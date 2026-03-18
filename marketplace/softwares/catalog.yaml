@@ -167,13 +167,13 @@
   description: >-
     Connect agents to WhatsApp via Baileys. Enables bidirectional messaging
     through WebSocket bridge.
-  version: "0.1.0"
+  version: "0.1.1"
   categories:
     - channel
     - messaging
   install:
     type: npm
-    package: "https://github.com/saolalab/clawforce/releases/download/bridge%2Fv0.1.0/clawbot-whatsapp-bridge-0.1.0.tgz"
+    package: "https://github.com/saolalab/clawforce/releases/download/bridge%2Fv0.1.1/clawbot-whatsapp-bridge-0.1.1.tgz"
   post_install:
     command: clawbot-whatsapp-bridge
     args: ["start"]

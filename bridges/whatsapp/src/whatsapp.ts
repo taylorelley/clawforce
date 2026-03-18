@@ -15,7 +15,7 @@ import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode-terminal';
 import pino from 'pino';
 
-const VERSION = '0.1.0';
+const VERSION = '0.1.1';
 
 export interface InboundMessage {
   id: string;

@@ -1,6 +1,6 @@
 {
   "name": "@clawbot/whatsapp-bridge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "WhatsApp bridge for Clawbot using Baileys. Connects agents to WhatsApp via WebSocket.",
   "type": "module",
   "main": "dist/index.js",
