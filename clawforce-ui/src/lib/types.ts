@@ -69,6 +69,19 @@ export type SoftwareInstallResult = {
   verified: boolean;
 };
 
+export type AddCustomSoftwarePayload = {
+  id: string;
+  name: string;
+  description?: string;
+  author?: string;
+  version?: string;
+  categories?: string[];
+  install: { type: string; package: string };
+  run: { command: string; args?: string[]; stdin?: boolean };
+  post_install?: { command: string; args?: string[]; daemon?: boolean; env?: Record<string, string> };
+  required_env?: string[];
+};
+
 export type SecretsConfig = {
   env: Record<string, string>;
 };

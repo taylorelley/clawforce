@@ -79,27 +79,43 @@ async def _get_npm_global_bin() -> str:
     return _NPM_GLOBAL_BIN
 
 
-async def _resolve_command(command: str, env: dict[str, str]) -> str:
-    if os.path.isabs(command):
+async def _find_binary(
+    command: str,
+    install_type: str = "",
+    env: dict[str, str] | None = None,
+) -> str:
+    """Return the absolute path to `command`, or the bare name if not found.
+
+    Search order:
+      1. Already absolute → return as-is.
+      2. shutil.which (respects current PATH).
+      3. npm global bin (npm config get prefix)/bin  — for npm packages.
+      4. ~/.local/bin                                — for pip/shell packages.
+
+    When `env` is provided and the binary is found outside the current PATH,
+    its directory is prepended to env["PATH"] so child processes find it too.
+    """
+    if not command or os.path.isabs(command):
         return command
-    if shutil.which(command):
-        return command
-    npm_bin = await _get_npm_global_bin()
-    if npm_bin:
-        candidate = Path(npm_bin) / command
+    found = shutil.which(command)
+    if found:
+        return found
+    if install_type in ("npm", ""):
+        npm_bin = await _get_npm_global_bin()
+        if npm_bin:
+            candidate = Path(npm_bin) / command
+            if candidate.is_file():
+                if env is not None and npm_bin not in env.get("PATH", ""):
+                    env["PATH"] = f"{npm_bin}:{env.get('PATH', '')}"
+                return str(candidate)
+    if install_type in ("pip", "shell", ""):
+        candidate = Path.home() / ".local" / "bin" / command
         if candidate.is_file():
-            current_path = env.get("PATH", "")
-            if npm_bin not in current_path:
-                env["PATH"] = f"{npm_bin}:{current_path}"
+            if env is not None:
+                bin_dir = str(candidate.parent)
+                if bin_dir not in env.get("PATH", ""):
+                    env["PATH"] = f"{bin_dir}:{env.get('PATH', '')}"
             return str(candidate)
-    pip_bin = Path.home() / ".local" / "bin"
-    candidate = pip_bin / command
-    if candidate.is_file():
-        current_path = env.get("PATH", "")
-        pip_bin_str = str(pip_bin)
-        if pip_bin_str not in current_path:
-            env["PATH"] = f"{pip_bin_str}:{current_path}"
-        return str(candidate)
     return command
 
 
@@ -194,11 +210,16 @@ async def _run_with_pty(
     return _strip_ansi(output.decode("utf-8", errors="replace")).strip()
 
 
-async def _run_post_install(post_install: dict[str, Any], install_type: str) -> None:
+async def _run_post_install(
+    post_install: dict[str, Any],
+    install_type: str,
+    extra_env: dict[str, str] | None = None,
+) -> None:
     """Run post_install hook after software install. Supports daemon mode for long-running processes.
 
-    post_install: { "command": str, "args"?: list, "daemon"?: bool }
+    post_install: { "command": str, "args"?: list, "daemon"?: bool, "env"?: dict }
     If daemon is True, spawns process in background without waiting.
+    extra_env and post_install.env are merged into the process environment (e.g. for credentials).
     """
     cmd_str = post_install.get("command") or ""
     if not cmd_str:
@@ -206,7 +227,11 @@ async def _run_post_install(post_install: dict[str, Any], install_type: str) -> 
     args_list = post_install.get("args") or []
     daemon = bool(post_install.get("daemon", False))
     env = dict(os.environ)
-    resolved = await _resolve_command(cmd_str, env)
+    if extra_env:
+        env.update(extra_env)
+    if isinstance(post_install.get("env"), dict):
+        env.update(post_install["env"])
+    resolved = await _find_binary(cmd_str, install_type, env=env)
     full_cmd = [resolved] + [str(a) for a in args_list]
     if daemon:
         proc = await asyncio.create_subprocess_exec(
@@ -229,39 +254,64 @@ async def _run_post_install(post_install: dict[str, Any], install_type: str) -> 
             raise RuntimeError(f"post_install exited with code {proc.returncode}")
 
 
-async def _resolve_installed_command(command: str, install_type: str) -> str:
-    if not command:
-        return command
-    found = shutil.which(command)
-    if found:
-        return found
+
+
+def _build_install_cmd(install_type: str, package: str) -> list[str]:
+    """Return the shell command to install `package`, or [] for unknown install_type."""
     if install_type == "npm":
+        return ["npm", "install", "-g", package, "--loglevel=error"]
+    if install_type == "pip":
+        return ["pip", "install", "--user", package]
+    if install_type == "shell":
+        return ["sh", "-c", package]
+    return []
+
+
+async def _run_install_with_retry(
+    cmd: list[str],
+    key: str,
+    max_attempts: int = 3,
+    base_delay: float = 5.0,
+) -> bool:
+    """Run a package-manager install command, retrying on transient failures.
+
+    Streams output line-by-line at INFO level. Returns True on success.
+    """
+    for attempt in range(1, max_attempts + 1):
+        proc = None
         try:
             proc = await asyncio.create_subprocess_exec(
-                "npm",
-                "config",
-                "get",
-                "prefix",
+                *cmd,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
             )
-            out, _ = await asyncio.wait_for(proc.communicate(), timeout=10.0)
-            npm_prefix = out.decode("utf-8").strip()
-            if npm_prefix:
-                candidate = Path(npm_prefix) / "bin" / command
-                if candidate.is_file():
-                    return str(candidate)
-        except Exception:
-            pass
-    elif install_type == "pip":
-        candidate = Path.home() / ".local" / "bin" / command
-        if candidate.is_file():
-            return str(candidate)
-    elif install_type == "shell":
-        candidate = Path.home() / ".local" / "bin" / command
-        if candidate.is_file():
-            return str(candidate)
-    return command
+            if proc.stdout:
+                async for line_bytes in proc.stdout:
+                    line = line_bytes.decode("utf-8", errors="replace").rstrip()
+                    if line:
+                        logger.info("[%s] %s", key, line)
+            await asyncio.wait_for(proc.wait(), timeout=120.0)
+        except asyncio.TimeoutError:
+            if proc and proc.returncode is None:
+                proc.kill()
+            logger.warning("Timed out reinstalling '%s' (attempt %d/%d)", key, attempt, max_attempts)
+        except Exception as e:
+            logger.warning("Error reinstalling '%s' (attempt %d/%d): %s", key, attempt, max_attempts, e)
+        else:
+            if proc and proc.returncode == 0:
+                return True
+            logger.warning(
+                "Reinstall of '%s' exited %s (attempt %d/%d)",
+                key, proc.returncode if proc else "?", attempt, max_attempts,
+            )
+
+        if attempt < max_attempts:
+            delay = base_delay * (2 ** (attempt - 1))
+            logger.info("Retrying '%s' in %.1fs...", key, delay)
+            await asyncio.sleep(delay)
+
+    logger.error("Reinstall of '%s' failed after %d attempts", key, max_attempts)
+    return False
 
 
 class SoftwareManagement:
@@ -377,13 +427,8 @@ class SoftwareManagement:
         exit_code, verified, resolved_command.
         """
         key = slug_to_key(slug)
-        if install_type == "npm":
-            cmd = ["npm", "install", "-g", package, "--loglevel=error"]
-        elif install_type == "pip":
-            cmd = ["pip", "install", "--user", package]
-        elif install_type == "shell":
-            cmd = ["sh", "-c", package]
-        else:
+        cmd = _build_install_cmd(install_type, package)
+        if not cmd:
             return {
                 "ok": False,
                 "slug": slug,
@@ -419,36 +464,47 @@ class SoftwareManagement:
                 "resolved_command": command,
             }
 
-        resolved_command = await _resolve_installed_command(command, install_type)
+        resolved_command = await _find_binary(command, install_type)
         verified = resolved_command != command or bool(shutil.which(command))
+
+        use_npx = (
+            not verified
+            and install_type == "npm"
+            and package
+            and (command in ("", resolved_command) or not shutil.which(command))
+        )
 
         entry = {
             "name": name,
             "description": description,
-            "command": resolved_command,
-            "args": args or [],
+            "command": "npx" if use_npx else resolved_command,
+            "args": (["--yes", package] + (args or [])) if use_npx else (args or []),
             "env": env or {},
             "installed_via": install_type,
             "package": package,
             "stdin": stdin,
             "installed_at": datetime.now(timezone.utc).isoformat(),
-            "verified": verified,
+            "verified": verified or use_npx,
         }
+        if use_npx:
+            entry["via_npx"] = True
         if post_install:
             entry["post_install"] = post_install
         self._catalog[key] = entry
         self.save()
 
         msg = out_text[:200] or "Installed."
-        if not verified and command:
+        if not verified and command and not use_npx:
             msg += f" (warning: '{command}' not found in PATH after install)"
+        elif use_npx:
+            msg += " (will run via npx since binary not in PATH)"
 
         self._write_skill(key, entry, skill_content=skill_content)
         self._update_lock(key, entry)
 
         if post_install:
             try:
-                await _run_post_install(post_install, install_type)
+                await _run_post_install(post_install, install_type, extra_env=entry.get("env"))
                 msg = (msg.rstrip(".") + ". Post-install started.").strip()
             except Exception as e:
                 logger.warning(f"Post-install failed for '{key}': {e}")
@@ -460,8 +516,8 @@ class SoftwareManagement:
             "message": msg,
             "logs": full_logs[-4000:],
             "exit_code": exit_code,
-            "verified": verified,
-            "resolved_command": resolved_command,
+            "verified": verified or use_npx,
+            "resolved_command": "npx" if use_npx else resolved_command,
         }
 
     async def uninstall(self, slug: str) -> dict[str, Any]:
@@ -585,7 +641,8 @@ class SoftwareManagement:
         env["CI"] = "true"
 
         try:
-            command = await _resolve_command(command, env)
+            install_type = _get_entry_attr(entry, "installed_via", "")
+            command = await _find_binary(command, install_type, env=env)
         except Exception as e:
             return f"Error: {e!s}"
 
@@ -704,9 +761,11 @@ class SoftwareManagement:
             logger.warning(f"Failed to remove '{key}' from skills-lock.json: {e}")
 
     async def reinstall_missing(self) -> None:
-        """
-        Re-install software whose binaries are missing (e.g. after container
-        restart). Updates config and in-memory catalog with resolved paths.
+        """Re-install software whose binaries are missing (e.g. after container restart).
+
+        For each catalog entry whose command is no longer on PATH, runs the
+        package manager again (with retries), re-resolves the binary path, and
+        re-runs any post_install hook (e.g. to restart daemon processes).
         """
         if not self._config_path:
             return
@@ -714,7 +773,7 @@ class SoftwareManagement:
         if not self._catalog:
             return
 
-        def is_command_available(cmd: str) -> bool:
+        def is_available(cmd: str) -> bool:
             if not cmd:
                 return False
             if os.path.isabs(cmd):
@@ -724,130 +783,40 @@ class SoftwareManagement:
         updated = False
         for key, entry in list(self._catalog.items()):
             cmd = _get_entry_attr(entry, "command", "")
-            if is_command_available(cmd):
+            if is_available(cmd):
                 continue
 
             package = _get_entry_attr(entry, "package", "")
             if not package:
-                logger.warning(f"Software '{key}' has no package info, cannot reinstall")
+                logger.warning("Software '%s' has no package info, cannot reinstall", key)
                 continue
 
             install_type = _get_entry_attr(entry, "installed_via", "") or "npm"
-            logger.info(
-                f"Re-installing software '{key}' ({install_type} {package}) — binary not found after container restart"
-            )
-
-            if install_type == "npm":
-                run_cmd = ["npm", "install", "-g", package, "--loglevel=error"]
-            elif install_type == "pip":
-                run_cmd = ["pip", "install", "--user", package]
-            elif install_type == "shell":
-                run_cmd = ["sh", "-c", package]
-            else:
+            install_cmd = _build_install_cmd(install_type, package)
+            if not install_cmd:
+                logger.warning("Software '%s' has unsupported install_type '%s'", key, install_type)
                 continue
 
-            max_attempts = 3
-            base_delay = 5.0
-            proc = None
-            for attempt in range(1, max_attempts + 1):
-                proc = None
-                try:
-                    proc = await asyncio.create_subprocess_exec(
-                        *run_cmd,
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.STDOUT,
-                    )
-                    if proc.stdout:
-                        async for line_bytes in proc.stdout:
-                            line = line_bytes.decode("utf-8", errors="replace").rstrip()
-                            if line:
-                                logger.info(f"[{key}] {line}")
-                    await asyncio.wait_for(proc.wait(), timeout=120.0)
-                except asyncio.TimeoutError:
-                    if proc and proc.returncode is None:
-                        proc.kill()
-                    logger.warning(
-                        "Timed out re-installing software '%s' (attempt %d/%d)",
-                        key,
-                        attempt,
-                        max_attempts,
-                    )
-                    if attempt < max_attempts:
-                        delay = base_delay * (2 ** (attempt - 1))
-                        logger.info("Retrying in %.1fs...", delay)
-                        await asyncio.sleep(delay)
-                        continue
-                    logger.error(
-                        "Timed out re-installing software '%s' (>120s) after %d attempts",
-                        key,
-                        max_attempts,
-                    )
-                    break
-                except Exception as e:
-                    logger.warning(
-                        "Failed to re-install software '%s' (attempt %d/%d): %s",
-                        key,
-                        attempt,
-                        max_attempts,
-                        e,
-                    )
-                    if attempt < max_attempts:
-                        delay = base_delay * (2 ** (attempt - 1))
-                        logger.info("Retrying in %.1fs...", delay)
-                        await asyncio.sleep(delay)
-                        continue
-                    logger.error(
-                        "Failed to re-install software '%s' after %d attempts: %s",
-                        key,
-                        max_attempts,
-                        e,
-                    )
-                    break
-
-                if proc.returncode != 0:
-                    logger.warning(
-                        "Re-install of '%s' failed (exit %s, attempt %d/%d)",
-                        key,
-                        proc.returncode,
-                        attempt,
-                        max_attempts,
-                    )
-                    if attempt < max_attempts:
-                        delay = base_delay * (2 ** (attempt - 1))
-                        logger.info(
-                            "Retrying in %.1fs (network/transient errors are common)...", delay
-                        )
-                        await asyncio.sleep(delay)
-                        continue
-                    logger.error(
-                        "Re-install of '%s' failed (exit %s) after %d attempts",
-                        key,
-                        proc.returncode,
-                        max_attempts,
-                    )
-                    break
-
-                # success
-                break
-
-            if proc is None or proc.returncode != 0:
+            logger.info("Re-installing '%s' (%s %s) — binary missing", key, install_type, package)
+            ok = await _run_install_with_retry(install_cmd, key)
+            if not ok:
                 continue
 
             base_cmd = cmd.rsplit("/", 1)[-1] if "/" in cmd else cmd
-            resolved = await _resolve_installed_command(base_cmd, install_type)
+            resolved = await _find_binary(base_cmd, install_type)
             if resolved != cmd:
                 entry["command"] = resolved
                 updated = True
-            logger.info(f"Software '{key}' re-installed successfully")
+            logger.info("Software '%s' re-installed successfully", key)
 
             post_install = entry.get("post_install")
             if isinstance(post_install, dict):
                 try:
-                    await _run_post_install(post_install, install_type)
-                    logger.info(f"Started post-install for '{key}'")
+                    await _run_post_install(post_install, install_type, extra_env=entry.get("env"))
+                    logger.info("Started post-install for '%s'", key)
                 except Exception as e:
-                    logger.warning(f"Post-install failed for '{key}' after reinstall: {e}")
+                    logger.warning("Post-install failed for '%s' after reinstall: %s", key, e)
 
         if updated:
             self.save()
-            logger.info("Updated config with resolved command paths after reinstall")
+            logger.info("Updated catalog with resolved command paths after reinstall")

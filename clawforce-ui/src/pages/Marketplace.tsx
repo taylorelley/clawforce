@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { PageContainer, PageHeader } from "../components/ui";
-import { useTemplates, useSearchSkills, useSearchMcpServers, useSoftwareCatalog } from "../lib/queries";
+import { useTemplates, useSearchSkills, useSearchMcpServers, useSoftwareCatalog, useCustomSoftware, useAddCustomSoftware, useUpdateCustomSoftware, useDeleteCustomSoftware } from "../lib/queries";
 import CreateClawModal from "../components/CreateClawModal";
 import TemplateDetailModal from "../components/TemplateDetailModal";
 import InstallSkillModal from "../components/InstallSkillModal";
 import InstallMcpModal from "../components/InstallMcpModal";
 import InstallSoftwareModal from "../components/InstallSoftwareModal";
-import type { MarketplaceSkill, MCPRegistryServer, SoftwareCatalogEntry } from "../lib/types";
+import type { MarketplaceSkill, MCPRegistryServer, SoftwareCatalogEntry, AddCustomSoftwarePayload } from "../lib/types";
 import {
   HiOutlineCommandLine,
   HiOutlineCodeBracket,
@@ -340,6 +340,36 @@ function SkillCard({
               v{version}
             </span>
           )}
+          {skill.homepage && (
+            <a
+              href={skill.homepage}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              title="Setup guide / homepage"
+              className="inline-flex items-center gap-0.5 text-[10px] text-claude-text-muted hover:text-claude-accent transition-colors"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Docs
+            </a>
+          )}
+          {!skill.homepage && (
+            <a
+              href={`https://agentskill.sh/skills/${skill.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              title="View on agentskill.sh"
+              className="inline-flex items-center gap-0.5 text-[10px] text-claude-text-muted hover:text-claude-accent transition-colors"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Docs
+            </a>
+          )}
         </div>
         <div className="flex-1" />
         <button
@@ -553,6 +583,21 @@ function McpServerCard({
               </svg>
               Verified
             </span>
+          )}
+          {(server.homepage || server.repository) && (
+            <a
+              href={server.homepage || server.repository}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              title="Setup guide / documentation"
+              className="inline-flex items-center gap-0.5 text-[10px] text-claude-text-muted hover:text-claude-accent transition-colors"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Docs
+            </a>
           )}
         </div>
         <div className="flex-1" />
@@ -785,6 +830,48 @@ function SkillDetailModal({
               {skill.slug}
             </code>
           </div>
+
+          <div className="flex flex-wrap gap-3 text-sm">
+            {skill.homepage && (
+              <a
+                href={skill.homepage}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-claude-text-secondary hover:text-claude-accent transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                </svg>
+                Setup Guide
+              </a>
+            )}
+            {skill.repository && (
+              <a
+                href={skill.repository}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-claude-text-secondary hover:text-claude-accent transition-colors"
+              >
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                Repository
+              </a>
+            )}
+            {!skill.homepage && !skill.repository && (
+              <a
+                href={`https://agentskill.sh/skills/${skill.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-claude-text-secondary hover:text-claude-accent transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                View on agentskill.sh
+              </a>
+            )}
+          </div>
         </div>
 
         <div className="px-4 py-2 border-t border-claude-border bg-claude-surface/30 flex justify-end gap-2">
@@ -808,12 +895,34 @@ function SkillDetailModal({
 
 function SoftwareTab() {
   const { data: catalog = [], isLoading } = useSoftwareCatalog();
+  const { data: customEntries = [] } = useCustomSoftware();
+  const deleteMutation = useDeleteCustomSoftware();
+  const customIds = new Set((customEntries as { id?: string }[]).map((e) => e.id).filter(Boolean));
   const [installEntry, setInstallEntry] = useState<SoftwareCatalogEntry | null>(null);
+  const [showAddCustom, setShowAddCustom] = useState(false);
+  const [editEntry, setEditEntry] = useState<SoftwareCatalogEntry | null>(null);
+
+  const handleDeleteCustom = (entry: SoftwareCatalogEntry) => {
+    if (window.confirm(`Remove "${entry.name}" from custom catalog?`)) {
+      deleteMutation.mutate(entry.id);
+    }
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm text-claude-text-secondary max-w-2xl">
-        <span>Software extends your claws with CLI tools that can be installed into Docker containers.</span>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-claude-text-secondary">
+          Software extends your claws with CLI tools that can be installed into Docker containers.
+        </p>
+        <button
+          onClick={() => setShowAddCustom(true)}
+          className={`${css.btn} flex items-center gap-1.5 border border-claude-border bg-white hover:bg-claude-surface text-claude-text-primary text-xs shrink-0`}
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Custom
+        </button>
       </div>
 
       {isLoading && (
@@ -834,7 +943,10 @@ function SoftwareTab() {
             <SoftwareCard
               key={entry.id}
               entry={entry}
+              isCustom={customIds.has(entry.id)}
               onInstall={() => setInstallEntry(entry)}
+              onEdit={customIds.has(entry.id) ? () => setEditEntry(entry) : undefined}
+              onDelete={customIds.has(entry.id) ? () => handleDeleteCustom(entry) : undefined}
             />
           ))}
         </div>
@@ -854,16 +966,457 @@ function SoftwareTab() {
         onClose={() => setInstallEntry(null)}
         entry={installEntry}
       />
+
+      <AddCustomSoftwareModal
+        open={showAddCustom || !!editEntry}
+        onClose={() => {
+          setShowAddCustom(false);
+          setEditEntry(null);
+        }}
+        entryToEdit={editEntry}
+      />
+    </div>
+  );
+}
+
+/** Convert a display name to a slug id, e.g. "Google Cal MCP" → "google-cal-mcp" */
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * Parse a GitHub release URL into pre-filled form fields.
+ *
+ * Handles patterns like:
+ *   https://github.com/owner/repo/releases/tag/v1.2.3
+ *   https://github.com/owner/repo/releases/download/v1.2.3/pkg.tgz
+ *   https://github.com/owner/repo  (just the repo)
+ *
+ * For release tag URLs the npm package becomes the tarball URL pointing to the
+ * GitHub release assets (npm can install directly from a .tgz URL).
+ */
+function parseGithubUrl(raw: string): Partial<{
+  name: string; author: string; version: string;
+  installType: string; package: string; command: string;
+}> | null {
+  const url = raw.trim();
+  // Must look like a github.com URL
+  const m = url.match(/github\.com\/([^/]+)\/([^/?#]+)/);
+  if (!m) return null;
+
+  const owner = m[1];
+  const repo = m[2].replace(/\.git$/, "");
+
+  // Derive a friendly name from the repo slug
+  const name = repo
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  // Try to extract a version tag
+  const tagMatch = url.match(/\/releases\/(?:tag|download)\/([^/]+)/);
+  const version = tagMatch ? tagMatch[1].replace(/^v/, "") : "latest";
+
+  // If it's a direct .tgz download link, use it verbatim as the npm package
+  if (url.endsWith(".tgz") || url.endsWith(".tar.gz")) {
+    return { name, author: owner, version, installType: "npm", package: url, command: toSlug(repo) };
+  }
+
+  // For a release tag URL, construct the likely tarball URL.
+  // GitHub publishes source tarballs at /archive/refs/tags/<tag>.tar.gz
+  // but npm packages are usually published as assets. We use the tag URL
+  // directly — npm supports `npm install <git-url>#semver:...` or tarball URLs.
+  // Best we can do without fetching the page is point to the source archive.
+  if (tagMatch) {
+    const tag = tagMatch[1];
+    const tgzUrl = `https://github.com/${owner}/${repo}/archive/refs/tags/${tag}.tar.gz`;
+    return { name, author: owner, version: version, installType: "npm", package: tgzUrl, command: toSlug(repo) };
+  }
+
+  // Plain repo URL — use npm's git shorthand
+  return { name, author: owner, version: "latest", installType: "npm", package: `github:${owner}/${repo}`, command: toSlug(repo) };
+}
+
+const EMPTY_FORM = {
+  githubUrl: "",
+  name: "",
+  description: "",
+  author: "",
+  version: "",
+  installType: "npm",
+  package: "",
+  command: "",
+  args: "",
+  autoRun: false,
+  postInstallCommand: "",
+  postInstallArgs: "",
+  postInstallDaemon: true,
+  postInstallEnv: "",
+};
+
+function AddCustomSoftwareModal({ open, onClose, entryToEdit }: { open: boolean; onClose: () => void; entryToEdit?: SoftwareCatalogEntry | null }) {
+  const addMutation = useAddCustomSoftware();
+  const updateMutation = useUpdateCustomSoftware();
+
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [idOverride, setIdOverride] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (open && entryToEdit) {
+      const install = (entryToEdit as { install?: { type?: string; package?: string } }).install || {};
+      const run = (entryToEdit as { run?: { command?: string; args?: string[] } }).run || {};
+      const pi = (entryToEdit as { post_install?: { command?: string; args?: string[]; daemon?: boolean; env?: Record<string, string> } }).post_install;
+      setForm({
+        githubUrl: "",
+        name: entryToEdit.name || "",
+        description: entryToEdit.description || "",
+        author: entryToEdit.author || "",
+        version: entryToEdit.version || "latest",
+        installType: install.type || "npm",
+        package: install.package || "",
+        command: run.command || "",
+        args: Array.isArray(run.args) ? run.args.join(" ") : "",
+        autoRun: !!pi,
+        postInstallCommand: pi?.command || run.command || "",
+        postInstallArgs: Array.isArray(pi?.args) ? pi.args.join(" ") : "",
+        postInstallDaemon: pi?.daemon ?? true,
+        postInstallEnv: pi?.env ? Object.entries(pi.env).map(([k, v]) => `${k}=${v}`).join("\n") : "",
+      });
+      setIdOverride(entryToEdit.id || "");
+    } else if (open && !entryToEdit) {
+      setForm(EMPTY_FORM);
+      setIdOverride("");
+    }
+  }, [open, entryToEdit]);
+
+  const derivedId = idOverride || toSlug(form.name);
+
+  function reset() {
+    setForm(EMPTY_FORM);
+    setIdOverride("");
+    setError("");
+    setSuccess("");
+  }
+
+  function handleClose() {
+    reset();
+    onClose();
+  }
+
+  function handleGithubUrl(raw: string) {
+    setForm((f) => ({ ...f, githubUrl: raw }));
+    const parsed = parseGithubUrl(raw);
+    if (!parsed) return;
+    setForm((f) => ({
+      ...f,
+      githubUrl: raw,
+      name: parsed.name ?? f.name,
+      author: parsed.author ?? f.author,
+      version: parsed.version ?? f.version,
+      installType: parsed.installType ?? f.installType,
+      package: parsed.package ?? f.package,
+      command: parsed.command ?? f.command,
+    }));
+    setIdOverride("");
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    const id = derivedId;
+    if (!id || !form.name.trim() || !form.package.trim() || !form.command.trim()) {
+      setError("Name, Package, and Command are required.");
+      return;
+    }
+    const payload: AddCustomSoftwarePayload = {
+      id,
+      name: form.name.trim(),
+      description: form.description.trim(),
+      author: form.author.trim(),
+      version: form.version.trim() || "latest",
+      install: { type: form.installType, package: form.package.trim() },
+      run: {
+        command: form.command.trim(),
+        args: form.args.trim() ? form.args.trim().split(/\s+/) : [],
+      },
+      ...(form.autoRun && {
+        post_install: {
+          command: (form.postInstallCommand || form.command).trim(),
+          args: form.postInstallArgs.trim() ? form.postInstallArgs.trim().split(/\s+/) : [],
+          daemon: form.postInstallDaemon,
+          ...(form.postInstallEnv.trim() && {
+            env: Object.fromEntries(
+              form.postInstallEnv.trim().split("\n").filter(Boolean).map((line) => {
+                const [k, ...rest] = line.split("=");
+                return [k.trim(), rest.join("=").trim()];
+              })
+            ),
+          }),
+        },
+      }),
+    };
+    try {
+      if (entryToEdit) {
+        await updateMutation.mutateAsync({ softwareId: entryToEdit.id, entry: payload });
+        setSuccess(`"${payload.name}" updated.`);
+      } else {
+        await addMutation.mutateAsync(payload);
+        setSuccess(`"${payload.name}" added to catalog.`);
+      }
+      reset();
+      onClose();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to save software.");
+    }
+  }
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={handleClose}>
+      <div
+        className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-4 py-3 border-b border-claude-border flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-claude-text-primary">
+            {entryToEdit ? "Edit Custom Software" : "Add Custom Software"}
+          </h2>
+          <button onClick={handleClose} className="p-1 rounded-lg hover:bg-claude-surface transition-colors">
+            <svg className="h-4 w-4 text-claude-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-4 overflow-y-auto flex-1 space-y-4">
+          <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5 space-y-1.5">
+            <label className="flex items-center gap-1.5 text-xs font-medium text-claude-text-secondary">
+              <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+              </svg>
+              Import from GitHub URL (optional)
+            </label>
+            <input
+              className={css.input + " bg-white"}
+              placeholder="https://github.com/owner/repo/releases/tag/v1.2.3"
+              value={form.githubUrl}
+              onChange={(e) => handleGithubUrl(e.target.value)}
+            />
+            {form.githubUrl && !parseGithubUrl(form.githubUrl) && (
+              <p className="text-[10px] text-amber-600">Not a recognized GitHub URL — fill in the fields below manually.</p>
+            )}
+            {form.githubUrl && parseGithubUrl(form.githubUrl) && (
+              <p className="text-[10px] text-emerald-600">Fields pre-filled. Review and adjust below.</p>
+            )}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {/* Name + auto ID */}
+            <div>
+              <label className="block text-xs font-medium text-claude-text-secondary mb-1">
+                Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                className={css.input}
+                placeholder="My Tool"
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              />
+              {form.name && (
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span className="text-[10px] text-claude-text-muted">ID:</span>
+                  {idOverride ? (
+                    <input
+                      className="text-[10px] font-mono text-claude-text-primary bg-transparent border-b border-claude-border focus:outline-none focus:border-claude-accent px-0.5 w-32"
+                      value={idOverride}
+                      onChange={(e) => setIdOverride(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
+                    />
+                  ) : (
+                    <span className="text-[10px] font-mono text-claude-text-primary">{derivedId}</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIdOverride(idOverride ? "" : derivedId)}
+                    className="text-[10px] text-claude-accent hover:underline"
+                  >
+                    {idOverride ? "reset" : "edit"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-claude-text-secondary mb-1">Description</label>
+              <input
+                className={css.input}
+                placeholder="What does this tool do?"
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-claude-text-secondary mb-1">Author</label>
+                <input
+                  className={css.input}
+                  placeholder="GitHub owner"
+                  value={form.author}
+                  onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-claude-text-secondary mb-1">Version</label>
+                <input
+                  className={css.input}
+                  placeholder="latest"
+                  value={form.version}
+                  onChange={(e) => setForm((f) => ({ ...f, version: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-claude-border pt-3">
+              <p className="text-xs font-medium text-claude-text-secondary mb-2">Install</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs text-claude-text-muted mb-1">Type</label>
+                  <select
+                    className={css.input}
+                    value={form.installType}
+                    onChange={(e) => setForm((f) => ({ ...f, installType: e.target.value }))}
+                  >
+                    <option value="npm">npm</option>
+                    <option value="pip">pip</option>
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs text-claude-text-muted mb-1">Package <span className="text-red-500">*</span></label>
+                  <input
+                    className={css.input}
+                    placeholder="@scope/package@latest or github:owner/repo"
+                    value={form.package}
+                    onChange={(e) => setForm((f) => ({ ...f, package: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-claude-border pt-3">
+              <p className="text-xs font-medium text-claude-text-secondary mb-2">Run</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-claude-text-muted mb-1">Command <span className="text-red-500">*</span></label>
+                  <input
+                    className={css.input}
+                    placeholder="my-tool"
+                    value={form.command}
+                    onChange={(e) => setForm((f) => ({ ...f, command: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-claude-text-muted mb-1">Args (space-separated)</label>
+                  <input
+                    className={css.input}
+                    placeholder="-p --flag"
+                    value={form.args}
+                    onChange={(e) => setForm((f) => ({ ...f, args: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-claude-border pt-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.autoRun}
+                  onChange={(e) => setForm((f) => ({ ...f, autoRun: e.target.checked }))}
+                  className="rounded border-claude-border accent-claude-accent"
+                />
+                <span className="text-xs font-medium text-claude-text-secondary">Auto-run after install/reinstall</span>
+              </label>
+              {form.autoRun && (
+                <div className="mt-3 space-y-2 pl-5 border-l-2 border-claude-border">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-claude-text-muted mb-1">Command (default: Run command)</label>
+                      <input
+                        className={css.input}
+                        placeholder={form.command || "my-tool"}
+                        value={form.postInstallCommand}
+                        onChange={(e) => setForm((f) => ({ ...f, postInstallCommand: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-claude-text-muted mb-1">Args (space-separated)</label>
+                      <input
+                        className={css.input}
+                        placeholder="--port 3000"
+                        value={form.postInstallArgs}
+                        onChange={(e) => setForm((f) => ({ ...f, postInstallArgs: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.postInstallDaemon}
+                      onChange={(e) => setForm((f) => ({ ...f, postInstallDaemon: e.target.checked }))}
+                      className="rounded border-claude-border accent-claude-accent"
+                    />
+                    <span className="text-xs text-claude-text-muted">Run as daemon (background)</span>
+                  </label>
+                  <div>
+                    <label className="block text-xs text-claude-text-muted mb-1">Env (KEY=VALUE, one per line)</label>
+                    <textarea
+                      className={`${css.input} resize-none font-mono text-xs`}
+                      rows={2}
+                      placeholder="MCP_TRANSPORT=http"
+                      value={form.postInstallEnv}
+                      onChange={(e) => setForm((f) => ({ ...f, postInstallEnv: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {error && <p className="text-xs text-red-500">{error}</p>}
+            {success && <p className="text-xs text-emerald-600">{success}</p>}
+
+            <button
+              type="submit"
+              disabled={addMutation.isPending || updateMutation.isPending}
+              className={`${css.btn} w-full bg-claude-accent text-white hover:bg-claude-accent-hover text-xs disabled:opacity-50`}
+            >
+              {updateMutation.isPending ? "Saving..." : addMutation.isPending ? "Adding..." : entryToEdit ? "Save Changes" : "Add to Catalog"}
+            </button>
+          </form>
+
+        </div>
+      </div>
     </div>
   );
 }
 
 function SoftwareCard({
   entry,
+  isCustom,
   onInstall,
+  onEdit,
+  onDelete,
 }: {
   entry: SoftwareCatalogEntry;
+  isCustom?: boolean;
   onInstall: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }) {
   return (
     <div className="rounded-xl border border-claude-border bg-white p-4 hover:border-claude-accent/30 transition-colors flex flex-col">
@@ -881,6 +1434,32 @@ function SoftwareCard({
             )}
           </div>
         </div>
+        {isCustom && (onEdit || onDelete) && (
+          <div className="flex items-center gap-0.5 shrink-0">
+            {onEdit && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                className="p-1.5 rounded hover:bg-claude-surface text-claude-text-muted hover:text-claude-accent transition-colors"
+                title="Edit"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                </svg>
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                className="p-1.5 rounded hover:bg-red-50 text-claude-text-muted hover:text-red-500 transition-colors"
+                title="Delete"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </button>
+            )}
+          </div>
+        )}
       </div>
       {entry.description && (
         <p className="mt-2 text-xs text-claude-text-secondary line-clamp-2">{entry.description}</p>

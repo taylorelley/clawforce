@@ -230,6 +230,31 @@ class ExecToolConfig(Base):
     policy: ShellPolicyConfig = Field(default_factory=ShellPolicyConfig)
 
 
+class MCPConfigField(Base):
+    """A single field in an MCP server's config schema (JSON Schema subset).
+
+    name:        env var (stdio) or header name (HTTP) the server expects
+    title:       human-readable label (maps to JSON Schema "title")
+    description: hint text shown below the input
+    type:        JSON Schema type — "string" | "number" | "boolean"
+    format:      JSON Schema format — "password" | "uri" | "date" | ...
+    x_widget:    extension for non-standard widgets — "file"
+    default:     default value (any)
+    enum:        allowed values → renders as <select>
+    required:    whether the field must be filled before connecting
+    """
+
+    name: str
+    title: str = ""
+    description: str = ""
+    type: str = "string"
+    format: str = ""
+    x_widget: str = Field(default="", alias="x-widget")
+    default: str | int | float | bool | None = None
+    enum: list[str] = Field(default_factory=list)
+    required: bool = True
+
+
 class MCPServerConfig(Base):
     command: str = ""
     args: list[str] = Field(default_factory=list)
@@ -237,6 +262,11 @@ class MCPServerConfig(Base):
     url: str = ""
     headers: dict[str, str] = Field(default_factory=dict)
     enabled_tools: list[str] | None = Field(default=None, alias="enabledTools")
+    # Config schema for the server (populated at install time from the registry).
+    # Standard JSON Schema fields drive the UI: type, format, enum, x-widget, etc.
+    config_schema: list[MCPConfigField] = Field(
+        default_factory=list, alias="configSchema"
+    )
 
 
 class SoftwareEntry(Base):

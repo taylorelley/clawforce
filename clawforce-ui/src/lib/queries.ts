@@ -13,6 +13,7 @@ export const queryKeys = {
   skillsSearch: (q: string) => ["skills", "search", q] as const,
   mcpServers: (q: string) => ["mcp", "search", q] as const,
   softwareCatalog: ["software", "catalog"] as const,
+  customSoftware: ["software", "custom"] as const,
   workspaceFiles: (id: string, root?: string) => ["agents", id, "workspace", root ?? "workspace"] as const,
   workspaceFile: (id: string, path: string) => ["agents", id, "workspace", path] as const,
   plans: ["plans"] as const,
@@ -257,6 +258,49 @@ export function useSoftwareCatalog() {
     queryKey: queryKeys.softwareCatalog,
     queryFn: () => api.software.catalog(),
     staleTime: 60_000,
+  });
+}
+
+export function useCustomSoftware() {
+  return useQuery({
+    queryKey: queryKeys.customSoftware,
+    queryFn: () => api.software.listCustom(),
+    staleTime: 30_000,
+  });
+}
+
+export function useAddCustomSoftware() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (entry: import("./types").AddCustomSoftwarePayload) =>
+      api.software.addCustom(entry),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.customSoftware });
+      qc.invalidateQueries({ queryKey: queryKeys.softwareCatalog });
+    },
+  });
+}
+
+export function useUpdateCustomSoftware() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ softwareId, entry }: { softwareId: string; entry: import("./types").AddCustomSoftwarePayload }) =>
+      api.software.updateCustom(softwareId, entry),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.customSoftware });
+      qc.invalidateQueries({ queryKey: queryKeys.softwareCatalog });
+    },
+  });
+}
+
+export function useDeleteCustomSoftware() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (softwareId: string) => api.software.deleteCustom(softwareId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.customSoftware });
+      qc.invalidateQueries({ queryKey: queryKeys.softwareCatalog });
+    },
   });
 }
 

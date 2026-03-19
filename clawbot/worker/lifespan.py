@@ -35,7 +35,9 @@ async def run_worker() -> None:
         asyncio.create_task(admin_client.run_with_reconnect(stop)) if admin_client else None
     )
 
-    software_task = asyncio.create_task(_deferred_software_reinstall(ctx.software_management))
+    software_task = asyncio.create_task(
+        _deferred_software_reinstall(ctx.software_management, ctx.agent_loop)
+    )
 
     agent_task = asyncio.create_task(_run_agent(ctx))
     await ctx.heartbeat.start()
@@ -127,11 +129,15 @@ async def _build_context() -> tuple[WorkerContext, AdminClient | None]:
 # -- Software re-installation -------------------------------------------------
 
 
-async def _deferred_software_reinstall(software_management) -> None:
+async def _deferred_software_reinstall(software_management, agent_loop=None) -> None:
     """Run software reinstall in background after WebSocket connects.
 
     Waits SOFTWARE_REINSTALL_DELAY_S to let the connection establish first.
     Software reinstall can take minutes for npm/pip packages.
+
+    After reinstall, if any post_install daemons were started, waits briefly
+    for them to bind their ports then reconnects any MCP servers that were
+    skipped or failed at startup (because the daemon wasn't running yet).
 
     Sets global _software_installing flag so health endpoint reports status.
     """
@@ -142,6 +148,22 @@ async def _deferred_software_reinstall(software_management) -> None:
         logger.info("Starting background software reinstall...")
         await software_management.reinstall_missing()
         logger.info("Background software reinstall completed")
+
+        if agent_loop:
+            daemon_entries = [
+                e
+                for e in software_management.get_catalog().values()
+                if isinstance(e.get("post_install"), dict) and e["post_install"].get("daemon")
+            ]
+            if daemon_entries:
+                logger.info(
+                    "Waiting for {} post-install daemon(s) to start before retrying MCP...",
+                    len(daemon_entries),
+                )
+                await asyncio.sleep(5.0)
+                results = await agent_loop.reconnect_skipped_mcp_servers()
+                if not results:
+                    logger.debug("No skipped/failed MCP servers to retry after reinstall")
     except asyncio.CancelledError:
         logger.debug("Software reinstall task cancelled during shutdown")
     except Exception as e:

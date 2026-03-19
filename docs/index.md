@@ -62,6 +62,8 @@ After installation, open **http://localhost:8080** and log in with `admin`/`admi
 
 [Full installation options →](/guide/quickstart)
 
+[Product Principles & Best Practices →](/guide/principles)
+
 [Plans (coordination layer) →](/guide/plans)
 
 ## License

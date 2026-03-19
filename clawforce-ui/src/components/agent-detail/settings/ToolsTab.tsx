@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api } from "../../../lib/api";
 import { css, BUILTIN_TOOLS } from "../constants";
 import { Section, Toggle } from "../ui/Section";
-import type { Agent, ApprovalCfg, MCPServer, ToolsCfg } from "../types";
+import type { Agent, ApprovalCfg, MCPConfigField, MCPServer, ToolsCfg } from "../types";
 
 function ToolApprovalSection({ tools, setTools }: { tools: ToolsCfg; setTools: (t: ToolsCfg) => void }) {
   const approval = tools.approval ?? { default_mode: "always_run", per_tool: {}, timeout_seconds: 120 };
@@ -166,11 +166,13 @@ function McpToolPicker({
   serverKey,
   enabledTools,
   onChange,
+  serverStatus,
 }: {
   agentId: string;
   serverKey: string;
   enabledTools: string;
   onChange: (v: string) => void;
+  serverStatus?: { status?: string; error?: string };
 }) {
   const [tools, setTools] = useState<{ name: string; description: string }[]>([]);
   const [loading, setLoading] = useState(false);
@@ -205,8 +207,7 @@ function McpToolPicker({
     return (
       <div>
         <label className={css.label}>Enabled Tools</label>
-        <input className={css.input} value={enabledTools} onChange={(e) => onChange(e.target.value)} placeholder="Leave empty for all tools. e.g. read_file, write_file" />
-        <p className="mt-1 text-[10px] text-claude-text-muted">Save the agent first to pick tools interactively.</p>
+        <input className={css.input} value={enabledTools} onChange={(e) => onChange(e.target.value)} placeholder="Leave empty for all. e.g. read_file, write_file" />
       </div>
     );
   }
@@ -249,11 +250,15 @@ function McpToolPicker({
       {!fetched ? (
         <p className="text-[10px] text-claude-text-muted">
           {selected.size > 0
-            ? `${selected.size} tool(s) configured. Click "Load tools" to see and edit them.`
-            : 'Click "Load tools" to see available tools (agent must be running).'}
+            ? `${selected.size} tool(s) selected. Load to edit.`
+            : "Load to see available tools."}
         </p>
       ) : tools.length === 0 ? (
-        <p className="text-[10px] text-claude-text-muted">No tools found.</p>
+        <p className="text-[10px] text-claude-text-muted">
+          {serverStatus?.status && serverStatus.status !== "connected"
+            ? `No tools — server is ${serverStatus.status}.`
+            : "No tools found."}
+        </p>
       ) : (
         <div className="max-h-48 overflow-y-auto rounded-lg border border-claude-border bg-claude-bg divide-y divide-claude-border/50">
           {tools.map((t) => (
@@ -282,7 +287,7 @@ function McpToolPicker({
         </div>
       )}
       {fetched && selected.size === 0 && (
-        <p className="mt-1 text-[10px] text-claude-text-muted">All tools enabled (none filtered).</p>
+        <p className="mt-1 text-[10px] text-claude-text-muted">All tools enabled.</p>
       )}
     </div>
   );
@@ -294,12 +299,14 @@ function McpServerEditForm({
   onSave,
   onCancel,
   isNew,
+  serverStatus: serverStatusProp,
 }: {
   agentId: string;
   initial: EditState;
   onSave: (name: string, srv: import("../types").MCPServer) => void;
   onCancel: () => void;
   isNew: boolean;
+  serverStatus?: { status?: string; error?: string };
 }) {
   const [s, setS] = useState<EditState>(initial);
   const patch = (p: Partial<EditState>) => setS((prev) => ({ ...prev, ...p }));
@@ -319,7 +326,16 @@ function McpServerEditForm({
           stdio
         </label>
         <label className="flex items-center gap-1.5 text-sm cursor-pointer">
-          <input type="radio" checked={s.type === "http"} onChange={() => patch({ type: "http" })} className="accent-claude-accent" />
+          <input
+            type="radio"
+            checked={s.type === "http"}
+            onChange={() => setS((prev) => ({
+              ...prev,
+              type: "http",
+              url: (prev.url || "").trim() || "http://localhost:3000/mcp",
+            }))}
+            className="accent-claude-accent"
+          />
           HTTP
         </label>
       </div>
@@ -331,11 +347,11 @@ function McpServerEditForm({
             <input className={css.input} value={s.cmd} onChange={(e) => patch({ cmd: e.target.value })} placeholder="npx" />
           </div>
           <div>
-            <label className={css.label}>Arguments (comma-separated)</label>
+            <label className={css.label}>Arguments</label>
             <input className={css.input} value={s.args} onChange={(e) => patch({ args: e.target.value })} placeholder="-y, @modelcontextprotocol/server-filesystem, /path" />
           </div>
           <div>
-            <label className={css.label}>Environment Variables (KEY=VALUE, one per line)</label>
+            <label className={css.label}>Env Variables</label>
             <textarea className={`${css.input} resize-none font-mono`} rows={2} value={s.env} onChange={(e) => patch({ env: e.target.value })} placeholder="API_KEY=abc123" />
           </div>
         </>
@@ -343,10 +359,24 @@ function McpServerEditForm({
         <>
           <div>
             <label className={css.label}>URL</label>
-            <input className={css.input} value={s.url} onChange={(e) => patch({ url: e.target.value })} placeholder="https://example.com/mcp" />
+            <div className="flex gap-2">
+              <input
+                className={`${css.input} flex-1`}
+                value={s.url}
+                onChange={(e) => patch({ url: e.target.value })}
+                placeholder="http://localhost:3000/mcp"
+              />
+              <button
+                type="button"
+                onClick={() => patch({ url: "http://localhost:3000/mcp" })}
+                className="text-[10px] text-claude-accent hover:underline whitespace-nowrap"
+              >
+                Use localhost:3000
+              </button>
+            </div>
           </div>
           <div>
-            <label className={css.label}>Headers (KEY=VALUE, one per line)</label>
+            <label className={css.label}>Headers</label>
             <textarea
               className={`${css.input} resize-none font-mono`}
               rows={3}
@@ -354,9 +384,6 @@ function McpServerEditForm({
               onChange={(e) => patch({ headers: e.target.value })}
               placeholder={"Authorization=Bearer <token>\nX-Api-Key=your-key"}
             />
-            <p className="mt-1 text-[10px] text-claude-text-muted">
-              For OAuth: <code className="font-mono">Authorization=Bearer &lt;token&gt;</code>
-            </p>
           </div>
         </>
       )}
@@ -366,11 +393,18 @@ function McpServerEditForm({
         serverKey={isNew ? "" : s.name}
         enabledTools={s.enabledTools}
         onChange={(v) => patch({ enabledTools: v })}
+        serverStatus={serverStatusProp}
       />
 
       <div className="flex gap-2">
         <button
-          onClick={() => { if (isNew ? s.name.trim() : true) onSave(s.name.trim(), editStateToServer(s)); }}
+          onClick={() => {
+            let server = editStateToServer(s);
+            if (s.type === "http" && !(server.url || "").trim()) {
+              server = { ...server, url: "http://localhost:3000/mcp" };
+            }
+            if (isNew ? s.name.trim() : true) onSave(s.name.trim(), server);
+          }}
           disabled={isNew && !s.name.trim()}
           className={`${css.btn} bg-claude-accent text-white hover:bg-claude-accent-hover disabled:opacity-40`}
         >
@@ -384,9 +418,273 @@ function McpServerEditForm({
   );
 }
 
-export function ToolsTab({ agentId, agent, updateTools, setTools }: { agentId: string; agent: Agent; updateTools: (p: Record<string, unknown>) => void; setTools: (t: ToolsCfg) => void }) {
+function ConfigFieldInput({
+  field,
+  value,
+  autoFocus,
+  onChange,
+}: {
+  field: MCPConfigField;
+  value: string;
+  autoFocus: boolean;
+  onChange: (v: string) => void;
+}) {
+  const isFileWidget = field["x-widget"] === "file";
+  const [dragOver, setDragOver] = useState(false);
+
+  function handleFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = (e) => onChange(e.target?.result as string ?? "");
+    reader.readAsText(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  }
+
+  return (
+    <div>
+      <label className={css.label}>
+        {field.title || field.name}
+        <span className="ml-1.5 font-mono text-[10px] text-claude-text-muted normal-case tracking-tight">
+          {field.name}
+        </span>
+      </label>
+
+      {isFileWidget ? (
+        <div className="space-y-1.5">
+          <label
+            className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed px-3 py-4 cursor-pointer transition-colors ${
+              dragOver
+                ? "border-claude-accent bg-claude-accent-soft"
+                : value
+                ? "border-green-400 bg-green-50"
+                : "border-claude-border hover:border-claude-accent/50 hover:bg-claude-accent-soft/50"
+            }`}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+          >
+            <input
+              type="file"
+              accept=".json,application/json"
+              className="sr-only"
+              autoFocus={autoFocus}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+            />
+            {value ? (
+              <span className="text-xs text-green-700 font-medium">
+                ✓ File loaded ({value.length.toLocaleString()} chars)
+              </span>
+            ) : (
+              <>
+                <span className="text-xs text-claude-text-muted">Drop JSON file here or click to browse</span>
+                <span className="text-[10px] text-claude-text-muted opacity-70">e.g. credentials.json</span>
+              </>
+            )}
+          </label>
+          <details className="group">
+            <summary className="cursor-pointer text-[10px] text-claude-text-muted hover:text-claude-accent select-none">
+              Or paste JSON content
+            </summary>
+            <textarea
+              className={`mt-1 ${css.input} resize-none font-mono text-[10px]`}
+              rows={5}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={'{\n  "installed": {\n    "client_id": "..."\n  }\n}'}
+            />
+          </details>
+        </div>
+      ) : field.type === "boolean" ? (
+        <label className="flex items-center gap-2 mt-1">
+          <input
+            type="checkbox"
+            checked={value === "true"}
+            onChange={(e) => onChange(e.target.checked ? "true" : "false")}
+            className="w-4 h-4 rounded"
+          />
+          <span className="text-sm text-claude-text-secondary">Enable</span>
+        </label>
+      ) : field.type === "number" ? (
+        <input
+          type="number"
+          autoFocus={autoFocus}
+          className={css.input}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={`Enter ${field.title || field.name}`}
+        />
+      ) : field.enum && field.enum.length > 0 ? (
+        <select
+          autoFocus={autoFocus}
+          className={css.input}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">Select an option</option>
+          {field.enum.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+      ) : field.format === "uri" ? (
+        <input
+          type="url"
+          autoFocus={autoFocus}
+          className={css.input}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={`Enter ${field.title || field.name}`}
+        />
+      ) : field.format === "password" ? (
+        <input
+          type="password"
+          autoFocus={autoFocus}
+          className={css.input}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={`Enter ${field.title || field.name}`}
+        />
+      ) : (
+        <input
+          type="text"
+          autoFocus={autoFocus}
+          className={css.input}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={`Enter ${field.title || field.name}`}
+        />
+      )}
+
+      {field.description && (
+        <p className="mt-0.5 text-[10px] text-claude-text-muted">{field.description}</p>
+      )}
+    </div>
+  );
+}
+
+// MCP spec (2025-11-25) defines two auth patterns by transport:
+//   HTTP  → OAuth 2.1; server advertises auth server via WWW-Authenticate on 401 (RFC 9728).
+//           auth_url is extracted from that header by the backend and surfaced here.
+//   stdio → credentials come from environment variables only (spec explicitly excludes OAuth).
+//
+// When auth_url is present the UI opens the OAuth flow; otherwise it shows a KEY=VALUE form.
+
+function McpAuthFixForm({
+  srv,
+  authUrl,
+  onSave,
+  onCancel,
+}: {
+  srv: MCPServer;
+  authUrl?: string;
+  onSave: (updated: MCPServer) => void;
+  onCancel: () => void;
+}) {
+  const isHttp = !!srv.url;
+  const fields: MCPConfigField[] = srv.configSchema ?? [];
+
+  const existing = isHttp ? (srv.headers ?? {}) : (srv.env ?? {});
+  const [values, setValues] = useState<Record<string, string>>(
+    Object.fromEntries(fields.map((f) => [f.name, existing[f.name] ?? String(f.default ?? "")])),
+  );
+  const [rawKV, setRawKV] = useState(fields.length === 0 ? serializeKV(existing) : "");
+
+  function handleSave() {
+    if (fields.length > 0) {
+      const merged = { ...existing, ...values };
+      onSave(isHttp ? { ...srv, headers: merged } : { ...srv, env: merged });
+    } else {
+      const kv = parseKV(rawKV);
+      onSave(isHttp ? { ...srv, headers: kv } : { ...srv, env: kv });
+    }
+  }
+
+  const hasFiles = fields.some((f) => f["x-widget"] === "file");
+
+  // HTTP server advertising OAuth 2.1 via WWW-Authenticate (MCP spec, RFC 9728)
+  if (authUrl) {
+    return (
+      <div className="mt-1.5 rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-3">
+        <p className="text-xs font-medium text-amber-800">
+          This server uses OAuth 2.1. You need to authorize access before it can connect.
+        </p>
+        <div className="flex gap-2">
+          <a
+            href={authUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${css.btn} bg-amber-600 text-white hover:bg-amber-700 no-underline`}
+          >
+            Authorize →
+          </a>
+          <button onClick={onCancel} className={`${css.btn} text-claude-text-muted hover:text-claude-text-secondary`}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1.5 rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-3">
+      <p className="text-xs font-medium text-amber-800">
+        {hasFiles
+          ? "This server requires configuration. Upload any required files and fill in credentials below."
+          : isHttp
+          ? "This server requires authentication headers (Authorization, X-Api-Key, …)."
+          : "This server requires environment variables. Check the server's README for required names."}
+      </p>
+
+      {fields.length > 0 ? (
+        <div className="space-y-3">
+          {fields.map((f, i) => (
+            <ConfigFieldInput
+              key={f.name}
+              field={f}
+              value={values[f.name] ?? ""}
+              autoFocus={i === 0}
+              onChange={(v) => setValues((prev) => ({ ...prev, [f.name]: v }))}
+            />
+          ))}
+        </div>
+      ) : (
+        <div>
+          <label className={css.label}>
+            {isHttp ? "Headers (KEY=VALUE, one per line)" : "Environment Variables (KEY=VALUE, one per line)"}
+          </label>
+          <textarea
+            className={`${css.input} resize-none font-mono`}
+            rows={3}
+            autoFocus
+            value={rawKV}
+            onChange={(e) => setRawKV(e.target.value)}
+            placeholder={isHttp ? "Authorization=Bearer <token>\nX-Api-Key=your-key" : "API_KEY=your-key\nSECRET=abc123"}
+          />
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <button onClick={handleSave} className={`${css.btn} bg-amber-600 text-white hover:bg-amber-700`}>
+          Save &amp; Retry
+        </button>
+        <button onClick={onCancel} className={`${css.btn} text-claude-text-muted hover:text-claude-text-secondary`}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function ToolsTab({ agentId, agent, updateTools, setTools, onSave }: { agentId: string; agent: Agent; updateTools: (p: Record<string, unknown>) => void; setTools: (t: ToolsCfg) => void; onSave?: () => void }) {
   const [adding, setAdding] = useState(false);
   const [editingServer, setEditingServer] = useState<string | null>(null);
+  const [fixingAuthFor, setFixingAuthFor] = useState<string | null>(null);
 
   const tools = agent.tools;
   const mcpServers = tools.mcp_servers || {};
@@ -395,6 +693,8 @@ export function ToolsTab({ agentId, agent, updateTools, setTools }: { agentId: s
     updateTools({ mcp_servers: { ...mcpServers, [name]: srv } });
     setAdding(false);
     setEditingServer(null);
+    // Auto-persist after React commits the state update so the user doesn't need to scroll up
+    if (onSave) setTimeout(() => onSave(), 0);
   }
 
   function removeServer(name: string) {
@@ -471,9 +771,11 @@ export function ToolsTab({ agentId, agent, updateTools, setTools }: { agentId: s
           {Object.entries(mcpServers).map(([name, srv]) => {
             const st = agent.mcp_status?.[name];
             const isEditing = editingServer === name;
+            const isFixingAuth = fixingAuthFor === name;
+            const showAuthFix = st?.needs_auth && !isEditing;
             return (
               <div key={name}>
-                <div className="flex items-start justify-between rounded-lg border border-claude-border bg-claude-bg p-2.5">
+                <div className={`flex items-start justify-between rounded-lg border bg-claude-bg p-2.5 ${st?.needs_auth ? "border-claude-accent/40" : "border-claude-border"}`}>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-claude-text-primary">{name}</span>
@@ -509,8 +811,16 @@ export function ToolsTab({ agentId, agent, updateTools, setTools }: { agentId: s
                     )}
                   </div>
                   <div className="ml-3 flex items-center gap-2.5 shrink-0">
+                    {showAuthFix && (
+                      <button
+                        onClick={() => { setFixingAuthFor(isFixingAuth ? null : name); setEditingServer(null); }}
+                        className="text-xs font-medium text-amber-600 hover:text-amber-800 transition-colors"
+                      >
+                        {isFixingAuth ? "Cancel" : "Fix credentials"}
+                      </button>
+                    )}
                     <button
-                      onClick={() => setEditingServer(isEditing ? null : name)}
+                      onClick={() => { setEditingServer(isEditing ? null : name); setFixingAuthFor(null); }}
                       className="text-xs text-claude-text-muted hover:text-claude-accent transition-colors"
                     >
                       {isEditing ? "Cancel" : "Edit"}
@@ -520,6 +830,14 @@ export function ToolsTab({ agentId, agent, updateTools, setTools }: { agentId: s
                     </button>
                   </div>
                 </div>
+                {isFixingAuth && (
+                  <McpAuthFixForm
+                    srv={srv}
+                    authUrl={st?.auth_url}
+                    onSave={(updated) => { saveServer(name, updated); setFixingAuthFor(null); }}
+                    onCancel={() => setFixingAuthFor(null)}
+                  />
+                )}
                 {isEditing && (
                   <McpServerEditForm
                     agentId={agentId}

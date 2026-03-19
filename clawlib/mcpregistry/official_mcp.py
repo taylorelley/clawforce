@@ -21,23 +21,56 @@ def _build_install_config(raw: dict | list) -> dict:
     return {}
 
 
-def _parse_required_env(raw: dict | list) -> list[str]:
-    """Extract required env var names from remotes headers or packages environmentVariables."""
+_FILE_HINTS = frozenset({
+    "credentials_file", "credentials_json", "oauth_credentials",
+    "google_credentials", "client_secret_file",
+})
+
+
+def _infer_widget_for_field(name: str, entry: dict) -> str:
+    """Infer the widget type from field name and registry metadata.
+
+    Returns "file" when the name or format hints at a JSON file upload
+    (e.g. Google OAuth credentials.json), otherwise empty string (default text input).
+    """
+    lower = name.lower()
+    fmt = str(entry.get("format") or entry.get("type") or "").lower()
+    if fmt in ("file", "json_file", "oauth_file") or lower in _FILE_HINTS:
+        return "file"
+    if "file" in lower and ("json" in lower or "credential" in lower or "secret" in lower):
+        return "file"
+    return ""
+
+
+def _parse_config_schema(raw: dict | list) -> list[dict]:
+    """Extract config schema from remotes headers or packages environmentVariables.
+
+    Returns a list of dicts with JSON Schema properties: name, title, description,
+    type, format, x-widget, default, enum, required. The UI renders from this schema.
+    """
     items = raw if isinstance(raw, list) else [raw] if raw else []
-    result = []
+    seen: set[str] = set()
+    result: list[dict] = []
     for item in items:
         if not isinstance(item, dict):
             continue
-        for h in item.get("headers") or []:
-            if isinstance(h, dict) and h.get("isRequired") and h.get("name"):
-                name = str(h["name"])
-                if name and name not in result:
-                    result.append(name)
-        for ev in item.get("environmentVariables") or []:
-            if isinstance(ev, dict) and ev.get("isRequired") and ev.get("name"):
-                name = str(ev["name"])
-                if name and name not in result:
-                    result.append(name)
+        for entry in [*item.get("headers", []), *item.get("environmentVariables", [])]:
+            if not isinstance(entry, dict) or not entry.get("isRequired"):
+                continue
+            name = str(entry.get("name") or "").strip()
+            if not name or name in seen:
+                continue
+            seen.add(name)
+            widget = _infer_widget_for_field(name, entry)
+            result.append({
+                "name": name,
+                "title": str(entry.get("label") or entry.get("title") or entry.get("name") or name),
+                "description": str(entry.get("description") or ""),
+                "type": "string",
+                "format": "password" if not widget else "",
+                "x-widget": widget,
+                "required": True,
+            })
     return result
 
 
@@ -45,7 +78,7 @@ def _server_to_dict(info) -> dict:
     """Convert MCPServerInfo to MCPRegistryServer dict shape."""
     raw_cfg = getattr(info, "install_config", None) or {}
     install_config = _build_install_config(raw_cfg)
-    required_env = _parse_required_env(raw_cfg) if isinstance(raw_cfg, list) else []
+    config_schema = _parse_config_schema(raw_cfg) if isinstance(raw_cfg, list) else []
 
     return {
         "id": info.id,
@@ -65,7 +98,7 @@ def _server_to_dict(info) -> dict:
         "categories": info.categories or [],
         "capabilities": info.capabilities or [],
         "install_config": install_config,
-        "required_env": required_env,
+        "config_schema": config_schema,
     }
 
 

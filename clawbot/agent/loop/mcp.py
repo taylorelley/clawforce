@@ -44,9 +44,11 @@ class McpManager:
         status = await connect_mcp_servers({key: cfg}, self.mcp, self._stack)
         server_status = status.get(key, MCPServerStatus(key, "failed", error="unknown"))
 
+        # Always track the server so get_tools_summary() can report its status.
+        self._servers[key] = cfg
+        self._status[key] = server_status
+
         if server_status.status == "connected":
-            self._servers[key] = cfg
-            self._status[key] = server_status
             logger.info("Registered MCP server at runtime: {}", key)
         else:
             logger.warning("Failed to register MCP server {}: {}", key, server_status.error)
@@ -92,17 +94,8 @@ class McpManager:
         try:
             self._stack = AsyncExitStack()
             await self._stack.__aenter__()
-
-            async def _isolated() -> dict[str, MCPServerStatus]:
-                return await connect_mcp_servers(
-                    self._servers,
-                    self.mcp,
-                    self._stack,
-                )
-
-            child = asyncio.create_task(_isolated())
             try:
-                self._status = await child
+                self._status = await connect_mcp_servers(self._servers, self.mcp, self._stack)
                 logger.info("MCP servers connected ({} total)", len(self._status))
             except asyncio.CancelledError:
                 if (task := asyncio.current_task()) and task.cancelling() > 0:
@@ -117,6 +110,43 @@ class McpManager:
                 logger.error("MCP connection task failed: {}", e)
         finally:
             self._connect_task = None
+
+    async def reconnect_skipped_or_failed(self) -> dict[str, MCPServerStatus]:
+        """Retry connection for MCP servers that previously failed or were skipped.
+
+        Only retries HTTP servers (url-based) — these are the ones that may have
+        started late via a post_install daemon and weren't reachable at boot.
+        """
+        to_retry = {
+            k: v
+            for k, v in self._servers.items()
+            if k in self._status
+            and self._status[k].status in ("failed", "skipped")
+            and v.url
+        }
+        if not to_retry:
+            return {}
+
+        if self._stack is None:
+            self._stack = AsyncExitStack()
+            await self._stack.__aenter__()
+
+        results: dict[str, MCPServerStatus] = {}
+        for key, cfg in to_retry.items():
+            del self._servers[key]
+            del self._status[key]
+            status = await connect_mcp_servers({key: cfg}, self.mcp, self._stack)
+            server_status = status.get(key, MCPServerStatus(key, "failed", error="unknown"))
+            self._servers[key] = cfg
+            self._status[key] = server_status
+            results[key] = server_status
+            if server_status.status == "connected":
+                logger.info("MCP server '{}' reconnected after post-install daemon started", key)
+            else:
+                logger.warning(
+                    "MCP server '{}' still not connected after retry: {}", key, server_status.error
+                )
+        return results
 
     async def close(self) -> None:
         """Close MCP connections."""
@@ -142,3 +172,41 @@ class McpManager:
     def servers(self) -> dict[str, MCPServerConfig]:
         """Currently registered MCP server configs."""
         return self._servers
+
+    def get_tools_summary(self) -> str:
+        """Human-readable summary for the system prompt.
+
+        Lists all configured servers: connected ones with their tools,
+        failed ones with their error, and pending ones (still connecting).
+        This ensures the agent is always aware of every configured MCP server,
+        even if connection is in-progress or failed.
+        """
+        if not self._servers:
+            return ""
+
+        lines: list[str] = []
+        for name in self._servers:
+            st = self._status.get(name)
+            if st is None:
+                lines.append(f"**{name}**: connecting...")
+            elif st.status == "connected":
+                tool_names = [
+                    t for t in self.mcp.tool_names if t.startswith(f"mcp_{name}_")
+                ]
+                if tool_names:
+                    lines.append(f"**{name}** ({len(tool_names)} tools):")
+                    for t in tool_names:
+                        tool = self.mcp.get(t)
+                        desc = tool.description[:80] if tool else ""
+                        lines.append(f"  - `{t}`: {desc}")
+                else:
+                    lines.append(
+                        f"**{name}**: connected but no tools available "
+                        "(check enabled_tools filter or server configuration)"
+                    )
+            elif st.status == "failed":
+                lines.append(f"**{name}**: failed to connect — {st.error}")
+            elif st.status == "skipped":
+                lines.append(f"**{name}**: skipped — {st.error}")
+
+        return "\n".join(lines)

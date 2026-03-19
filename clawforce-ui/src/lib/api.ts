@@ -217,6 +217,17 @@ export const api = {
         `/agents/${agentId}/software/uninstall`,
         body
       ),
+    listCustom: () =>
+      request<import("./types").SoftwareCatalogEntry[]>("/software/custom"),
+    addCustom: (entry: import("./types").AddCustomSoftwarePayload) =>
+      post<import("./types").SoftwareCatalogEntry>("/software/custom", entry),
+    updateCustom: (softwareId: string, entry: import("./types").AddCustomSoftwarePayload) =>
+      put<import("./types").SoftwareCatalogEntry>(`/software/custom/${encodeURIComponent(softwareId)}`, entry),
+    deleteCustom: (softwareId: string) =>
+      request<{ ok: boolean; id: string }>(
+        `/software/custom/${encodeURIComponent(softwareId)}`,
+        { method: "DELETE" }
+      ),
   },
   plans: {
     list: () => request<import("./types").Plan[]>("/plans"),

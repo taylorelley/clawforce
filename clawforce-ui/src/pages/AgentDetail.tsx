@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { ClawIcon } from "../components/ClawIcon";
@@ -59,6 +59,8 @@ export default function AgentDetail() {
   const navigate = useNavigate();
   const { token } = useAuth();
   const [agent, setAgent] = useState<Agent | null>(null);
+  const agentRef = useRef<Agent | null>(null);
+  agentRef.current = agent;
   const [lastSavedAgent, setLastSavedAgent] = useState<Agent | null>(null);
   const [mainTab, setMainTab] = useState<MainTab>("workspace");
   const [dirty, setDirty] = useState(false);
@@ -199,10 +201,11 @@ export default function AgentDetail() {
   }
 
   async function save() {
-    if (!agentId || !agent) return;
+    const currentAgent = agentRef.current;
+    if (!agentId || !currentAgent) return;
     setSaving(true);
     try {
-      const channels = structuredClone(agent.channels);
+      const channels = structuredClone(currentAgent.channels);
       for (const chDef of CHANNEL_DEFS) {
         const chData = channels[chDef.key];
         if (!chData) continue;
@@ -216,24 +219,24 @@ export default function AgentDetail() {
         }
       }
       const channelsToSend = channelsPayloadForUpdate(channels);
-      const providersToSend = providersPayloadForUpdate(agent.providers as Record<string, Record<string, unknown>> | undefined);
+      const providersToSend = providersPayloadForUpdate(currentAgent.providers as Record<string, Record<string, unknown>> | undefined);
 
       const payload: Record<string, unknown> = {
-        name: agent.name,
-        description: agent.description,
-        color: agent.color,
-        model: agent.model,
-        temperature: agent.temperature,
-        max_tokens: agent.max_tokens,
-        max_tool_iterations: agent.max_tool_iterations,
-        memory_window: agent.memory_window,
-        fault_tolerance: agent.fault_tolerance,
-        enabled: agent.enabled,
-        tools: agent.tools,
-        skills: agent.skills,
+        name: currentAgent.name,
+        description: currentAgent.description,
+        color: currentAgent.color,
+        model: currentAgent.model,
+        temperature: currentAgent.temperature,
+        max_tokens: currentAgent.max_tokens,
+        max_tool_iterations: currentAgent.max_tool_iterations,
+        memory_window: currentAgent.memory_window,
+        fault_tolerance: currentAgent.fault_tolerance,
+        enabled: currentAgent.enabled,
+        tools: currentAgent.tools,
+        skills: currentAgent.skills,
         channels: channelsToSend,
-        heartbeat: agent.heartbeat,
-        security: agent.security,
+        heartbeat: currentAgent.heartbeat,
+        security: currentAgent.security,
       };
       if (providersToSend) payload.providers = providersToSend;
 

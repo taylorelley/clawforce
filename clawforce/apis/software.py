@@ -3,7 +3,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from clawforce.auth import get_current_user
 from clawforce.core.domain.runtime import AgentRuntimeBackend
@@ -37,6 +37,105 @@ async def get_software_entry(
             status_code=status.HTTP_404_NOT_FOUND, detail="Software not found in catalog"
         )
     return entry
+
+
+class CustomSoftwareInstallConfig(BaseModel):
+    type: str = "npm"
+    package: str
+
+
+class CustomSoftwareRunConfig(BaseModel):
+    command: str
+    args: list[str] = []
+    stdin: bool = False
+
+
+class CustomSoftwarePostInstallConfig(BaseModel):
+    """Auto-run after install/reinstall. command defaults to run.command; daemon=true runs in background."""
+
+    command: str
+    args: list[str] = []
+    daemon: bool = True
+    env: dict[str, str] = {}
+
+
+class AddCustomSoftwareRequest(BaseModel):
+    """Request body for adding a custom software entry to the catalog."""
+
+    id: str = Field(..., description="Unique slug identifier, e.g. my-tool")
+    name: str
+    description: str = ""
+    author: str = ""
+    version: str = ""
+    categories: list[str] = []
+    install: CustomSoftwareInstallConfig
+    run: CustomSoftwareRunConfig
+    post_install: CustomSoftwarePostInstallConfig | None = None
+    required_env: list[str] = []
+
+
+@router.get("/api/software/custom")
+async def list_custom_software(
+    _: dict = Depends(get_current_user),
+):
+    """Return user-managed custom software entries."""
+    return get_software_registry().list_custom_entries()
+
+
+@router.post("/api/software/custom", status_code=status.HTTP_201_CREATED)
+async def add_custom_software(
+    body: AddCustomSoftwareRequest,
+    _: dict = Depends(get_current_user),
+):
+    """Add a custom software entry to the user catalog."""
+    registry = get_software_registry()
+    existing = registry.get_entry(body.id)
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Software id '{body.id}' already exists in the catalog",
+        )
+    entry = body.model_dump(exclude_none=True)
+    registry.add_custom_entry(entry)
+    return entry
+
+
+@router.put("/api/software/custom/{software_id:path}", status_code=status.HTTP_200_OK)
+async def update_custom_software(
+    software_id: str,
+    body: AddCustomSoftwareRequest,
+    _: dict = Depends(get_current_user),
+):
+    """Update a custom software entry by id."""
+    if body.id != software_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="URL id and body id must match",
+        )
+    entry = body.model_dump(exclude_none=True)
+    entry["id"] = software_id
+    updated = get_software_registry().update_custom_entry(software_id, entry)
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Custom software '{software_id}' not found",
+        )
+    return entry
+
+
+@router.delete("/api/software/custom/{software_id:path}", status_code=status.HTTP_200_OK)
+async def delete_custom_software(
+    software_id: str,
+    _: dict = Depends(get_current_user),
+):
+    """Delete a custom software entry by id."""
+    removed = get_software_registry().delete_custom_entry(software_id)
+    if not removed:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Custom software '{software_id}' not found",
+        )
+    return {"ok": True, "id": software_id}
 
 
 class SoftwareInstallRequest(BaseModel):

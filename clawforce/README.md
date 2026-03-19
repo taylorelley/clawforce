@@ -92,6 +92,8 @@ docker run -d -p 8080:8080 \
 
 Full documentation: https://github.com/saolalab/clawforce
 
+See [Product Principles & Best Practices](https://saolalab.github.io/clawforce/guide/principles) for our focus on easy agent team setup, MCP over Computer/Browser Use, and security best practices.
+
 ## License
 
 Apache 2.0

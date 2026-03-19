@@ -11,9 +11,11 @@ from contextlib import AsyncExitStack
 from pathlib import Path
 from typing import Any
 
+import httpx
 from loguru import logger
 from mcp import ClientSession, StdioServerParameters, types
 from mcp.client.stdio import stdio_client
+from mcp.client.streamable_http import streamable_http_client
 
 from clawbot.agent.tools.base import Tool, sanitize_tool_name
 from clawbot.agent.tools.registry import ToolRegistry
@@ -88,19 +90,96 @@ def _build_stdio_params(cfg: Any) -> StdioServerParameters:
 class MCPServerStatus:
     """Runtime connection status of a single MCP server."""
 
-    __slots__ = ("name", "status", "tools_count", "error")
+    __slots__ = ("name", "status", "tools_count", "error", "needs_auth", "auth_url")
 
-    def __init__(self, name: str, status: str, tools_count: int = 0, error: str = ""):
+    def __init__(
+        self,
+        name: str,
+        status: str,
+        tools_count: int = 0,
+        error: str = "",
+        needs_auth: bool = False,
+        auth_url: str = "",
+    ):
         self.name = name
         self.status = status
         self.tools_count = tools_count
         self.error = error
+        self.needs_auth = needs_auth
+        # OAuth 2.1: resource_metadata URL from WWW-Authenticate header on 401.
+        # When set, the UI should open this URL to initiate the OAuth flow
+        # instead of asking for manual key/value credentials.
+        self.auth_url = auth_url
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {"name": self.name, "status": self.status, "tools": self.tools_count}
         if self.error:
             d["error"] = self.error
+        if self.needs_auth:
+            d["needs_auth"] = True
+        if self.auth_url:
+            d["auth_url"] = self.auth_url
         return d
+
+
+def _parse_www_authenticate_resource_metadata(header: str) -> str:
+    """Extract resource_metadata URL from a WWW-Authenticate: Bearer header.
+
+    Per MCP spec (RFC 9728): servers MUST include resource_metadata in the
+    WWW-Authenticate header on 401 so clients can discover the OAuth 2.1
+    authorization server.
+
+    Example header value:
+      Bearer resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource"
+    """
+    import re
+    m = re.search(r'resource_metadata=["\']?([^\s"\'>,]+)', header, re.IGNORECASE)
+    return m.group(1) if m else ""
+
+
+def _classify_mcp_error(e: BaseException, cfg: Any) -> tuple[str, bool, str]:
+    """Return (error_message, needs_auth, auth_url) for an MCP connection failure.
+
+    needs_auth=True  → server needs credentials not yet provided.
+    auth_url non-empty → server advertises OAuth 2.1 via WWW-Authenticate;
+                         the UI should open this URL instead of showing a form.
+    """
+    if isinstance(e, httpx.HTTPStatusError):
+        code = e.response.status_code
+        body = e.response.text[:200].strip()
+        needs_auth = code in (401, 403)
+        auth_url = ""
+        if code == 401:
+            www_auth = e.response.headers.get("WWW-Authenticate", "")
+            auth_url = _parse_www_authenticate_resource_metadata(www_auth)
+        hints = {
+            401: "unauthorized — check API key or token",
+            403: "forbidden — check API key or token",
+            404: "endpoint not found — verify the URL",
+        }
+        hint = hints.get(code, "server error — the remote MCP server may be down" if code >= 500 else "unexpected response")
+        msg = f"HTTP {code}: {hint}" + (f" ({body})" if body else "")
+        return msg, needs_auth, auth_url
+
+    if isinstance(e, httpx.ConnectError):
+        return f"connection refused or DNS failure: {e}", False, ""
+    if isinstance(e, httpx.TimeoutException):
+        return f"connection timed out: {e}", False, ""
+    if isinstance(e, httpx.RemoteProtocolError):
+        return f"remote protocol error (server may not speak MCP): {e}", False, ""
+
+    err_msg = str(e) or repr(e)
+    lower = err_msg.lower()
+
+    # stdio: process exited immediately → almost always missing env var / API key
+    if cfg.command and ("connection closed" in lower or "eof" in lower or "broken pipe" in lower):
+        return f"process exited immediately — check required env vars (API keys): {err_msg}", True, ""
+
+    # HTTP streamable: session terminated / cancelled during handshake
+    if cfg.url and ("session terminated" in lower or "cancelled" in lower or "cancel scope" in lower):
+        return f"session terminated during handshake — server may require auth headers: {err_msg}", True, ""
+
+    return err_msg, False, ""
 
 
 async def connect_mcp_servers(
@@ -124,19 +203,7 @@ async def connect_mcp_servers(
                 params = _build_stdio_params(cfg)
                 read, write = await stack.enter_async_context(stdio_client(params))
             elif cfg.url:
-                import httpx
-                from mcp.client.streamable_http import streamable_http_client
-
-                headers = (
-                    getattr(cfg, "headers", None)
-                    if not isinstance(cfg, dict)
-                    else cfg.get("headers")
-                )
-                http_client = (
-                    httpx.AsyncClient(headers=headers)
-                    if headers and isinstance(headers, dict)
-                    else None
-                )
+                http_client = httpx.AsyncClient(headers=cfg.headers) if cfg.headers else None
                 read, write, _ = await stack.enter_async_context(
                     streamable_http_client(cfg.url, http_client=http_client)
                 )
@@ -149,12 +216,7 @@ async def connect_mcp_servers(
             await session.initialize()
 
             tools = await session.list_tools()
-            enabled_tools = (
-                getattr(cfg, "enabled_tools", None)
-                if not isinstance(cfg, dict)
-                else cfg.get("enabledTools") or cfg.get("enabled_tools")
-            )
-            allowed: set[str] | None = set(enabled_tools) if enabled_tools else None
+            allowed: set[str] | None = set(cfg.enabled_tools) if cfg.enabled_tools else None
 
             registered = 0
             for tool_def in tools.tools:
@@ -178,8 +240,8 @@ async def connect_mcp_servers(
             if current_task and isinstance(e, asyncio.CancelledError):
                 while current_task.cancelling() > cancel_count_before:
                     current_task.uncancel()
-            err_msg = str(e) or repr(e)
-            statuses[name] = MCPServerStatus(name, "failed", error=err_msg)
+            err_msg, needs_auth, auth_url = _classify_mcp_error(e, cfg)
+            statuses[name] = MCPServerStatus(name, "failed", error=err_msg, needs_auth=needs_auth, auth_url=auth_url)
             cmd_or_url = getattr(cfg, "command", "") or getattr(cfg, "url", "") or "?"
             logger.error(
                 "MCP server '{}': failed to connect: {} (command={})",

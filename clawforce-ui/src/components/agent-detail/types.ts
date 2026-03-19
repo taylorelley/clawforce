@@ -1,3 +1,15 @@
+export type MCPConfigField = {
+  name: string;
+  title: string;
+  description: string;
+  type?: "string" | "number" | "boolean";
+  format?: "password" | "uri" | string;
+  "x-widget"?: "file" | string;
+  default?: string | number | boolean | null;
+  enum?: string[];
+  required?: boolean;
+};
+
 export type MCPServer = {
   command: string;
   args: string[];
@@ -6,6 +18,8 @@ export type MCPServer = {
   headers?: Record<string, string>;
   /** When set, only these tool names are registered. Empty/undefined = all tools. */
   enabledTools?: string[];
+  /** Config schema the server needs, populated from the registry at install time. */
+  configSchema?: MCPConfigField[];
 };
 
 export type ApprovalCfg = {
@@ -53,6 +67,10 @@ export type MCPStatusInfo = {
   status: "connected" | "failed" | "skipped";
   tools: number;
   error?: string;
+  needs_auth?: boolean;
+  /** OAuth 2.1 resource_metadata URL from WWW-Authenticate on 401. When set,
+   *  the UI should open this URL to initiate the OAuth flow (MCP spec, RFC 9728). */
+  auth_url?: string;
 };
 
 export type SecurityCfg = {

@@ -222,7 +222,7 @@ class SessionProcessor:
             channel=msg.channel,
             chat_id=msg.chat_id,
             tool_approval_config=self._tools_manager.approval_config,
-            mcp_tools_summary=self._tools_manager.mcp.get_tools_summary(),
+            mcp_tools_summary=self._mcp_manager.get_tools_summary(),
             software_exec_hint=self._software_management.get_spawn_hint()
             if self._software_management
             else None,
@@ -307,7 +307,7 @@ class SessionProcessor:
             channel=origin_channel,
             chat_id=origin_chat_id,
             tool_approval_config=self._tools_manager.approval_config,
-            mcp_tools_summary=self._tools_manager.mcp.get_tools_summary(),
+            mcp_tools_summary=self._mcp_manager.get_tools_summary(),
             software_exec_hint=self._software_management.get_spawn_hint()
             if self._software_management
             else None,
@@ -356,6 +356,7 @@ class SessionProcessor:
             The agent's response.
         """
         self._mcp_manager.connect()
+        await self._mcp_manager.await_connected()
         msg = InboundMessage(channel=channel, sender_id="user", chat_id=chat_id, content=content)
 
         response = await self.process_message(msg, session_key=session_key, on_progress=on_progress)

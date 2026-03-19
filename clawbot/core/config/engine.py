@@ -127,41 +127,40 @@ class ConfigEngine:
         if not plain:
             return self.config_dict()
 
-        # Normalize camelCase via schema before merge; secrets sections are already stripped
+        # Normalize camelCase → snake_case via schema round-trip before diffing/merging.
         plain = Config.model_validate(plain).model_dump(by_alias=False)
 
-        old_tools = (self._config.model_dump(by_alias=False) if self._config else {}).get("tools")
-        # Extract mcp_servers before merge so we can replace (not deep-merge) after
+        old_tools = (self._config.model_dump(by_alias=False) if self._config else {}).get("tools", {})
+
+        # deep_merge re-adds deleted keys, so mcp_servers must be replaced atomically.
+        # Stash the incoming value, merge everything else, then overwrite.
         incoming_mcp = plain.get("tools", {}).get("mcp_servers")
         self.merge(plain)
-        # mcp_servers must be replaced, not merged — deep_merge would re-add deleted servers
         if incoming_mcp is not None and self._config is not None:
-            current = self._config.model_dump(by_alias=False)
-            current.setdefault("tools", {})["mcp_servers"] = incoming_mcp
-            self._config = Config.model_validate(current)
+            raw = self._config.model_dump(by_alias=False)
+            raw.setdefault("tools", {})["mcp_servers"] = incoming_mcp
+            self._config = Config.model_validate(raw)
 
-        to_save = {
-            k: v
-            for k, v in self._config.model_dump(by_alias=False).items()
-            if k not in SECRET_SECTIONS
-        }
+        to_save = {k: v for k, v in self._config.model_dump(by_alias=False).items() if k not in SECRET_SECTIONS}
         save_config(to_save, self._config_path)
 
-        tools_changed = old_tools != to_save.get("tools")
-        if self._agent_loop and tools_changed:
-            self._reload_tool_approval(self._config.tools)
-            task = asyncio.ensure_future(self._reload_mcp_servers(self._config.tools))
-            task.add_done_callback(
-                lambda t: (
-                    logger.exception("[config_engine] MCP reload failed: {}", t.exception())
-                    if not t.cancelled() and t.exception()
-                    else None
+        if self._agent_loop:
+            new_tools = to_save.get("tools", {})
+            if old_tools.get("approval") != new_tools.get("approval"):
+                self._reload_tool_approval(self._config.tools)
+            if old_tools.get("mcp_servers") != new_tools.get("mcp_servers"):
+                task = asyncio.ensure_future(self._reload_mcp_servers(self._config.tools))
+                task.add_done_callback(
+                    lambda t: (
+                        logger.exception("[config_engine] MCP reload failed: {}", t.exception())
+                        if not t.cancelled() and t.exception()
+                        else None
+                    )
                 )
-            )
-            # Reload software catalog so per-software env (e.g. GH_TOKEN) is picked up
-            if getattr(self._agent_loop, "software_management", None):
-                self._agent_loop.software_management.reload()
-                logger.info("[config_engine] Software catalog reloaded (tools.software changed)")
+            if old_tools.get("software") != new_tools.get("software"):
+                if getattr(self._agent_loop, "software_management", None):
+                    self._agent_loop.software_management.reload()
+                    logger.info("[config_engine] Software catalog reloaded (tools.software changed)")
 
         return self.config_dict()
 
@@ -185,18 +184,27 @@ class ConfigEngine:
         if self._agent_loop is None:
             return
         try:
-            mcp_status = self._agent_loop.mcp_status  # {key: MCPServerStatus}
-            current = set(mcp_status.keys()) if mcp_status else set()
-            desired = set(tools.mcp_servers) if tools.mcp_servers else set()
+            running: dict = getattr(self._agent_loop, "mcp_servers", None) or {}
+            desired = tools.mcp_servers or {}
 
-            for key in current - desired:
-                logger.info("[config_engine] Unregistering MCP server: {}", key)
+            for key, new_cfg_obj in desired.items():
+                new_cfg = new_cfg_obj.model_dump(exclude_none=True)
+
+                if key not in running:
+                    logger.info("[config_engine] Registering new MCP server: {}", key)
+                    status = await self._agent_loop.register_mcp_server(key, new_cfg)
+                    logger.info("[config_engine] MCP server {} status: {}", key, status.status)
+                elif new_cfg != running[key].model_dump(exclude_none=True):
+                    # Config changed (e.g. stdio → HTTP after OAuth setup): reconnect.
+                    logger.info("[config_engine] Config changed for MCP server {}, re-registering", key)
+                    self._agent_loop.unregister_mcp_server(key)
+                    status = await self._agent_loop.register_mcp_server(key, new_cfg)
+                    logger.info("[config_engine] MCP server {} status: {}", key, status.status)
+                # else: unchanged — nothing to do
+
+            for key in set(running) - set(desired):
+                logger.info("[config_engine] Removing MCP server: {}", key)
                 self._agent_loop.unregister_mcp_server(key)
 
-            for key in desired - current:
-                server_config = tools.mcp_servers[key].model_dump(exclude_none=True)
-                logger.info("[config_engine] Registering MCP server: {}", key)
-                status = await self._agent_loop.register_mcp_server(key, server_config)
-                logger.info("[config_engine] MCP server {} status: {}", key, status.status)
         except Exception as e:
             logger.exception("[config_engine] Failed to reload MCP servers: {}", e)

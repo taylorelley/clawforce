@@ -9,8 +9,9 @@ from clawforce.apis.agents.crud import require_agent_access
 from clawforce.auth import get_current_user
 from clawforce.core.domain.runtime import AgentRuntimeBackend
 from clawforce.core.runtimes._worker_runtime import WorkerRuntimeBase
+from clawforce.core.store.agent_config import AgentConfigStore
 from clawforce.core.store.agents import AgentStore
-from clawforce.deps import get_agent_store, get_mcp_registry, get_runtime
+from clawforce.deps import get_agent_config_store, get_agent_store, get_mcp_registry, get_runtime
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,9 @@ class MCPInstallRequest(BaseModel):
     args: list[str] = []
     env: dict[str, str] = {}
     url: str = ""
+    # Config schema declared by the registry entry.
+    # Stored in the server config so the UI can render config inputs.
+    config_schema: list[dict] = []
 
 
 @router.get("/api/agents/{agent_id}/mcp-servers")
@@ -166,12 +170,12 @@ async def install_mcp_server(
     body: MCPInstallRequest,
     _: dict = Depends(get_current_user),
     store: AgentStore = Depends(get_agent_store),
+    agent_config_store: AgentConfigStore = Depends(get_agent_config_store),
     runtime: AgentRuntimeBackend = Depends(get_runtime),
 ):
     """Install an MCP server to an agent's config.
 
-    The server config is added to tools.mcp_servers. The agent needs to be
-    restarted for the changes to take effect.
+    The server config is added to tools.mcp_servers and the agent hot-reloads it.
     """
     agent = store.get_agent(agent_id)
     if not agent:
@@ -203,7 +207,22 @@ async def install_mcp_server(
             detail="Either 'url' or 'command' must be provided",
         )
 
-    config_update = {"tools": {"mcp_servers": {server_key: mcp_config}}}
+    if body.config_schema:
+        mcp_config["configSchema"] = body.config_schema
+
+    # Persist to the DB store first (source of truth for restarts).
+    # Use replace_keys so the full mcp_servers dict is stored atomically.
+    persisted = agent_config_store.update_config(
+        agent_id,
+        {"tools": {"mcp_servers": {server_key: mcp_config}}},
+        replace_keys=None,  # merge is fine here — we're only adding, not removing
+    )
+
+    # Push the full persisted mcp_servers to the running agent so it hot-reloads.
+    # apply_update replaces mcp_servers entirely (to support deletions), so we must
+    # send the complete desired state — not just the new server.
+    full_mcp_servers = persisted.get("tools", {}).get("mcp_servers", {})
+    config_update = {"tools": {"mcp_servers": full_mcp_servers}}
 
     try:
         updated = await runtime.update_config(agent_id, config_update)

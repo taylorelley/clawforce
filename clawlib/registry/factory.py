@@ -26,9 +26,14 @@ def get_mcp_registry() -> MCPRegistry:
     return _mcp_registry
 
 
-def get_software_registry() -> SoftwareRegistry:
-    """Return the SoftwareRegistry implementation (marketplace YAML catalog)."""
+def get_software_registry() -> YamlSoftwareRegistry:
+    """Return the SoftwareRegistry implementation (marketplace YAML catalog + custom entries)."""
     global _software_registry
     if _software_registry is None:
-        _software_registry = YamlSoftwareRegistry()
+        from clawlib.storage import get_storage_backend, get_storage_root
+
+        storage = get_storage_backend()
+        root = get_storage_root(storage)
+        custom_path = root / "admin" / "custom_software_catalog.yaml"
+        _software_registry = YamlSoftwareRegistry(custom_catalog_path=custom_path)
     return _software_registry

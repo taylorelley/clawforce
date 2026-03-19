@@ -225,6 +225,11 @@ class AgentLoop:
         """Per-server MCP connection status (populated after first connect)."""
         return self._mcp_manager.status
 
+    @property
+    def mcp_servers(self) -> dict:
+        """All registered MCP server configs (including those not yet connected)."""
+        return self._mcp_manager.servers
+
     async def close_mcp(self) -> None:
         """Close MCP connections."""
         await self._mcp_manager.close()
@@ -236,6 +241,10 @@ class AgentLoop:
     def unregister_mcp_server(self, key: str) -> None:
         """Unregister an MCP server at runtime (delegates to McpManager)."""
         self._mcp_manager.unregister_server(key)
+
+    async def reconnect_skipped_mcp_servers(self) -> dict[str, MCPServerStatus]:
+        """Retry failed/skipped MCP server connections (e.g. after post-install daemons start)."""
+        return await self._mcp_manager.reconnect_skipped_or_failed()
 
     def try_resolve_approval(self, msg) -> bool:
         """If this message is a yes/no reply for a pending tool approval, resolve and return True."""
