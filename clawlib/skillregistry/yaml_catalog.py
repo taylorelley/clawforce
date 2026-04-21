@@ -133,7 +133,7 @@ class YamlSkillRegistry:
                 logger.exception("agentskill.sh search failed; returning self-hosted only")
                 remote = []
             for entry in remote:
-                entry.setdefault("source", "agentskill.sh")
+                entry["source"] = "agentskill.sh"
 
         return [*custom_matches, *remote][:limit]
 

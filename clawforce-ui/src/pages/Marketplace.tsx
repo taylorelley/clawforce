@@ -11,7 +11,7 @@ import AddCustomSkillModal from "../components/AddCustomSkillModal";
 import InstallSkillModal from "../components/InstallSkillModal";
 import InstallMcpModal from "../components/InstallMcpModal";
 import InstallSoftwareModal from "../components/InstallSoftwareModal";
-import type { MarketplaceSkill, MCPRegistryServer, SoftwareCatalogEntry, AddCustomSoftwarePayload, PlanTemplate, CustomSkillEntry, SkillSource } from "../lib/types";
+import type { MarketplaceSkill, MCPRegistryServer, SoftwareCatalogEntry, AddCustomSoftwarePayload, PlanTemplate, CustomSkillEntry } from "../lib/types";
 import {
   HiOutlineCommandLine,
   HiOutlineCodeBracket,
@@ -339,11 +339,18 @@ function SkillsTab() {
   }
 
   const customBySlug = new Map(customEntries.map((e) => [e.slug, e]));
-  const filteredSkills = (skills ?? []).filter((s) => {
-    if (sourceFilter === "all") return true;
-    const src: SkillSource = s.source ?? "agentskill.sh";
-    return src === sourceFilter;
-  });
+  const filteredSkills = (() => {
+    const seen = new Set<string>();
+    const out: MarketplaceSkill[] = [];
+    for (const s of skills ?? []) {
+      if (sourceFilter !== "all" && s.source !== sourceFilter) continue;
+      const key = `${s.source ?? "?"}:${s.slug}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(s);
+    }
+    return out;
+  })();
 
   function handleDeleteCustom(slug: string, name: string) {
     if (window.confirm(`Remove "${name}" from self-hosted skills?`)) {
@@ -452,7 +459,7 @@ function SkillsTab() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredSkills.map((skill: MarketplaceSkill) => (
               <SkillCard
-                key={skill.slug}
+                key={`${skill.source ?? "?"}:${skill.slug}`}
                 skill={skill}
                 onSelect={() => setSelectedSkill(skill)}
                 onInstall={() => setInstallSkill(skill)}

@@ -228,6 +228,7 @@ export function useSearchSkills(query: string, enabled = true) {
     queryFn: () => api.skills.search(query, 30),
     enabled,
     staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 }
 
