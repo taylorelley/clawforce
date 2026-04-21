@@ -125,6 +125,11 @@ export default function InstallSkillModal({ open, onClose, skill, onInstalled }:
                       v{skill.version}
                     </span>
                   )}
+                  {skill.source === "self-hosted" && (
+                    <span className="rounded px-1.5 py-px text-[10px] font-medium bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200">
+                      Self-hosted
+                    </span>
+                  )}
                 </div>
                 <p className="mt-0.5 text-xs text-claude-text-muted line-clamp-2">{skill.description}</p>
               </div>

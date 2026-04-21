@@ -10,10 +10,14 @@ from typing import Any, Protocol, runtime_checkable
 
 @runtime_checkable
 class SkillRegistry(Protocol):
-    """Protocol for skill marketplace search and install."""
+    """Protocol for skill marketplace search, install, and self-hosted CRUD."""
 
     async def search_skills(self, query: str, limit: int) -> list[dict]:
-        """Search for skills. Returns list of dicts with slug, name, description, etc."""
+        """Search for skills. Returns list of dicts with slug, name, description, etc.
+
+        Each entry SHOULD carry a ``source`` field identifying its origin
+        (e.g. ``"agentskill.sh"`` or ``"self-hosted"``).
+        """
         ...
 
     async def install_skill(
@@ -23,6 +27,26 @@ class SkillRegistry(Protocol):
         env: dict[str, str] | None = None,
     ) -> tuple[int, str, str]:
         """Install a skill into dest. Returns (returncode, stdout, stderr)."""
+        ...
+
+    def list_custom_entries(self) -> list[dict[str, Any]]:
+        """Return raw self-hosted catalog entries. May include stored SKILL.md content."""
+        ...
+
+    def get_entry(self, slug: str) -> dict[str, Any] | None:
+        """Return a self-hosted catalog entry by slug, or None if not found."""
+        ...
+
+    def add_custom_entry(self, entry: dict[str, Any]) -> None:
+        """Append a new self-hosted catalog entry."""
+        ...
+
+    def update_custom_entry(self, slug: str, entry: dict[str, Any]) -> bool:
+        """Update a self-hosted entry by slug. Returns True if found and updated."""
+        ...
+
+    def delete_custom_entry(self, slug: str) -> bool:
+        """Remove a self-hosted entry by slug. Returns True if found and removed."""
         ...
 
 
