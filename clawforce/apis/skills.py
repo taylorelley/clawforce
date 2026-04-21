@@ -11,7 +11,7 @@ import re
 import shutil
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 from clawforce.auth import get_current_user
 from clawforce.core.domain.runtime import AgentRuntimeBackend, AgentRuntimeError
@@ -132,7 +132,7 @@ async def search_skills(
     _: dict = Depends(get_current_user),
     registry=Depends(get_skill_registry),
 ):
-    """Search the skill registry (agentskill.sh by default)."""
+    """Search the skill registry (agentskill.sh + self-hosted YAML catalog)."""
     try:
         results = await registry.search_skills(q.strip(), limit=limit)
     except FileNotFoundError:
@@ -146,8 +146,130 @@ async def search_skills(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Skill registry error: {e!s}",
         )
-    results.sort(key=lambda s: s.get("downloads", 0), reverse=True)
+
+    # Stable ordering: self-hosted first, then by downloads desc.
+    def _sort_key(entry: dict) -> tuple[int, int]:
+        return (
+            0 if entry.get("source") == "self-hosted" else 1,
+            -int(entry.get("downloads", 0) or 0),
+        )
+
+    results.sort(key=_sort_key)
     return results
+
+
+# Slug rule for self-hosted skills: filesystem-safe and compatible with the
+# skill directory name on disk. Allow lowercase letters, digits, dashes, and
+# underscores; no leading/trailing separators.
+_CUSTOM_SKILL_SLUG_RE = re.compile(r"^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$")
+_RESERVED_CUSTOM_SKILL_SLUGS = frozenset({"custom", "search"})
+
+
+class CustomSkillRequest(BaseModel):
+    """Request body for adding or updating a self-hosted skill entry."""
+
+    slug: str = Field(..., description="Unique slug, e.g. my-pdf-helper (used as skill dir name)")
+    name: str = Field(..., min_length=1)
+    description: str = ""
+    author: str = ""
+    version: str = ""
+    categories: list[str] = Field(default_factory=list)
+    homepage: str = ""
+    repository: str = ""
+    license: str = ""
+    required_env: list[str] = Field(default_factory=list)
+    skill_content: str = Field(
+        ...,
+        min_length=1,
+        description="Full SKILL.md content, including YAML frontmatter",
+    )
+
+    @field_validator("slug")
+    @classmethod
+    def _validate_slug(cls, v: str) -> str:
+        if not v:
+            raise ValueError("slug must not be empty")
+        if v in _RESERVED_CUSTOM_SKILL_SLUGS:
+            raise ValueError(f"slug '{v}' is reserved and cannot be used")
+        if not _CUSTOM_SKILL_SLUG_RE.match(v):
+            raise ValueError(
+                "slug must be lowercase letters, digits, dashes or underscores "
+                "(no leading/trailing separator, no slashes)"
+            )
+        return v
+
+    @field_validator("skill_content")
+    @classmethod
+    def _validate_skill_content(cls, v: str) -> str:
+        if not v.lstrip().startswith("---"):
+            raise ValueError("skill_content must begin with a '---' YAML frontmatter block")
+        return v
+
+
+@router.get("/api/skills/custom")
+async def list_custom_skills(
+    _: dict = Depends(get_current_user),
+    registry=Depends(get_skill_registry),
+):
+    """Return admin-managed self-hosted skill entries (including stored SKILL.md content)."""
+    return registry.list_custom_entries()
+
+
+@router.post("/api/skills/custom", status_code=status.HTTP_201_CREATED)
+async def add_custom_skill(
+    body: CustomSkillRequest,
+    _: dict = Depends(get_current_user),
+    registry=Depends(get_skill_registry),
+):
+    """Add a self-hosted skill to the admin catalog."""
+    if registry.get_entry(body.slug):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Skill slug '{body.slug}' already exists in the catalog",
+        )
+    entry = body.model_dump(exclude_none=True)
+    registry.add_custom_entry(entry)
+    return entry
+
+
+@router.put("/api/skills/custom/{slug}")
+async def update_custom_skill(
+    slug: str,
+    body: CustomSkillRequest,
+    _: dict = Depends(get_current_user),
+    registry=Depends(get_skill_registry),
+):
+    """Update a self-hosted skill entry by slug."""
+    if body.slug != slug:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="URL slug and body slug must match",
+        )
+    entry = body.model_dump(exclude_none=True)
+    entry["slug"] = slug
+    updated = registry.update_custom_entry(slug, entry)
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Self-hosted skill '{slug}' not found",
+        )
+    return entry
+
+
+@router.delete("/api/skills/custom/{slug}")
+async def delete_custom_skill(
+    slug: str,
+    _: dict = Depends(get_current_user),
+    registry=Depends(get_skill_registry),
+):
+    """Delete a self-hosted skill by slug."""
+    removed = registry.delete_custom_entry(slug)
+    if not removed:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Self-hosted skill '{slug}' not found",
+        )
+    return {"ok": True, "slug": slug}
 
 
 class SkillInstallRequest(BaseModel):
@@ -162,13 +284,23 @@ async def install_skill(
     _: dict = Depends(get_current_user),
     store: AgentStore = Depends(get_agent_store),
     runtime: AgentRuntimeBackend = Depends(get_runtime),
+    registry=Depends(get_skill_registry),
 ):
-    """Install a skill from the registry into the agent's workspace (delegated to runtime/worker)."""
+    """Install a skill from the registry into the agent's workspace (delegated to runtime/worker).
+
+    If the slug belongs to a self-hosted entry, the stored SKILL.md content is
+    passed through to the worker so it can be written directly without
+    invoking ``npx skills``.
+    """
     agent = store.get_agent(agent_id)
     if not agent:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found")
+    custom = registry.get_entry(body.slug) if hasattr(registry, "get_entry") else None
+    skill_content = (custom or {}).get("skill_content", "") if custom else ""
     try:
-        return await runtime.install_skill(agent_id, body.slug, body.env)
+        return await runtime.install_skill(
+            agent_id, body.slug, body.env, skill_content=skill_content
+        )
     except AgentRuntimeError as exc:
         logger.warning(f"Skill install failed: agent={agent_id} slug={body.slug} error={exc}")
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))

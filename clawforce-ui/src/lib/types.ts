@@ -171,6 +171,8 @@ export type SkillInfo = {
   always: boolean;
 };
 
+export type SkillSource = "agentskill.sh" | "self-hosted";
+
 export type MarketplaceSkill = {
   slug: string;
   name: string;
@@ -182,6 +184,35 @@ export type MarketplaceSkill = {
   homepage?: string;
   repository?: string;
   required_env?: string[];
+  source?: SkillSource;
+};
+
+export type CustomSkillEntry = {
+  slug: string;
+  name: string;
+  description?: string;
+  author?: string;
+  version?: string;
+  categories?: string[];
+  homepage?: string;
+  repository?: string;
+  license?: string;
+  required_env?: string[];
+  skill_content: string;
+};
+
+export type AddCustomSkillPayload = {
+  slug: string;
+  name: string;
+  description?: string;
+  author?: string;
+  version?: string;
+  categories?: string[];
+  homepage?: string;
+  repository?: string;
+  license?: string;
+  required_env?: string[];
+  skill_content: string;
 };
 
 export type MCPRegistryServer = {

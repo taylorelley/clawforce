@@ -11,6 +11,7 @@ export const queryKeys = {
   agentVariables: (id: string) => ["agents", id, "variables"] as const,
   agentSkills: (id: string) => ["agents", id, "skills"] as const,
   skillsSearch: (q: string) => ["skills", "search", q] as const,
+  customSkills: ["skills", "custom"] as const,
   mcpServers: (q: string) => ["mcp", "search", q] as const,
   softwareCatalog: ["software", "catalog"] as const,
   customSoftware: ["software", "custom"] as const,
@@ -227,6 +228,49 @@ export function useSearchSkills(query: string, enabled = true) {
     queryFn: () => api.skills.search(query, 30),
     enabled,
     staleTime: 60_000,
+  });
+}
+
+export function useCustomSkills() {
+  return useQuery({
+    queryKey: queryKeys.customSkills,
+    queryFn: () => api.skills.listCustom(),
+    staleTime: 30_000,
+  });
+}
+
+export function useAddCustomSkill() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (entry: import("./types").AddCustomSkillPayload) =>
+      api.skills.addCustom(entry),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.customSkills });
+      qc.invalidateQueries({ queryKey: ["skills", "search"] });
+    },
+  });
+}
+
+export function useUpdateCustomSkill() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ slug, entry }: { slug: string; entry: import("./types").AddCustomSkillPayload }) =>
+      api.skills.updateCustom(slug, entry),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.customSkills });
+      qc.invalidateQueries({ queryKey: ["skills", "search"] });
+    },
+  });
+}
+
+export function useDeleteCustomSkill() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (slug: string) => api.skills.deleteCustom(slug),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.customSkills });
+      qc.invalidateQueries({ queryKey: ["skills", "search"] });
+    },
   });
 }
 

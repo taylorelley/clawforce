@@ -114,6 +114,7 @@ class InstallSkillRequest(BaseModel):
     action: Literal["install_skill"] = "install_skill"
     slug: str = ""
     env: dict[str, str] = Field(default_factory=dict)
+    skill_content: str = ""  # self-hosted: write this content directly, skip npx
 
 
 class SkillResultData(BaseModel):

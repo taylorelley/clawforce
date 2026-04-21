@@ -143,8 +143,15 @@ class AgentRuntimeBackend(ABC):
         agent_id: str,
         slug: str,
         env: dict[str, str] | None = None,
+        *,
+        skill_content: str = "",
     ) -> dict:
-        """Install a skill from the registry into the agent's workspace. Returns result dict."""
+        """Install a skill from the registry into the agent's workspace. Returns result dict.
+
+        When ``skill_content`` is non-empty, the worker writes the provided
+        ``SKILL.md`` content directly into the agent's workspace and skips the
+        registry-backed install path (used for self-hosted skills).
+        """
         raise AgentRuntimeError("install_skill not implemented")
 
     async def uninstall_skill(self, agent_id: str, slug: str) -> dict:

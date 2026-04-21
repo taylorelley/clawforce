@@ -24,6 +24,23 @@ def _slug_to_skill_name(slug: str) -> str:
 async def handle_install_skill(file_service: AgentFS, req: InstallSkillRequest) -> dict:
     workspace_dir = file_service.workspace_path
     workspace_dir.mkdir(parents=True, exist_ok=True)
+
+    # Self-hosted path: write the provided SKILL.md content directly.
+    if req.skill_content:
+        skill_name = _slug_to_skill_name(req.slug)
+        skill_dir = workspace_dir / ".agents" / "skills" / skill_name
+        try:
+            skill_dir.mkdir(parents=True, exist_ok=True)
+            (skill_dir / "SKILL.md").write_text(req.skill_content, encoding="utf-8")
+        except OSError as e:
+            logger.warning("Self-hosted skill write failed: slug=%s err=%s", req.slug, e)
+            raise RuntimeError(f"Install failed: {e}")
+        return {
+            "data": SkillResultData(
+                slug=skill_name, message=f"Installed self-hosted skill '{skill_name}'"
+            ).model_dump()
+        }
+
     registry = get_skill_registry()
     rc, stdout, stderr = await registry.install_skill(req.slug, workspace_dir, req.env or None)
     if rc != 0:
