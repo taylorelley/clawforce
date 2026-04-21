@@ -8,21 +8,27 @@ from clawlib.registry.protocols import (
     SkillRegistry,
     SoftwareRegistry,
 )
-from clawlib.skillregistry import SkillsShRegistry
+from clawlib.skillregistry import SkillsShRegistry, YamlSkillRegistry
 from clawlib.softwareregistry import YamlSoftwareRegistry
 from clawlib.storage import get_storage_backend, get_storage_root
 
-_skill_registry: SkillsShRegistry | None = None
+_skill_registry: YamlSkillRegistry | None = None
 _mcp_registry: OfficialMCPRegistry | None = None
 _software_registry: YamlSoftwareRegistry | None = None
 _plan_template_registry: YamlPlanTemplateRegistry | None = None
 
 
 def get_skill_registry() -> SkillRegistry:
-    """Return the SkillRegistry implementation (agentskill.sh)."""
+    """Return the SkillRegistry implementation (agentskill.sh + self-hosted YAML catalog)."""
     global _skill_registry
     if _skill_registry is None:
-        _skill_registry = SkillsShRegistry()
+        storage = get_storage_backend()
+        root = get_storage_root(storage)
+        custom_path = root / "admin" / "custom_skills_catalog.yaml"
+        _skill_registry = YamlSkillRegistry(
+            custom_catalog_path=custom_path,
+            inner=SkillsShRegistry(),
+        )
     return _skill_registry
 
 

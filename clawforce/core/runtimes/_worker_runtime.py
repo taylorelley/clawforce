@@ -221,11 +221,18 @@ class WorkerRuntimeBase(AgentRuntimeBackend):
         agent_id: str,
         slug: str,
         env: dict[str, str] | None = None,
+        *,
+        skill_content: str = "",
     ) -> dict:
         if not self._is_ws_connected(agent_id):
             raise AgentRuntimeError(f"Agent {agent_id} is not connected")
         resp = await self._ws_request(
-            agent_id, "install_skill", slug=slug, env=env or {}, timeout=90.0
+            agent_id,
+            "install_skill",
+            slug=slug,
+            env=env or {},
+            skill_content=skill_content,
+            timeout=90.0,
         )
         if resp and resp.get("ok"):
             return resp.get("data", {})

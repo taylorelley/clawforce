@@ -165,6 +165,17 @@ export const api = {
   skills: {
     search: (q: string, limit = 20) =>
       request<import("./types").MarketplaceSkill[]>(`/skills/search?q=${encodeURIComponent(q)}&limit=${limit}`),
+    listCustom: () =>
+      request<import("./types").CustomSkillEntry[]>("/skills/custom"),
+    addCustom: (entry: import("./types").AddCustomSkillPayload) =>
+      post<import("./types").CustomSkillEntry>("/skills/custom", entry),
+    updateCustom: (slug: string, entry: import("./types").AddCustomSkillPayload) =>
+      put<import("./types").CustomSkillEntry>(`/skills/custom/${encodeURIComponent(slug)}`, entry),
+    deleteCustom: (slug: string) =>
+      request<{ ok: boolean; slug: string }>(
+        `/skills/custom/${encodeURIComponent(slug)}`,
+        { method: "DELETE" }
+      ),
   },
   mcpRegistry: {
     search: (q: string = "", limit = 50) =>

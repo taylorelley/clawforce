@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageContainer, PageHeader, PlanIcon, TrashIcon } from "../components/ui";
-import { useTemplates, useSearchSkills, useSearchMcpServers, useSoftwareCatalog, useCustomSoftware, useAddCustomSoftware, useUpdateCustomSoftware, useDeleteCustomSoftware, usePlanTemplates, useCustomPlanTemplates, useDeleteCustomPlanTemplate } from "../lib/queries";
+import { useTemplates, useSearchSkills, useSearchMcpServers, useSoftwareCatalog, useCustomSoftware, useAddCustomSoftware, useUpdateCustomSoftware, useDeleteCustomSoftware, usePlanTemplates, useCustomPlanTemplates, useDeleteCustomPlanTemplate, useCustomSkills, useDeleteCustomSkill } from "../lib/queries";
 import CreateClawModal from "../components/CreateClawModal";
 import CreatePlanModal from "../components/CreatePlanModal";
 import TemplateDetailModal from "../components/TemplateDetailModal";
 import PlanTemplateDetailModal from "../components/PlanTemplateDetailModal";
 import AddPlanTemplateModal from "../components/AddPlanTemplateModal";
+import AddCustomSkillModal from "../components/AddCustomSkillModal";
 import InstallSkillModal from "../components/InstallSkillModal";
 import InstallMcpModal from "../components/InstallMcpModal";
 import InstallSoftwareModal from "../components/InstallSoftwareModal";
-import type { MarketplaceSkill, MCPRegistryServer, SoftwareCatalogEntry, AddCustomSoftwarePayload, PlanTemplate } from "../lib/types";
+import type { MarketplaceSkill, MCPRegistryServer, SoftwareCatalogEntry, AddCustomSoftwarePayload, PlanTemplate, CustomSkillEntry } from "../lib/types";
 import {
   HiOutlineCommandLine,
   HiOutlineCodeBracket,
@@ -314,12 +315,19 @@ function TemplatesTab({ templates, isLoading }: { templates: { value: string; la
   );
 }
 
+type SourceFilter = "all" | "agentskill.sh" | "self-hosted";
+
 function SkillsTab() {
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const { data: skills, isLoading, error } = useSearchSkills(searchQuery, true);
+  const { data: customEntries = [] } = useCustomSkills();
+  const deleteCustomMutation = useDeleteCustomSkill();
   const [installSkill, setInstallSkill] = useState<MarketplaceSkill | null>(null);
   const [selectedSkill, setSelectedSkill] = useState<MarketplaceSkill | null>(null);
+  const [showAddCustom, setShowAddCustom] = useState(false);
+  const [editCustom, setEditCustom] = useState<CustomSkillEntry | null>(null);
 
   useEffect(() => {
     setSearchQuery("");
@@ -330,49 +338,103 @@ function SkillsTab() {
     setSearchQuery(searchInput.trim() || "");
   }
 
+  const customBySlug = new Map(customEntries.map((e) => [e.slug, e]));
+  const filteredSkills = (() => {
+    const seen = new Set<string>();
+    const out: MarketplaceSkill[] = [];
+    for (const s of skills ?? []) {
+      if (sourceFilter !== "all" && s.source !== sourceFilter) continue;
+      const key = `${s.source ?? "?"}:${s.slug}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(s);
+    }
+    return out;
+  })();
+
+  function handleDeleteCustom(slug: string, name: string) {
+    if (window.confirm(`Remove "${name}" from self-hosted skills?`)) {
+      deleteCustomMutation.mutate(slug);
+    }
+  }
+
+  const filterBtn = (f: SourceFilter, label: string) => (
+    <button
+      type="button"
+      onClick={() => setSourceFilter(f)}
+      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+        sourceFilter === f
+          ? "bg-white text-claude-text-primary shadow-sm"
+          : "text-claude-text-muted hover:text-claude-text-secondary"
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm text-claude-text-secondary max-w-2xl">
-        <span>Skills extend your claws with specialized capabilities. Powered by</span>
-        <a
-          href="https://agentskill.sh"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 text-claude-accent hover:underline font-medium"
-        >
-          agentskill.sh
-          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-        </a>
-      </div>
-
-      <form onSubmit={handleSearch} className="flex gap-2 max-w-2xl">
-        <div className="relative flex-1">
-          <svg className="absolute left-2.5 top-2.5 h-4 w-4 text-claude-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            className={`${css.input} pl-8`}
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search skills... (e.g. web scraping, calendar, github)"
-          />
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2 text-sm text-claude-text-secondary max-w-2xl">
+          <span>Skills extend your claws with specialized capabilities. Powered by</span>
+          <a
+            href="https://agentskill.sh"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-claude-accent hover:underline font-medium"
+          >
+            agentskill.sh
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+          <span>or add self-hosted entries.</span>
         </div>
         <button
-          type="submit"
-          disabled={isLoading}
-          className={`${css.btn} bg-claude-accent text-white hover:bg-claude-accent-hover disabled:opacity-40 shrink-0 min-w-[80px]`}
+          onClick={() => setShowAddCustom(true)}
+          className={`${css.btn} flex items-center gap-1.5 border border-claude-border bg-white hover:bg-claude-surface text-claude-text-primary text-xs shrink-0`}
         >
-          {isLoading ? (
-            <span className="inline-flex items-center gap-1">
-              <span className="h-1 w-1 rounded-full bg-white animate-pulse" />
-              <span className="h-1 w-1 rounded-full bg-white animate-pulse [animation-delay:150ms]" />
-              <span className="h-1 w-1 rounded-full bg-white animate-pulse [animation-delay:300ms]" />
-            </span>
-          ) : "Search"}
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Custom
         </button>
-      </form>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-[240px] max-w-2xl">
+          <div className="relative flex-1">
+            <svg className="absolute left-2.5 top-2.5 h-4 w-4 text-claude-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              className={`${css.input} pl-8`}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search skills... (e.g. web scraping, calendar, github)"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={`${css.btn} bg-claude-accent text-white hover:bg-claude-accent-hover disabled:opacity-40 shrink-0 min-w-[80px]`}
+          >
+            {isLoading ? (
+              <span className="inline-flex items-center gap-1">
+                <span className="h-1 w-1 rounded-full bg-white animate-pulse" />
+                <span className="h-1 w-1 rounded-full bg-white animate-pulse [animation-delay:150ms]" />
+                <span className="h-1 w-1 rounded-full bg-white animate-pulse [animation-delay:300ms]" />
+              </span>
+            ) : "Search"}
+          </button>
+        </form>
+
+        <div className="flex rounded-lg border border-claude-border bg-claude-surface p-0.5 shrink-0">
+          {filterBtn("all", "All")}
+          {filterBtn("agentskill.sh", "agentskill.sh")}
+          {filterBtn("self-hosted", "Self-hosted")}
+        </div>
+      </div>
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
@@ -392,42 +454,56 @@ function SkillsTab() {
         </div>
       )}
 
-      {!isLoading && skills && skills.length > 0 && (
+      {!isLoading && filteredSkills.length > 0 && (
         <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {skills.map((skill: MarketplaceSkill) => (
+            {filteredSkills.map((skill: MarketplaceSkill) => (
               <SkillCard
-                key={skill.slug}
+                key={`${skill.source ?? "?"}:${skill.slug}`}
                 skill={skill}
                 onSelect={() => setSelectedSkill(skill)}
                 onInstall={() => setInstallSkill(skill)}
+                onEdit={
+                  skill.source === "self-hosted" && customBySlug.has(skill.slug)
+                    ? () => setEditCustom(customBySlug.get(skill.slug) ?? null)
+                    : undefined
+                }
+                onDelete={
+                  skill.source === "self-hosted" && customBySlug.has(skill.slug)
+                    ? () => handleDeleteCustom(skill.slug, skill.name)
+                    : undefined
+                }
               />
             ))}
           </div>
         </div>
       )}
 
-      {!isLoading && skills && skills.length === 0 && (
+      {!isLoading && filteredSkills.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-claude-text-muted">
           <svg className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <p className="text-sm">
-            {searchQuery
+            {sourceFilter === "self-hosted"
+              ? 'No self-hosted skills yet. Click "Add Custom" to create one.'
+              : searchQuery
               ? `No skills found for "${searchQuery}"`
-              : "No skills found in agentskill.sh registry."}
+              : "No skills found."}
           </p>
-          <p className="text-xs mt-1">
-            Try different keywords or browse{" "}
-            <a
-              href="https://agentskill.sh"
-              target="_blank"
-              rel="noreferrer"
-              className="text-claude-accent hover:underline"
-            >
-              agentskill.sh
-            </a>
-          </p>
+          {sourceFilter !== "self-hosted" && (
+            <p className="text-xs mt-1">
+              Try different keywords or browse{" "}
+              <a
+                href="https://agentskill.sh"
+                target="_blank"
+                rel="noreferrer"
+                className="text-claude-accent hover:underline"
+              >
+                agentskill.sh
+              </a>
+            </p>
+          )}
         </div>
       )}
 
@@ -444,6 +520,15 @@ function SkillsTab() {
           setSelectedSkill(null);
           if (selectedSkill) setInstallSkill(selectedSkill);
         }}
+      />
+
+      <AddCustomSkillModal
+        open={showAddCustom || !!editCustom}
+        onClose={() => {
+          setShowAddCustom(false);
+          setEditCustom(null);
+        }}
+        entryToEdit={editCustom}
       />
     </div>
   );
@@ -466,15 +551,20 @@ function SkillCard({
   skill,
   onSelect,
   onInstall,
+  onEdit,
+  onDelete,
 }: {
   skill: MarketplaceSkill;
   onSelect: () => void;
   onInstall: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }) {
   const author = isLikelyAuthor(skill.author) ? skill.author : undefined;
   const descFromAuthor = !isLikelyAuthor(skill.author) && skill.author && !isLikelyVersion(skill.author) ? skill.author : undefined;
   const description = (skill.description && !isLikelyVersion(skill.description)) ? skill.description : descFromAuthor;
   const version = skill.version || (isLikelyVersion(skill.description) ? skill.description?.replace(/^v/, "") : undefined);
+  const isSelfHosted = skill.source === "self-hosted";
 
   return (
     <div className="rounded-xl border border-claude-border bg-white p-4 hover:border-claude-accent/30 transition-colors flex flex-col">
@@ -486,7 +576,17 @@ function SkillCard({
             </svg>
           </div>
           <div className="min-w-0">
-            <span className="text-sm font-medium text-claude-text-primary">{skill.name}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium text-claude-text-primary truncate">{skill.name}</span>
+              {isSelfHosted && (
+                <span
+                  className="rounded px-1.5 py-px text-[10px] font-medium bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 shrink-0"
+                  title="Stored in this deployment's admin catalog"
+                >
+                  Self-hosted
+                </span>
+              )}
+            </div>
             {author && (
               <p className="text-[10px] text-claude-text-muted mt-0.5">by {author}</p>
             )}
@@ -520,7 +620,7 @@ function SkillCard({
               Docs
             </a>
           )}
-          {!skill.homepage && (
+          {!skill.homepage && !isSelfHosted && (
             <a
               href={`https://agentskill.sh/skills/${skill.slug}`}
               target="_blank"
@@ -537,12 +637,31 @@ function SkillCard({
           )}
         </div>
         <div className="flex-1" />
-        <button
-          onClick={onInstall}
-          className={`${css.btn} bg-claude-accent text-white hover:bg-claude-accent-hover text-xs px-3 py-1.5`}
-        >
-          Install
-        </button>
+        <div className="flex items-center gap-1.5">
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="rounded-md px-2 py-1 text-[11px] text-claude-text-secondary hover:text-claude-text-primary hover:bg-claude-surface transition-colors"
+            >
+              Edit
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="rounded-md p-1 text-claude-border-strong hover:text-red-500 hover:bg-red-50 transition-all"
+              title="Delete self-hosted skill"
+            >
+              <TrashIcon className="h-3.5 w-3.5" />
+            </button>
+          )}
+          <button
+            onClick={onInstall}
+            className={`${css.btn} bg-claude-accent text-white hover:bg-claude-accent-hover text-xs px-3 py-1.5`}
+          >
+            Install
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -966,6 +1085,11 @@ function SkillDetailModal({
             {version && (
               <span className="text-[10px] font-mono text-claude-text-muted shrink-0">v{version}</span>
             )}
+            {skill.source === "self-hosted" && (
+              <span className="rounded px-1.5 py-px text-[10px] font-medium bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 shrink-0">
+                Self-hosted
+              </span>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -1023,7 +1147,7 @@ function SkillDetailModal({
                 Repository
               </a>
             )}
-            {!skill.homepage && !skill.repository && (
+            {!skill.homepage && !skill.repository && skill.source !== "self-hosted" && (
               <a
                 href={`https://agentskill.sh/skills/${skill.slug}`}
                 target="_blank"
