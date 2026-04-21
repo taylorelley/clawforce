@@ -230,7 +230,7 @@ clawforce serve
 | Category | Capabilities |
 |----------|--------------|
 | **Agent Management** | Create, configure, start/stop, monitor, and scale agents from dashboard |
-| **Marketplace** | Pre-built agent templates for common workflows — deploy in 1 click |
+| **Marketplace** | Pre-built agent templates, plan templates (Kanban blueprints), skills, MCP servers, and software — deploy in 1 click |
 | **Team Coordination** | A2A discovery, direct messaging, shared Kanban plans, task delegation |
 | **Security** | Container isolation (Docker/Podman), vault secrets, network controls, shell policies, RBAC |
 | **Tools** | Shell, filesystem, web search, MCP servers, custom integrations |

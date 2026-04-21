@@ -16,6 +16,7 @@ This document defines product terms so that design and documentation stay consis
 | **Workspace** | Per-agent filesystem: profiles (read-only), workspace (read/write), .config, .sessions. Isolated per agent. |
 | **Team** | Grouping of agents (e.g. for start/stop as a set). Organizational. |
 | **Plan** | Orchestrator for agent work. A local Kanban board with tasks, artifacts, and agent assignments. The coordinator (plan creator) decides when each agent engages; activation marks the plan ready but does not require all agents to be running. Plan does not sync with external systems; agents handle that. |
+| **Plan template** | Reusable blueprint for a Plan: columns and pre-filled tasks. Lives in the Marketplace (**Plan Templates** tab). Bundled starters ship in `marketplace/plan-templates/catalog.yaml`; custom entries are stored in `{storage_root}/admin/custom_plan_templates.yaml`. Applied by passing `template_id` to `POST /api/plans`. |
 | **Session** | One conversation thread (e.g. channel + chat_id). Stored as JSONL; append-only for LLM context. |
 | **Secrets / Vault** | Credentials (API keys, tokens) injected at runtime; not stored in agent-accessible config or workspace. |
 
