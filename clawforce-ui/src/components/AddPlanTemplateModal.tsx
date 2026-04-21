@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Modal from "./Modal";
 import { PlanIcon, TrashIcon } from "./ui";
-import { useAddCustomPlanTemplate, useUpdateCustomPlanTemplate } from "../lib/queries";
+import { useAddCustomPlanTemplate, useClaws, useUpdateCustomPlanTemplate } from "../lib/queries";
 import type { AddPlanTemplatePayload, PlanTemplate, PlanTemplateColumn, PlanTemplateTask } from "../lib/types";
 
 interface AddPlanTemplateModalProps {
@@ -20,7 +20,7 @@ function toSlug(name: string): string {
 }
 
 function emptyTask(firstColumn: string): PlanTemplateTask {
-  return { title: "", description: "", column: firstColumn };
+  return { title: "", description: "", column: firstColumn, agent_id: "" };
 }
 
 type FormState = {
@@ -30,6 +30,7 @@ type FormState = {
   categories: string;
   columns: PlanTemplateColumn[];
   tasks: PlanTemplateTask[];
+  agentIds: string[];
 };
 
 const EMPTY_FORM: FormState = {
@@ -38,7 +39,8 @@ const EMPTY_FORM: FormState = {
   author: "",
   categories: "",
   columns: [],
-  tasks: [{ title: "", description: "", column: "todo" }],
+  tasks: [{ title: "", description: "", column: "todo", agent_id: "" }],
+  agentIds: [],
 };
 
 const css = {
@@ -52,6 +54,7 @@ const css = {
 export default function AddPlanTemplateModal({ open, onClose, entryToEdit }: AddPlanTemplateModalProps) {
   const addMutation = useAddCustomPlanTemplate();
   const updateMutation = useUpdateCustomPlanTemplate();
+  const { data: claws = [] } = useClaws();
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [idOverride, setIdOverride] = useState("");
@@ -72,8 +75,10 @@ export default function AddPlanTemplateModal({ open, onClose, entryToEdit }: Add
                 title: t.title ?? "",
                 description: t.description ?? "",
                 column: t.column ?? "",
+                agent_id: t.agent_id ?? "",
               }))
-            : [{ title: "", description: "", column: "todo" }],
+            : [{ title: "", description: "", column: "todo", agent_id: "" }],
+        agentIds: entryToEdit.agent_ids ?? [],
       });
       setIdOverride(entryToEdit.id ?? "");
     } else {
@@ -141,6 +146,7 @@ export default function AddPlanTemplateModal({ open, onClose, entryToEdit }: Add
         title: t.title.trim(),
         description: (t.description ?? "").trim(),
         column: (t.column ?? "").trim() || toSlug(availableColumns[0] ?? "todo"),
+        agent_id: (t.agent_id ?? "").trim(),
       }));
     if (cleanedTasks.length === 0) {
       setError("Add at least one task.");
@@ -161,6 +167,7 @@ export default function AddPlanTemplateModal({ open, onClose, entryToEdit }: Add
         .filter(Boolean),
       columns: cleanedColumns,
       tasks: cleanedTasks,
+      agent_ids: form.agentIds.filter(Boolean),
     };
     try {
       if (entryToEdit) {
@@ -281,6 +288,47 @@ export default function AddPlanTemplateModal({ open, onClose, entryToEdit }: Add
         </div>
 
         <div>
+          <label className={css.label}>Preassigned agents</label>
+          <p className="text-[11px] text-claude-text-muted mb-2">
+            Agents to auto-assign to every plan created from this template. Missing agents are
+            skipped at plan creation time.
+          </p>
+          {claws.length === 0 ? (
+            <p className="text-[11px] text-claude-text-muted italic">
+              No claws available yet. Create a claw first to preassign it here.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {claws.map((c) => {
+                const selected = form.agentIds.includes(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() =>
+                      setForm((f) => ({
+                        ...f,
+                        agentIds: selected
+                          ? f.agentIds.filter((a) => a !== c.id)
+                          : [...f.agentIds, c.id],
+                      }))
+                    }
+                    className={`rounded-full px-2.5 py-0.5 text-[11px] transition-colors ring-1 ${
+                      selected
+                        ? "bg-claude-accent/10 text-claude-accent ring-claude-accent/40"
+                        : "bg-claude-surface text-claude-text-secondary ring-claude-border hover:text-claude-text-primary"
+                    }`}
+                    title={c.id}
+                  >
+                    {c.name || c.id}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className={css.label}>Columns</label>
             <button
@@ -381,6 +429,26 @@ export default function AddPlanTemplateModal({ open, onClose, entryToEdit }: Add
                   value={task.description ?? ""}
                   onChange={(e) => updateTask(i, { description: e.target.value })}
                 />
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-claude-text-muted">Assign to:</span>
+                  <select
+                    className={css.select}
+                    value={task.agent_id ?? ""}
+                    onChange={(e) => updateTask(i, { agent_id: e.target.value })}
+                  >
+                    <option value="">Unassigned</option>
+                    {claws.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name || c.id}
+                      </option>
+                    ))}
+                  </select>
+                  {task.agent_id && !claws.some((c) => c.id === task.agent_id) && (
+                    <span className="text-[10px] text-amber-600" title="Agent no longer exists">
+                      stale: {task.agent_id}
+                    </span>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

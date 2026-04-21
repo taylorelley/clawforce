@@ -142,6 +142,26 @@ def auth_headers(client: TestClient, admin_user):
     return {"Authorization": f"Bearer {resp.json()['access_token']}"}
 
 
+def _seed_agents(agent_ids: list[str]) -> None:
+    """Insert minimal agent rows so plan_agents/plan_tasks FKs can reference them."""
+    from clawforce.core.database import get_database
+
+    with get_database().connection() as conn:
+        for aid in agent_ids:
+            conn.execute(
+                """INSERT OR IGNORE INTO agents
+                   (id, name, description, color, enabled, status, base_path, agent_token, mode, created_at, updated_at)
+                   VALUES (?, ?, '', '', 1, 'stopped', '', ?, 'agent', ?, ?)""",
+                (
+                    aid,
+                    aid,
+                    f"token-{aid}",
+                    "2026-01-01T00:00:00Z",
+                    "2026-01-01T00:00:00Z",
+                ),
+            )
+
+
 class TestPlanTemplateEndpoints:
     def test_list_returns_bundled_starters(self, client: TestClient, auth_headers):
         resp = client.get("/api/plan-templates", headers=auth_headers)
@@ -335,3 +355,121 @@ class TestCreatePlanFromTemplate:
         plan = resp.json()
         first_col_id = plan["columns"][0]["id"]
         assert plan["tasks"][0]["column_id"] == first_col_id
+
+
+class TestAgentPreassignment:
+    def test_plan_level_agents_preassigned(self, client: TestClient, auth_headers):
+        _seed_agents(["agent-1", "agent-2"])
+        client.post(
+            "/api/plan-templates",
+            headers=auth_headers,
+            json={
+                "id": "with-agents",
+                "name": "Has Agents",
+                "agent_ids": ["agent-1", "agent-2"],
+                "tasks": [{"title": "t", "column": "todo"}],
+            },
+        )
+        resp = client.post(
+            "/api/plans",
+            headers=auth_headers,
+            json={"name": "New plan", "template_id": "with-agents"},
+        )
+        assert resp.status_code == 200
+        plan = resp.json()
+        assert sorted(plan["agent_ids"]) == ["agent-1", "agent-2"]
+
+    def test_task_level_agent_is_applied(self, client: TestClient, auth_headers):
+        _seed_agents(["agent-1"])
+        client.post(
+            "/api/plan-templates",
+            headers=auth_headers,
+            json={
+                "id": "task-owner",
+                "name": "Task Owner",
+                "tasks": [
+                    {"title": "owned", "column": "todo", "agent_id": "agent-1"},
+                    {"title": "unowned", "column": "todo"},
+                ],
+            },
+        )
+        resp = client.post(
+            "/api/plans",
+            headers=auth_headers,
+            json={"name": "P", "template_id": "task-owner"},
+        )
+        plan = resp.json()
+        by_title = {t["title"]: t["agent_id"] for t in plan["tasks"]}
+        assert by_title["owned"] == "agent-1"
+        assert by_title["unowned"] == ""
+        # A task-only agent must also end up on the plan's agents list.
+        assert plan["agent_ids"] == ["agent-1"]
+
+    def test_missing_plan_agent_is_silently_skipped(
+        self, client: TestClient, auth_headers
+    ):
+        _seed_agents(["real-agent"])
+        client.post(
+            "/api/plan-templates",
+            headers=auth_headers,
+            json={
+                "id": "stale-plan-agents",
+                "name": "Stale",
+                "agent_ids": ["real-agent", "ghost-agent"],
+                "tasks": [{"title": "t", "column": "todo"}],
+            },
+        )
+        resp = client.post(
+            "/api/plans",
+            headers=auth_headers,
+            json={"name": "P", "template_id": "stale-plan-agents"},
+        )
+        assert resp.status_code == 200
+        plan = resp.json()
+        assert plan["agent_ids"] == ["real-agent"]
+
+    def test_missing_task_agent_leaves_task_unassigned(
+        self, client: TestClient, auth_headers
+    ):
+        _seed_agents(["real-agent"])
+        client.post(
+            "/api/plan-templates",
+            headers=auth_headers,
+            json={
+                "id": "stale-task-agent",
+                "name": "Stale Task",
+                "tasks": [
+                    {"title": "lost owner", "column": "todo", "agent_id": "ghost"},
+                    {"title": "good owner", "column": "todo", "agent_id": "real-agent"},
+                ],
+            },
+        )
+        resp = client.post(
+            "/api/plans",
+            headers=auth_headers,
+            json={"name": "P", "template_id": "stale-task-agent"},
+        )
+        plan = resp.json()
+        by_title = {t["title"]: t["agent_id"] for t in plan["tasks"]}
+        assert by_title["lost owner"] == ""
+        assert by_title["good owner"] == "real-agent"
+        assert plan["agent_ids"] == ["real-agent"]
+
+    def test_add_template_with_agents_roundtrip(
+        self, client: TestClient, auth_headers
+    ):
+        _seed_agents(["a1"])
+        payload = {
+            "id": "rt",
+            "name": "RT",
+            "agent_ids": ["a1"],
+            "tasks": [{"title": "t1", "column": "todo", "agent_id": "a1"}],
+        }
+        resp = client.post("/api/plan-templates", headers=auth_headers, json=payload)
+        assert resp.status_code == 201
+        assert resp.json()["agent_ids"] == ["a1"]
+        assert resp.json()["tasks"][0]["agent_id"] == "a1"
+
+        resp = client.get("/api/plan-templates/rt", headers=auth_headers)
+        assert resp.json()["agent_ids"] == ["a1"]
+        assert resp.json()["tasks"][0]["agent_id"] == "a1"

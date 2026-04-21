@@ -219,6 +219,8 @@ export type PlanTemplateTask = {
   description?: string;
   /** Short column name ("todo", "in-progress", ...) or a column title. Empty = first column. */
   column?: string;
+  /** Agent id to preassign this task to. Empty / unknown = task stays unassigned. */
+  agent_id?: string;
 };
 
 export type PlanTemplate = {
@@ -229,6 +231,8 @@ export type PlanTemplate = {
   categories?: string[];
   columns?: PlanTemplateColumn[];
   tasks: PlanTemplateTask[];
+  /** Agent ids to preassign at the plan level. Missing agents are skipped. */
+  agent_ids?: string[];
 };
 
 export type AddPlanTemplatePayload = {
@@ -239,6 +243,7 @@ export type AddPlanTemplatePayload = {
   categories?: string[];
   columns?: PlanTemplateColumn[];
   tasks: PlanTemplateTask[];
+  agent_ids?: string[];
 };
 
 export type PlanTask = {

@@ -22,6 +22,7 @@ class PlanTemplateTaskModel(BaseModel):
     title: str
     description: str = ""
     column: str = ""
+    agent_id: str = ""
 
 
 class AddPlanTemplateRequest(BaseModel):
@@ -34,6 +35,10 @@ class AddPlanTemplateRequest(BaseModel):
     categories: list[str] = []
     columns: list[PlanTemplateColumnModel] = []
     tasks: list[PlanTemplateTaskModel] = []
+    agent_ids: list[str] = Field(
+        default_factory=list,
+        description="Agents to preassign to plans created from this template",
+    )
 
 
 @router.get("/api/plan-templates")

@@ -1,6 +1,6 @@
 import Modal from "./Modal";
 import { PlanIcon } from "./ui";
-import { usePlanTemplates } from "../lib/queries";
+import { useClaws, usePlanTemplates } from "../lib/queries";
 import type { PlanTemplate, PlanTemplateTask } from "../lib/types";
 
 interface PlanTemplateDetailModalProps {
@@ -53,7 +53,13 @@ export default function PlanTemplateDetailModal({
   onUseTemplate,
 }: PlanTemplateDetailModalProps) {
   const { data: templates = [] } = usePlanTemplates();
+  const { data: claws = [] } = useClaws();
   const template = templates.find((t) => t.id === templateId) ?? null;
+  const agentLabel = (agentId: string): { label: string; known: boolean } => {
+    const match = claws.find((c) => c.id === agentId);
+    if (match) return { label: match.name || match.id, known: true };
+    return { label: agentId, known: false };
+  };
 
   if (!template) {
     return (
@@ -122,6 +128,33 @@ export default function PlanTemplateDetailModal({
           </div>
         )}
 
+        {template.agent_ids && template.agent_ids.length > 0 && (
+          <div>
+            <h3 className="text-xs font-semibold text-claude-text-muted uppercase tracking-wide mb-2">
+              Preassigned agents
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {template.agent_ids.map((aid) => {
+                const { label, known } = agentLabel(aid);
+                return (
+                  <span
+                    key={aid}
+                    className={`rounded-full px-2 py-0.5 text-[10px] ring-1 ${
+                      known
+                        ? "bg-claude-accent/10 text-claude-accent ring-claude-accent/30"
+                        : "bg-amber-50 text-amber-700 ring-amber-200"
+                    }`}
+                    title={known ? aid : "Agent no longer exists — will be skipped at plan creation"}
+                  >
+                    {label}
+                    {!known && " · missing"}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div>
           <h3 className="text-xs font-semibold text-claude-text-muted uppercase tracking-wide mb-2">
             Board preview
@@ -146,6 +179,22 @@ export default function PlanTemplateDetailModal({
                         {t.description && (
                           <div className="mt-0.5 text-[11px] text-claude-text-muted line-clamp-2">{t.description}</div>
                         )}
+                        {t.agent_id && (() => {
+                          const { label, known } = agentLabel(t.agent_id);
+                          return (
+                            <div
+                              className={`mt-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] ring-1 ${
+                                known
+                                  ? "bg-claude-accent/10 text-claude-accent ring-claude-accent/30"
+                                  : "bg-amber-50 text-amber-700 ring-amber-200"
+                              }`}
+                              title={known ? t.agent_id : "Agent no longer exists — task will be unassigned"}
+                            >
+                              Assigned: {label}
+                              {!known && " · missing"}
+                            </div>
+                          );
+                        })()}
                       </li>
                     ))}
                   </ul>

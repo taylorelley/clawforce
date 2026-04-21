@@ -129,7 +129,13 @@ class PlanStore(BaseRepository[PlanDef]):
         If the template declares ``columns``, those replace the four defaults.
         Each task's ``column`` is resolved against the plan's actual columns
         via ``_resolve_column_id`` (supports short names and title suffix match).
-        Tasks are inserted unassigned; users assign agents before activating.
+
+        Agent preassignment:
+        - Plan-level ``agent_ids`` are assigned to the new plan.
+        - Task-level ``agent_id`` values are applied to each task and also
+          assigned to the plan (a task agent must be on the plan to work it).
+        - Agent ids that do not exist are silently skipped — a stale template
+          should not block plan creation.
         """
         plan = PlanDef(name=name, description=description)
         d = plan.model_dump(by_alias=False)
@@ -157,7 +163,19 @@ class PlanStore(BaseRepository[PlanDef]):
         plan.tasks = []
         plan.agent_ids = []
 
+        # Resolve the union of agents to preassign: plan-level + any referenced by tasks.
+        plan_agent_candidates: list[str] = [
+            a for a in (template.get("agent_ids") or []) if isinstance(a, str) and a
+        ]
         template_tasks = template.get("tasks") or []
+        for raw in template_tasks:
+            task_agent = str(raw.get("agent_id", "") or "")
+            if task_agent and task_agent not in plan_agent_candidates:
+                plan_agent_candidates.append(task_agent)
+
+        assigned_agents = self._assign_existing_agents(plan.id, plan_agent_candidates)
+        plan.agent_ids = list(assigned_agents)
+
         position_by_column: dict[str, int] = {}
         for raw in template_tasks:
             title = str(raw.get("title", "")).strip()
@@ -170,10 +188,13 @@ class PlanStore(BaseRepository[PlanDef]):
             )
             position = position_by_column.get(column_id, 0)
             position_by_column[column_id] = position + 1
+            raw_task_agent = str(raw.get("agent_id", "") or "")
+            task_agent_id = raw_task_agent if raw_task_agent in assigned_agents else ""
             task = PlanTask(
                 title=title,
                 description=description_text,
                 column_id=column_id,
+                agent_id=task_agent_id,
                 position=position,
             )
             with self._db.connection() as conn:
@@ -184,7 +205,7 @@ class PlanStore(BaseRepository[PlanDef]):
                         task.id,
                         plan.id,
                         task.column_id or None,
-                        None,
+                        task.agent_id or None,
                         task.title,
                         task.description,
                         task.position,
@@ -201,6 +222,32 @@ class PlanStore(BaseRepository[PlanDef]):
                     (datetime.now(timezone.utc).isoformat(), plan.id),
                 )
         return plan
+
+    def _assign_existing_agents(self, plan_id: str, agent_ids: list[str]) -> set[str]:
+        """Assign only the agent ids that currently exist. Returns the set assigned.
+
+        Silently drops ids that have no matching ``agents`` row to keep plan
+        creation resilient against stale template references.
+        """
+        if not agent_ids:
+            return set()
+        with self._db.connection() as conn:
+            placeholders = ",".join("?" for _ in agent_ids)
+            rows = conn.execute(
+                f"SELECT id FROM agents WHERE id IN ({placeholders})",
+                agent_ids,
+            ).fetchall()
+            existing = {r["id"] for r in rows}
+            for aid in agent_ids:
+                if aid in existing:
+                    try:
+                        conn.execute(
+                            "INSERT INTO plan_agents (plan_id, agent_id) VALUES (?, ?)",
+                            (plan_id, aid),
+                        )
+                    except sqlite3.IntegrityError:
+                        pass
+        return existing
 
     def update_plan(self, plan_id: str, **kwargs: object) -> PlanDef | None:
         plan = self.get_plan(plan_id)

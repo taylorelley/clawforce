@@ -105,15 +105,27 @@ Admins can add, edit, and delete **custom** plan templates from the Marketplace 
 
 Each template has:
 
-| Field         | Purpose                                                                          |
-|---------------|----------------------------------------------------------------------------------|
-| `id`          | Unique slug identifier.                                                          |
-| `name`        | Display name.                                                                    |
-| `description` | Short summary (shown in card + detail modal).                                    |
-| `author`      | Optional attribution.                                                            |
-| `categories`  | Free-form tags.                                                                  |
-| `columns`     | Optional — if omitted, the four default columns are used.                        |
-| `tasks`       | List of `{ title, description, column }`. `column` is a short name or title.      |
+| Field         | Purpose                                                                                  |
+|---------------|------------------------------------------------------------------------------------------|
+| `id`          | Unique slug identifier.                                                                  |
+| `name`        | Display name.                                                                            |
+| `description` | Short summary (shown in card + detail modal).                                            |
+| `author`      | Optional attribution.                                                                    |
+| `categories`  | Free-form tags.                                                                          |
+| `columns`     | Optional — if omitted, the four default columns are used.                                |
+| `tasks`       | List of `{ title, description, column, agent_id? }`. `column` is a short name or title.   |
+| `agent_ids`   | Optional list of agent ids to preassign to every plan created from this template.        |
+
+### Preassigning agents
+
+Templates can seed a plan with agent assignments, saving a step at plan-creation time:
+
+- **Plan-level `agent_ids`** — every agent in this list is assigned to the new plan.
+- **Task-level `agent_id`** — the task is created already assigned to that agent, and that agent is also auto-added to the plan's agents list (so the assignment is valid).
+
+Agent ids reference claws in *your* installation, so preassignment is most useful for custom templates. In the Marketplace UI, the **Add Plan Template** modal lists your current claws as togglable chips for the plan-level list and as a per-task dropdown.
+
+Agent references are resolved leniently: if an id doesn't match an existing claw at plan-creation time (because the claw was renamed or deleted), it is **silently skipped** — the plan is still created, missing plan-level ids are dropped, and tasks that referenced a missing agent are created unassigned. The detail modal marks stale ids with a *missing* badge so you can fix or remove them.
 
 Example:
 
@@ -123,14 +135,16 @@ Example:
   description: Rapid team-wide bug discovery and triage.
   author: Clawforce
   categories: [engineering]
+  agent_ids:
+    - triager-claw-id        # whole team sees the plan
   columns:
     - { title: Reported }
     - { title: Triaged }
     - { title: Fixing }
     - { title: Verified }
   tasks:
-    - { title: Kick off bug bash, column: reported }
-    - { title: Prioritise repro repros, column: triaged }
+    - { title: Kick off bug bash, column: reported, agent_id: triager-claw-id }
+    - { title: Prioritise repros, column: triaged }
 ```
 
 ### Creating a plan from a template
