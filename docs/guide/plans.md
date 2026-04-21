@@ -86,7 +86,92 @@ flowchart LR
     Plan -->|context when coordinator notifies| Agents
 ```
 
+## Plan templates
+
+Starting a plan from zero on every recurring workflow is tedious. **Plan templates** are reusable blueprints — a set of columns and pre-filled tasks — that you can apply when creating a plan. They live in the **Marketplace → Plan Templates** tab alongside Claw Templates, Skills, MCP Servers, and Software.
+
+### Bundled starters
+
+Clawforce ships with four starter templates in `marketplace/plan-templates/catalog.yaml`:
+
+- **Product Launch** — default Kanban columns, five launch tasks (scope, brief, demo, content, enablement).
+- **Sprint Planning** — default columns, six tasks covering grooming, goal-setting, estimation, standups, demo, retro.
+- **Bug Triage** — custom columns (Triage, Investigating, Fix in Progress, Verified) seeded with intake tasks.
+- **Research Project** — custom columns (Research, Synthesise, Draft, Publish) with tasks staged across each phase.
+
+### Custom templates
+
+Admins can add, edit, and delete **custom** plan templates from the Marketplace UI. Custom entries are stored in `{storage_root}/admin/custom_plan_templates.yaml`, merged with bundled starters at read time. An id present in the bundled catalog cannot be shadowed by a custom entry — pick a unique id.
+
+Each template has:
+
+| Field         | Purpose                                                                                  |
+|---------------|------------------------------------------------------------------------------------------|
+| `id`          | Unique slug identifier.                                                                  |
+| `name`        | Display name.                                                                            |
+| `description` | Short summary (shown in card + detail modal).                                            |
+| `author`      | Optional attribution.                                                                    |
+| `categories`  | Free-form tags.                                                                          |
+| `columns`     | Optional — if omitted, the four default columns are used.                                |
+| `tasks`       | List of `{ title, description, column, agent_id? }`. `column` is a short name or title.   |
+| `agent_ids`   | Optional list of agent ids to preassign to every plan created from this template.        |
+
+### Preassigning agents
+
+Templates can seed a plan with agent assignments, saving a step at plan-creation time:
+
+- **Plan-level `agent_ids`** — every agent in this list is assigned to the new plan.
+- **Task-level `agent_id`** — the task is created already assigned to that agent, and that agent is also auto-added to the plan's agents list (so the assignment is valid).
+
+Agent ids reference claws in *your* installation, so preassignment is most useful for custom templates. In the Marketplace UI, the **Add Plan Template** modal lists your current claws as togglable chips for the plan-level list and as a per-task dropdown.
+
+Agent references are resolved leniently: if an id doesn't match an existing claw at plan-creation time (because the claw was renamed or deleted), it is **silently skipped** — the plan is still created, missing plan-level ids are dropped, and tasks that referenced a missing agent are created unassigned. The detail modal marks stale ids with a *missing* badge so you can fix or remove them.
+
+Example:
+
+```yaml
+- id: bug-bash
+  name: Bug Bash
+  description: Rapid team-wide bug discovery and triage.
+  author: Clawforce
+  categories: [engineering]
+  agent_ids:
+    - triager-claw-id        # whole team sees the plan
+  columns:
+    - { title: Reported }
+    - { title: Triaged }
+    - { title: Fixing }
+    - { title: Verified }
+  tasks:
+    - { title: Kick off bug bash, column: reported, agent_id: triager-claw-id }
+    - { title: Prioritise repros, column: triaged }
+```
+
+### Creating a plan from a template
+
+On the `/plans` page, **Add Plan** now offers two modes:
+
+- **Blank Plan** — the previous behaviour: name + description, default four columns, zero tasks.
+- **From Template** — pick a template from the dropdown; the modal shows a preview of columns and task counts and pre-fills the plan name (still editable).
+
+Under the hood, `POST /api/plans` accepts an optional `template_id`. When set, the server replaces the default columns with the template's columns (if defined) and creates each template task unassigned in the referenced column. If a task's `column` reference doesn't match any column, it falls back to the first column.
+
+### REST API
+
+| Method | Path                                     | Purpose                                               |
+|--------|------------------------------------------|-------------------------------------------------------|
+| GET    | `/api/plan-templates`                    | List bundled + custom templates                        |
+| GET    | `/api/plan-templates/custom`             | List only user-managed custom templates                |
+| GET    | `/api/plan-templates/{id}`               | Get a single template                                  |
+| POST   | `/api/plan-templates`                    | Add a custom template (409 if id already exists)       |
+| PUT    | `/api/plan-templates/{id}`               | Update a custom template                               |
+| DELETE | `/api/plan-templates/{id}`               | Delete a custom template                               |
+| POST   | `/api/plans` with `{"template_id": ...}` | Create a new plan seeded by the template's columns/tasks |
+
+Plans are independent records once created — deleting the template they were created from does not affect existing plans.
+
 ## See also
 
 - [Terminology](/reference/terminology) — Plan definition and "Plan vs external systems"
 - [Role TOOLS.md](https://github.com/saolalab/clawforce/tree/main/marketplace/roles) — Agent guidance for planning and coordination
+- [Plan templates catalog](https://github.com/saolalab/clawforce/tree/main/marketplace/plan-templates) — Bundled starter templates

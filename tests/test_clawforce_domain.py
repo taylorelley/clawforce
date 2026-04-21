@@ -8,6 +8,7 @@ from clawforce.core.domain.plan import (
     PlanDef,
     PlanTask,
     _default_plan_columns,
+    columns_from_template,
 )
 
 
@@ -204,3 +205,63 @@ class TestPlanDef:
         plan = PlanDef(columns=cols)
         assert len(plan.columns) == 4
         assert plan.columns[2].title == "Review"
+
+
+class TestColumnsFromTemplate:
+    """Tests for columns_from_template helper."""
+
+    def test_empty_template_columns_returns_defaults(self):
+        """Empty or None template columns should fall back to default four."""
+        plan_id = "plan-x"
+        assert [c.title for c in columns_from_template(plan_id, None)] == [
+            "Todo", "In Progress", "Blocked", "Done",
+        ]
+        assert [c.title for c in columns_from_template(plan_id, [])] == [
+            "Todo", "In Progress", "Blocked", "Done",
+        ]
+
+    def test_default_column_ids_use_plan_prefix(self):
+        """Default columns derived from a plan id should use the plan-id prefix."""
+        cols = columns_from_template("plan-abc", None)
+        assert cols[0].id == "plan-abc-col-todo"
+        assert cols[1].id == "plan-abc-col-in-progress"
+
+    def test_custom_columns_are_slugged(self):
+        """Custom column titles become col-<slug> ids and keep their titles."""
+        cols = columns_from_template(
+            "plan-1",
+            [
+                {"title": "Reported", "position": 0},
+                {"title": "Fix in Progress", "position": 1},
+            ],
+        )
+        assert [c.title for c in cols] == ["Reported", "Fix in Progress"]
+        assert [c.id for c in cols] == [
+            "plan-1-col-reported",
+            "plan-1-col-fix-in-progress",
+        ]
+        assert [c.position for c in cols] == [0, 1]
+
+    def test_missing_position_defaults_to_index(self):
+        """Columns without a position get their index as the position."""
+        cols = columns_from_template(
+            "p",
+            [{"title": "A"}, {"title": "B"}, {"title": "C"}],
+        )
+        assert [c.position for c in cols] == [0, 1, 2]
+
+    def test_blank_title_gets_fallback_label(self):
+        """A blank title should not produce an empty id — use a fallback label."""
+        cols = columns_from_template("p", [{"title": ""}])
+        assert cols[0].title.startswith("Column")
+        assert cols[0].id.startswith("p-col-column")
+
+    def test_duplicate_slugs_are_deduped(self):
+        """Columns whose titles slugify to the same value get numeric suffixes so ids stay unique."""
+        cols = columns_from_template(
+            "p",
+            [{"title": "Review"}, {"title": "review"}, {"title": "Review!"}],
+        )
+        ids = [c.id for c in cols]
+        assert len(set(ids)) == len(ids)
+        assert ids == ["p-col-review", "p-col-review-2", "p-col-review-3"]
