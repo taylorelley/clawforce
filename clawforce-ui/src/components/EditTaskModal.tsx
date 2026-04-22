@@ -7,9 +7,9 @@ import type { PlanTask as PlanTaskType, PlanColumn as PlanColumnType } from "../
 const css = {
   label: "mb-1 block text-xs text-claude-text-muted font-medium",
   input:
-    "w-full rounded-lg border border-claude-border bg-white px-3 py-2 text-sm text-claude-text-primary placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
+    "w-full rounded-lg border border-claude-border bg-claude-input px-3 py-2 text-sm text-claude-text-primary placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
   select:
-    "w-full rounded-lg border border-claude-border bg-white px-3 py-2 text-sm text-claude-text-primary focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
+    "w-full rounded-lg border border-claude-border bg-claude-input px-3 py-2 text-sm text-claude-text-primary focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
 };
 
 interface EditTaskModalProps {

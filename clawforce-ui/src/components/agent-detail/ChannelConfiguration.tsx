@@ -76,7 +76,7 @@ const CHANNELS: ChannelDef[] = [
   {
     key: "email",
     name: "Email",
-    icon: <MdEmail className="text-gray-600" size={20} />,
+    icon: <MdEmail className="text-claude-text-tertiary" size={20} />,
     description: "SMTP and IMAP configuration",
     fields: [
       { key: "smtp_host", label: "SMTP Host", type: "text" },
@@ -163,7 +163,7 @@ export function ChannelConfiguration({
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-claude-text-primary">{channel.name}</span>
                       {enabled && (
-                        <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Enabled</span>
+                        <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-950/50 text-green-700 rounded-full">Enabled</span>
                       )}
                     </div>
                     <p className="text-xs text-claude-text-muted mt-0.5">{channel.description}</p>

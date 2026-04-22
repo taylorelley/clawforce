@@ -108,11 +108,11 @@ export default function TaskDetailModal({
 
   const statusColor =
     task.column_id === "col-done"
-      ? "bg-green-100 text-green-800"
+      ? "bg-green-100 dark:bg-green-950/50 text-green-800"
       : task.column_id === "col-in-progress"
-        ? "bg-blue-100 text-blue-800"
+        ? "bg-blue-100 dark:bg-blue-950/50 text-blue-800"
         : task.column_id === "col-blocked"
-          ? "bg-amber-100 text-amber-800"
+          ? "bg-amber-100 dark:bg-amber-950/50 text-amber-800"
           : "bg-claude-surface text-claude-text-secondary";
 
   return (

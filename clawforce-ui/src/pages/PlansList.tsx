@@ -73,7 +73,7 @@ export default function PlansList() {
                   <button
                     onClick={() => deactivatePlan.mutate(plan.id)}
                     disabled={deactivatePlan.isPending}
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-red-600 bg-red-50 ring-1 ring-red-600/20 hover:bg-red-100 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-red-600 bg-red-50 dark:bg-red-950/40 ring-1 ring-red-600/20 hover:bg-red-100 dark:bg-red-950/50 transition-colors disabled:opacity-50"
                   >
                     <StopIcon className="h-2.5 w-2.5" />
                     Pause
@@ -82,7 +82,7 @@ export default function PlansList() {
                   <button
                     onClick={() => activatePlan.mutate(plan.id)}
                     disabled={activatePlan.isPending}
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-green-700 bg-green-50 ring-1 ring-green-600/20 hover:bg-green-100 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-green-700 bg-green-50 dark:bg-green-950/40 ring-1 ring-green-600/20 hover:bg-green-100 dark:bg-green-950/50 transition-colors disabled:opacity-50"
                   >
                     <PlayIcon className="h-2.5 w-2.5" />
                     Activate
@@ -90,7 +90,7 @@ export default function PlansList() {
                 )}
                 <button
                   onClick={() => setDeleteTarget({ id: plan.id, name: plan.name })}
-                  className="rounded p-1 text-claude-border-strong hover:text-red-500 hover:bg-red-50 transition-all"
+                  className="rounded p-1 text-claude-border-strong hover:text-red-500 hover:bg-red-50 dark:bg-red-950/40 transition-all"
                   title="Delete plan"
                 >
                   <TrashIcon className="h-3.5 w-3.5" />

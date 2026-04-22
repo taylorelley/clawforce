@@ -41,7 +41,7 @@ export default function Modal({ open, onClose, title, icon, children, footer, si
       }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
     >
-      <div className={`w-full ${maxWidthClass} max-h-[90vh] flex flex-col rounded-xl border border-claude-border bg-white shadow-xl`}>
+      <div className={`w-full ${maxWidthClass} max-h-[90vh] flex flex-col rounded-xl border border-claude-border bg-claude-input shadow-xl`}>
         <div className="flex items-center justify-between flex-shrink-0 border-b border-claude-border px-5 py-3">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-claude-text-primary">
             {icon && <span className="flex shrink-0 text-claude-text-muted">{icon}</span>}

@@ -87,7 +87,7 @@ export default function PlanTemplateDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-3 py-1.5 text-xs border border-claude-border bg-white hover:bg-claude-surface transition-colors"
+            className="rounded-lg px-3 py-1.5 text-xs border border-claude-border bg-claude-input hover:bg-claude-surface transition-colors"
           >
             Close
           </button>
@@ -146,7 +146,7 @@ export default function PlanTemplateDetailModal({
                     className={`rounded-full px-2 py-0.5 text-[10px] ring-1 ${
                       known
                         ? "bg-claude-accent/10 text-claude-accent ring-claude-accent/30"
-                        : "bg-amber-50 text-amber-700 ring-amber-200"
+                        : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 ring-amber-200"
                     }`}
                     title={known ? aid : "Agent no longer exists — will be skipped at plan creation"}
                   >
@@ -177,7 +177,7 @@ export default function PlanTemplateDetailModal({
                     {col.tasks.map((t, i) => (
                       <li
                         key={`${col.title}-${i}`}
-                        className="rounded border border-claude-border bg-white px-2 py-1.5"
+                        className="rounded border border-claude-border bg-claude-input px-2 py-1.5"
                       >
                         <div className="text-xs font-medium text-claude-text-primary">{t.title}</div>
                         {t.description && (
@@ -190,7 +190,7 @@ export default function PlanTemplateDetailModal({
                               className={`mt-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] ring-1 ${
                                 known
                                   ? "bg-claude-accent/10 text-claude-accent ring-claude-accent/30"
-                                  : "bg-amber-50 text-amber-700 ring-amber-200"
+                                  : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 ring-amber-200"
                               }`}
                               title={known ? t.agent_id : "Agent no longer exists — task will be unassigned"}
                             >

@@ -65,7 +65,7 @@ export function VariablesTab({ agentId }: { agentId: string }) {
   return (
     <div className="space-y-3">
       <Section title="Variables">
-        <div className="mb-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 flex items-start gap-2">
+        <div className="mb-3 rounded-lg border border-claude-border bg-claude-surface px-3 py-2 text-sm text-claude-text-tertiary flex items-start gap-2">
           <svg className="h-4 w-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -106,7 +106,7 @@ export function VariablesTab({ agentId }: { agentId: string }) {
                   type="checkbox"
                   checked={secret}
                   onChange={() => toggleSecret(idx)}
-                  className="rounded border-gray-300"
+                  className="rounded border-claude-border"
                 />
                 Secret
               </label>
@@ -127,7 +127,7 @@ export function VariablesTab({ agentId }: { agentId: string }) {
             type="button"
             onClick={save}
             disabled={saveMut.isPending}
-            className={`${css.btn} ${saved ? "bg-green-50 text-green-700 ring-1 ring-green-200" : "bg-claude-accent text-white hover:bg-claude-accent-hover"} disabled:opacity-40 text-xs px-3 py-1.5`}
+            className={`${css.btn} ${saved ? "bg-green-50 dark:bg-green-950/40 text-green-700 ring-1 ring-green-200" : "bg-claude-accent text-white hover:bg-claude-accent-hover"} disabled:opacity-40 text-xs px-3 py-1.5`}
           >
             {saveMut.isPending ? "Saving…" : saved ? "Saved" : "Save variables"}
           </button>

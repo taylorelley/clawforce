@@ -7,9 +7,9 @@ import type { MarketplaceSkill, AgentSummary } from "../lib/types";
 const css = {
   btn: "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
   select:
-    "w-full rounded-lg border border-claude-border bg-white px-3 py-2 text-sm focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
+    "w-full rounded-lg border border-claude-border bg-claude-input px-3 py-2 text-sm focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
   input:
-    "w-full rounded-lg border border-claude-border bg-white px-3 py-2 text-sm placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
+    "w-full rounded-lg border border-claude-border bg-claude-input px-3 py-2 text-sm placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
 };
 
 interface Props {
@@ -98,7 +98,7 @@ export default function InstallSkillModal({ open, onClose, skill, onInstalled }:
     >
       {success ? (
         <div className="flex flex-col items-center justify-center py-6 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 mb-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/50 mb-3">
             <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
@@ -126,7 +126,7 @@ export default function InstallSkillModal({ open, onClose, skill, onInstalled }:
                     </span>
                   )}
                   {skill.source === "self-hosted" && (
-                    <span className="rounded px-1.5 py-px text-[10px] font-medium bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200">
+                    <span className="rounded px-1.5 py-px text-[10px] font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 ring-1 ring-indigo-200">
                       Self-hosted
                     </span>
                   )}
@@ -165,7 +165,7 @@ export default function InstallSkillModal({ open, onClose, skill, onInstalled }:
             {agentsLoading ? (
               <p className="text-xs text-claude-text-muted">Loading agents...</p>
             ) : runningAgents.length === 0 ? (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              <div className="rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 text-xs text-amber-700">
                 No running agents. Start an agent first to install skills.
               </div>
             ) : (
@@ -185,7 +185,7 @@ export default function InstallSkillModal({ open, onClose, skill, onInstalled }:
           </div>
 
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 px-3 py-2 text-xs text-red-700">
               {error}
             </div>
           )}

@@ -16,7 +16,7 @@ function ToolEventRow({ entry, result }: { entry: ActivityEntry; result?: Activi
           {formatActivityTime(entry.ts)}
         </span>
         {entry.toolName && (
-          <span className="shrink-0 rounded bg-violet-50 border border-violet-200 px-1.5 py-0.5 text-[10px] font-semibold font-mono text-violet-700">
+          <span className="shrink-0 rounded bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-900 px-1.5 py-0.5 text-[10px] font-semibold font-mono text-violet-700">
             {entry.toolName}
           </span>
         )}
@@ -201,14 +201,14 @@ export function ActivityLogView({ agentId, token }: { agentId: string; token: st
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-claude-border bg-white/50">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-claude-border bg-claude-input/50">
         <div className="flex rounded-md border border-claude-border bg-claude-surface p-0.5">
           {ACTIVITY_FILTERS.map((f) => (
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
               className={`rounded px-2 py-0.5 text-[10px] font-medium transition-colors ${filter === f.key
-                  ? "bg-white text-claude-text-primary shadow-sm"
+                  ? "bg-claude-input text-claude-text-primary shadow-sm"
                   : "text-claude-text-muted hover:text-claude-text-secondary"
                 }`}
             >
@@ -223,7 +223,7 @@ export function ActivityLogView({ agentId, token }: { agentId: string; token: st
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Filter events…"
-            className="w-full rounded-md border border-claude-border bg-white px-2.5 py-1 text-[11px] text-claude-text-secondary placeholder:text-claude-text-muted focus:outline-none focus:ring-1 focus:ring-claude-accent/40 focus:border-claude-accent"
+            className="w-full rounded-md border border-claude-border bg-claude-input px-2.5 py-1 text-[11px] text-claude-text-secondary placeholder:text-claude-text-muted focus:outline-none focus:ring-1 focus:ring-claude-accent/40 focus:border-claude-accent"
           />
           {search && (
             <button
@@ -247,8 +247,8 @@ export function ActivityLogView({ agentId, token }: { agentId: string; token: st
               setPaused(!paused);
             }}
             className={`rounded px-2 py-0.5 text-[10px] font-medium border transition-colors ${paused
-                ? "border-amber-300 bg-amber-50 text-amber-700"
-                : "border-claude-border bg-white text-claude-text-muted hover:text-claude-text-secondary"
+                ? "border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-700"
+                : "border-claude-border bg-claude-input text-claude-text-muted hover:text-claude-text-secondary"
               }`}
           >
             {paused ? "▶ Resume" : "⏸ Pause"}

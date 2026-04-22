@@ -231,13 +231,13 @@ export const ACTIVITY_FILTERS: { key: ActivityFilter; label: string }[] = [
 ];
 
 export const EVENT_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string; group: ActivityFilter }> = {
-  message_received: { label: "Received", color: "text-blue-700", bg: "bg-blue-50 border-blue-200", icon: "↓", group: "messages" },
-  message_sent: { label: "Sent", color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200", icon: "↑", group: "messages" },
-  tool_call: { label: "Tool Call", color: "text-violet-700", bg: "bg-violet-50 border-violet-200", icon: "⚡", group: "tools" },
-  tool_result: { label: "Result", color: "text-amber-700", bg: "bg-amber-50 border-amber-200", icon: "←", group: "tools" },
-  agent_started: { label: "Started", color: "text-green-700", bg: "bg-green-50 border-green-200", icon: "●", group: "lifecycle" },
-  agent_stopped: { label: "Stopped", color: "text-gray-600", bg: "bg-gray-50 border-gray-200", icon: "○", group: "lifecycle" },
-  status: { label: "Status", color: "text-amber-600", bg: "bg-amber-50 border-amber-200", icon: "◐", group: "lifecycle" },
+  message_received: { label: "Received", color: "text-blue-700", bg: "bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900", icon: "↓", group: "messages" },
+  message_sent: { label: "Sent", color: "text-emerald-700", bg: "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900", icon: "↑", group: "messages" },
+  tool_call: { label: "Tool Call", color: "text-violet-700", bg: "bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-900", icon: "⚡", group: "tools" },
+  tool_result: { label: "Result", color: "text-amber-700", bg: "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900", icon: "←", group: "tools" },
+  agent_started: { label: "Started", color: "text-green-700", bg: "bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-900", icon: "●", group: "lifecycle" },
+  agent_stopped: { label: "Stopped", color: "text-claude-text-tertiary", bg: "bg-claude-surface border-claude-border", icon: "○", group: "lifecycle" },
+  status: { label: "Status", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900", icon: "◐", group: "lifecycle" },
 };
 
 export const ACTIVITY_BUFFER_MAX = 500;

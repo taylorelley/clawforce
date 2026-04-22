@@ -29,7 +29,7 @@ export default function Login() {
           <img src={clawforceLogo} alt="Clawforce" className="h-16 w-16 shrink-0" />
           <span className="text-lg font-semibold text-claude-text-primary">ClawForce</span>
         </div>
-        {error && <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-3 rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600">{error}</p>}
         <Input
           type="text"
           placeholder="Username"

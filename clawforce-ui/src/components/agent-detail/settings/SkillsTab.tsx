@@ -34,14 +34,14 @@ export function SkillsTab({
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-claude-text-primary">{skill.name}</span>
               {skill.always && (
-                <span className="rounded px-1.5 py-px text-[10px] font-medium bg-blue-50 text-blue-700 ring-1 ring-blue-200">always</span>
+                <span className="rounded px-1.5 py-px text-[10px] font-medium bg-blue-50 dark:bg-blue-950/40 text-blue-700 ring-1 ring-blue-200">always</span>
               )}
               {!skill.available && (
-                <span className="rounded px-1.5 py-px text-[10px] font-medium bg-amber-50 text-amber-700 ring-1 ring-amber-200">deps missing</span>
+                <span className="rounded px-1.5 py-px text-[10px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 ring-1 ring-amber-200">deps missing</span>
               )}
               <span className={`rounded px-1.5 py-px text-[10px] font-medium ${skill.source === "workspace"
-                  ? "bg-purple-50 text-purple-700 ring-1 ring-purple-200"
-                  : "bg-gray-50 text-gray-500 ring-1 ring-gray-200"
+                  ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 ring-1 ring-purple-200"
+                  : "bg-claude-surface text-claude-text-tertiary ring-1 ring-gray-200"
                 }`}>
                 {skill.source}
               </span>

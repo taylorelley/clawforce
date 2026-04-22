@@ -53,9 +53,9 @@ const EMPTY_FORM: FormState = {
 const css = {
   label: "mb-1 block text-xs text-claude-text-muted font-medium",
   input:
-    "w-full rounded-lg border border-claude-border bg-white px-3 py-1.5 text-sm text-claude-text-primary placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
+    "w-full rounded-lg border border-claude-border bg-claude-input px-3 py-1.5 text-sm text-claude-text-primary placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
   textarea:
-    "w-full rounded-lg border border-claude-border bg-white px-3 py-2 text-xs font-mono text-claude-text-primary placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
+    "w-full rounded-lg border border-claude-border bg-claude-input px-3 py-2 text-xs font-mono text-claude-text-primary placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
 };
 
 function deriveTransport(entry: CustomMcpEntry | null | undefined): Transport {
@@ -203,7 +203,7 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-3 py-1.5 text-xs border border-claude-border bg-white hover:bg-claude-surface transition-colors"
+            className="rounded-lg px-3 py-1.5 text-xs border border-claude-border bg-claude-input hover:bg-claude-surface transition-colors"
           >
             Cancel
           </button>
@@ -220,7 +220,7 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
     >
       <form id="custom-mcp-form" onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 px-3 py-2 text-xs text-red-700">
             {error}
           </div>
         )}
@@ -338,7 +338,7 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
               className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
                 form.transport === "stdio"
                   ? "border-claude-accent bg-claude-accent/5 text-claude-text-primary"
-                  : "border-claude-border bg-white text-claude-text-secondary hover:bg-claude-surface"
+                  : "border-claude-border bg-claude-input text-claude-text-secondary hover:bg-claude-surface"
               }`}
             >
               stdio (command)
@@ -354,7 +354,7 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
               className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
                 form.transport === "http"
                   ? "border-claude-accent bg-claude-accent/5 text-claude-text-primary"
-                  : "border-claude-border bg-white text-claude-text-secondary hover:bg-claude-surface"
+                  : "border-claude-border bg-claude-input text-claude-text-secondary hover:bg-claude-surface"
               }`}
             >
               http (URL)

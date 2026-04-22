@@ -221,7 +221,7 @@ export function WorkspaceTab({
   const lang = current.endsWith(".md") ? "markdown" : current.endsWith(".json") ? "json" : current.endsWith(".sh") ? "shell" : current.endsWith(".yaml") || current.endsWith(".yml") ? "yaml" : "plaintext";
 
   return (
-    <div data-workspace-container className="flex h-[calc(100vh-14rem)] gap-0 rounded-xl border border-claude-border overflow-hidden bg-white">
+    <div data-workspace-container className="flex h-[calc(100vh-14rem)] gap-0 rounded-xl border border-claude-border overflow-hidden bg-claude-input">
       {/* Explorer sidebar */}
       <div
         className="flex-shrink-0 border-r border-claude-border bg-claude-bg flex flex-col"
@@ -307,7 +307,7 @@ export function WorkspaceTab({
                   <FileIcon name={current.split("/").pop()!} />
                   <span className="truncate font-mono text-[11px] text-claude-text-secondary">{current}</span>
                   {isAgentReadOnly && (
-                    <span className="shrink-0 rounded bg-amber-50 ring-1 ring-amber-200 px-1.5 py-0.5 text-[10px] text-amber-600" title="The agent cannot modify this file at runtime">
+                    <span className="shrink-0 rounded bg-amber-50 dark:bg-amber-950/40 ring-1 ring-amber-200 px-1.5 py-0.5 text-[10px] text-amber-600" title="The agent cannot modify this file at runtime">
                       agent r/o
                     </span>
                   )}
@@ -315,7 +315,7 @@ export function WorkspaceTab({
                 </div>
                 <div className="flex items-center gap-1.5">
                   {isMarkdown && (
-                    <div className="flex rounded-md border border-claude-border bg-white p-0.5">
+                    <div className="flex rounded-md border border-claude-border bg-claude-input p-0.5">
                       <button
                         type="button"
                         onClick={() => setViewMode("edit")}
@@ -526,7 +526,7 @@ export function WorkspaceTab({
 
       {renameTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+          <div className="bg-claude-input rounded-xl shadow-lg p-6 w-full max-w-sm">
             <h3 className="text-lg font-semibold text-claude-text-primary mb-4">Rename</h3>
             <input
               type="text"
@@ -549,7 +549,7 @@ export function WorkspaceTab({
 
       {moveTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+          <div className="bg-claude-input rounded-xl shadow-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-claude-text-primary mb-2">Move</h3>
             <p className="text-xs text-claude-text-muted mb-4">Enter the new path for "{moveTarget.split("/").pop()}"</p>
             <input

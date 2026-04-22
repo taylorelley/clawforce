@@ -337,11 +337,11 @@ export default function AgentDetail() {
           <h1 className="text-lg font-semibold text-claude-text-primary">{agent.name}</h1>
           <span
             className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium ${agent.status === "running"
-                ? "bg-green-50 text-green-700 ring-1 ring-green-200"
+                ? "bg-green-50 dark:bg-green-950/40 text-green-700 ring-1 ring-green-200"
                 : agent.status === "provisioning" || agent.status === "connecting"
-                  ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+                  ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 ring-1 ring-amber-200"
                   : agent.status === "failed"
-                    ? "bg-red-50 text-red-700 ring-1 ring-red-200"
+                    ? "bg-red-50 dark:bg-red-950/40 text-red-700 ring-1 ring-red-200"
                     : "bg-claude-surface text-claude-text-muted ring-1 ring-claude-border"
               }`}
           >
@@ -378,11 +378,11 @@ export default function AgentDetail() {
         </div>
         <div className="flex items-center gap-2">
           {agent.status === "running" ? (
-            <button onClick={stopAgent} className={`${css.btn} text-red-500 ring-1 ring-red-200 hover:bg-red-50`}>
+            <button onClick={stopAgent} className={`${css.btn} text-red-500 ring-1 ring-red-200 hover:bg-red-50 dark:bg-red-950/40`}>
               Stop
             </button>
           ) : (
-            <button onClick={startAgent} className={`${css.btn} text-green-600 ring-1 ring-green-200 hover:bg-green-50`}>
+            <button onClick={startAgent} className={`${css.btn} text-green-600 ring-1 ring-green-200 hover:bg-green-50 dark:bg-green-950/40`}>
               Start
             </button>
           )}

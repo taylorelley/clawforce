@@ -28,7 +28,7 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
         className={`${css.toggle} ${checked ? "bg-claude-accent" : "bg-claude-border-strong"}`}
       >
         <span
-          className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${checked ? "translate-x-4" : "translate-x-0"}`}
+          className={`pointer-events-none block h-4 w-4 rounded-full bg-claude-input shadow-sm transition-transform ${checked ? "translate-x-4" : "translate-x-0"}`}
         />
       </button>
       {label && <span className="text-sm text-claude-text-secondary">{label}</span>}

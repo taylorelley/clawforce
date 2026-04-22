@@ -142,7 +142,7 @@ export default function TemplateDetailModal({
         </p>
       )}
       {detail && (
-        <div className="flex h-[min(70vh,32rem)] gap-0 rounded-lg border border-claude-border overflow-hidden bg-white">
+        <div className="flex h-[min(70vh,32rem)] gap-0 rounded-lg border border-claude-border overflow-hidden bg-claude-input">
           {/* Explorer sidebar */}
           <div className="w-52 flex-shrink-0 border-r border-claude-border bg-claude-bg flex flex-col overflow-hidden">
             <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-claude-text-muted border-b border-claude-border">

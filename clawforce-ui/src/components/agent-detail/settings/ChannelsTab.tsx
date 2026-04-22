@@ -84,7 +84,7 @@ export function ChannelsTab({
                 <span className="flex items-center justify-center w-5 h-5 shrink-0">{ch.icon}</span>
                 <span className="text-sm font-medium text-claude-text-primary">{ch.label}</span>
                 {isEnabled && (
-                  <span className="rounded-full bg-green-50 px-1.5 py-px text-[10px] font-medium text-green-700 ring-1 ring-green-200">Active</span>
+                  <span className="rounded-full bg-green-50 dark:bg-green-950/40 px-1.5 py-px text-[10px] font-medium text-green-700 ring-1 ring-green-200">Active</span>
                 )}
               </div>
               <svg
@@ -100,7 +100,7 @@ export function ChannelsTab({
             {isOpen && (
               <div className="mt-3 space-y-2.5 border-t border-claude-border pt-3">
                 {isZalo && !zaloBridgeInstalled && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+                  <div className="rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-3 py-2.5 text-sm text-amber-800">
                     <p className="font-medium">Zalo Personal Bridge is not available</p>
                     <p className="mt-1 text-amber-700">
                       Install it from{" "}
@@ -112,7 +112,7 @@ export function ChannelsTab({
                   </div>
                 )}
                 {isWhatsApp && !whatsappBridgeInstalled && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+                  <div className="rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-3 py-2.5 text-sm text-amber-800">
                     <p className="font-medium">WhatsApp Bridge is not available</p>
                     <p className="mt-1 text-amber-700">
                       Install it from{" "}
@@ -129,7 +129,7 @@ export function ChannelsTab({
                     return (
                       <div key={f.name} className="flex items-center gap-2.5 opacity-60">
                         <div className={`${css.toggle} bg-claude-border-strong cursor-not-allowed`}>
-                          <span className="pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm translate-x-0" />
+                          <span className="pointer-events-none block h-4 w-4 rounded-full bg-claude-input shadow-sm translate-x-0" />
                         </div>
                         <span className="text-sm text-claude-text-muted">{f.label}</span>
                         <span className="text-xs text-claude-text-muted">(install bridge first)</span>

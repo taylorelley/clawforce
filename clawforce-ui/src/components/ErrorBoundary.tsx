@@ -37,7 +37,7 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900">
           <h3 className="text-red-800 font-semibold mb-2">Something went wrong</h3>
           <p className="text-red-600 text-sm mb-3">
             {this.state.error?.message || "An unexpected error occurred"}
@@ -61,7 +61,7 @@ export class ErrorBoundary extends Component<Props, State> {
  */
 export function PanelErrorFallback({ title, error }: { title: string; error?: Error }) {
   return (
-    <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+    <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900">
       <h4 className="text-red-800 font-medium mb-1">{title}</h4>
       <p className="text-red-600 text-sm">{error?.message || "Failed to load"}</p>
     </div>

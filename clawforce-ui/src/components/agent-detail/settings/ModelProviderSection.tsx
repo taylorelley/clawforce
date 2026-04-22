@@ -445,7 +445,7 @@ export function ModelProviderSection({
             </button>
 
             {modelDropdownOpen && models.length > 0 && (
-              <div className="absolute z-50 mt-1 w-full rounded-xl border border-claude-border bg-white shadow-lg">
+              <div className="absolute z-50 mt-1 w-full rounded-xl border border-claude-border bg-claude-input shadow-lg">
                 <div className="border-b border-claude-border p-2">
                   <input
                     ref={searchRef}

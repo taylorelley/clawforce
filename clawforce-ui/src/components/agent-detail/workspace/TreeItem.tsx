@@ -82,7 +82,7 @@ export function TreeItem({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onDelete(node.path); }}
-              className="p-0.5 rounded text-claude-text-muted hover:text-red-500 hover:bg-red-50"
+              className="p-0.5 rounded text-claude-text-muted hover:text-red-500 hover:bg-red-50 dark:bg-red-950/40"
               title="Delete"
             >
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -448,7 +448,7 @@ function ConfigFieldInput({
               dragOver
                 ? "border-claude-accent bg-claude-accent-soft"
                 : value
-                ? "border-green-400 bg-green-50"
+                ? "border-green-400 bg-green-50 dark:bg-green-950/40"
                 : "border-claude-border hover:border-claude-accent/50 hover:bg-claude-accent-soft/50"
             }`}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -597,7 +597,7 @@ function McpAuthFixForm({
   // HTTP server advertising OAuth 2.1 via WWW-Authenticate (MCP spec, RFC 9728)
   if (authUrl) {
     return (
-      <div className="mt-1.5 rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-3">
+      <div className="mt-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-3 space-y-3">
         <p className="text-xs font-medium text-amber-800">
           This server uses OAuth 2.1. You need to authorize access before it can connect.
         </p>
@@ -619,7 +619,7 @@ function McpAuthFixForm({
   }
 
   return (
-    <div className="mt-1.5 rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-3">
+    <div className="mt-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-3 space-y-3">
       <p className="text-xs font-medium text-amber-800">
         {hasFiles
           ? "This server requires configuration. Upload any required files and fill in credentials below."
@@ -768,8 +768,8 @@ export function ToolsTab({ agentId, agent, updateTools, setTools, onSave }: { ag
                       <span className="text-sm font-medium text-claude-text-primary">{name}</span>
                       <span
                         className={`rounded px-1.5 py-px text-[10px] font-medium ${srv.url
-                            ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200"
-                            : "bg-purple-50 text-purple-700 ring-1 ring-purple-200"
+                            ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 ring-1 ring-blue-200"
+                            : "bg-purple-50 dark:bg-purple-950/40 text-purple-700 ring-1 ring-purple-200"
                           }`}
                       >
                         {srv.url ? "HTTP" : "stdio"}
@@ -777,9 +777,9 @@ export function ToolsTab({ agentId, agent, updateTools, setTools, onSave }: { ag
                       {st && (
                         <span
                           className={`rounded px-1.5 py-px text-[10px] font-medium ${st.status === "connected"
-                              ? "bg-green-50 text-green-700 ring-1 ring-green-200"
+                              ? "bg-green-50 dark:bg-green-950/40 text-green-700 ring-1 ring-green-200"
                               : st.status === "failed"
-                                ? "bg-red-50 text-red-700 ring-1 ring-red-200"
+                                ? "bg-red-50 dark:bg-red-950/40 text-red-700 ring-1 ring-red-200"
                                 : "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200"
                             }`}
                           title={st.error || undefined}
