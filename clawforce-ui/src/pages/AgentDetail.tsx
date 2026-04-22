@@ -8,6 +8,7 @@ import { api } from "../lib/api";
 import { css, CHANNEL_DEFS } from "../components/agent-detail/constants";
 import { deepMerge, defaultTools, defaultSkills, defaultHeartbeat } from "../components/agent-detail/utils";
 import { WorkspaceTab } from "../components/agent-detail/workspace/WorkspaceTab";
+import { ChatTab } from "../components/agent-detail/chat/ChatTab";
 import { LogsTab } from "../components/agent-detail/logs/LogsTab";
 import { ScheduledJobsTab } from "../components/agent-detail/settings/ScheduledJobsTab";
 import { SettingsContent } from "../components/agent-detail/settings/SettingsContent";
@@ -295,6 +296,7 @@ export default function AgentDetail() {
 
   const mainTabs: { key: MainTab; label: string }[] = [
     { key: "workspace", label: "Workspace" },
+    { key: "chat", label: "Chat" },
     { key: "logs", label: "Logs" },
     { key: "jobs", label: "Schedule" },
     { key: "settings", label: "Settings" },
@@ -395,7 +397,7 @@ export default function AgentDetail() {
         ))}
       </div>
 
-      {(agent.status === "provisioning" || agent.status === "connecting") && (mainTab === "workspace" || mainTab === "logs" || mainTab === "jobs") ? (
+      {(agent.status === "provisioning" || agent.status === "connecting") && (mainTab === "workspace" || mainTab === "chat" || mainTab === "logs" || mainTab === "jobs") ? (
         <div className="rounded-xl border border-claude-border bg-claude-bg p-8 text-center">
           <div className="flex justify-center mb-4">
             <svg className="h-10 w-10 animate-spin text-claude-accent" fill="none" viewBox="0 0 24 24">
@@ -422,7 +424,7 @@ export default function AgentDetail() {
             </button>
           )}
         </div>
-      ) : agent.status !== "running" && (mainTab === "workspace" || mainTab === "logs" || mainTab === "jobs") ? (
+      ) : agent.status !== "running" && (mainTab === "workspace" || mainTab === "chat" || mainTab === "logs" || mainTab === "jobs") ? (
         <div className="rounded-xl border border-claude-border bg-claude-bg p-8 text-center">
           <p className="text-sm font-medium text-claude-text-primary mb-1">Agent is not started</p>
           <p className="text-xs text-claude-text-muted mb-4 max-w-sm mx-auto">
@@ -437,6 +439,7 @@ export default function AgentDetail() {
           {mainTab === "workspace" && (
             <WorkspaceTab agentId={agentId!} token={token!} agentStatus={agent?.status} status_message={agent?.status_message} />
           )}
+          {mainTab === "chat" && <ChatTab agentId={agentId!} token={token!} />}
           {mainTab === "jobs" && <ScheduledJobsTab agentId={agentId!} />}
           {mainTab === "logs" && <LogsTab agentId={agentId!} token={token!} />}
         </>

@@ -104,7 +104,7 @@ export type Agent = {
   onboarding_completed?: boolean;
 };
 
-export type MainTab = "workspace" | "jobs" | "logs" | "settings";
+export type MainTab = "workspace" | "chat" | "jobs" | "logs" | "settings";
 export type SettingsTab = "general" | "variables" | "channels" | "tools" | "skills" | "software";
 
 export type FieldDef = { name: string; label: string; type: "text" | "password" | "number" | "toggle" | "tags"; placeholder?: string };

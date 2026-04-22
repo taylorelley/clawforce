@@ -42,3 +42,9 @@ class A2AMessageBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     message: str
+
+
+class ChatMessageBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    message: str
