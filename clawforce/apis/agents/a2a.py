@@ -176,6 +176,7 @@ async def send_chat_message(
         )
 
     user_id = current.get("user_id") or current.get("sub") or ""
+    session_key = f"webchat:{user_id}:{agent_id}"
 
     run_id = uuid.uuid4().hex
     loop = asyncio.get_running_loop()
@@ -189,6 +190,7 @@ async def send_chat_message(
             "run_id": run_id,
             "text": body.message,
             "from_agent_id": f"user:{user_id}",
+            "session_key": session_key,
         },
     )
 

@@ -298,21 +298,22 @@ class AdminClient:
                         continue
                     run_id = data.get("run_id", "")
                     text = data.get("text", "")
+                    session_key = data.get("session_key") or f"acp:{run_id}"
                     logger.info(f"ACP run received: run_id={run_id}")
-                    asyncio.create_task(self._handle_acp_run(run_id, text))
+                    asyncio.create_task(self._handle_acp_run(run_id, text, session_key))
                 elif msg_type == "request" and self._ctx:
                     asyncio.create_task(self._handle_request(ws, data))
         except (asyncio.CancelledError, websockets.exceptions.ConnectionClosed):
             pass
 
-    async def _handle_acp_run(self, run_id: str, text: str) -> None:
+    async def _handle_acp_run(self, run_id: str, text: str, session_key: str | None = None) -> None:
         if not self._ctx:
             return
         logger.info(f"ACP run processing: run_id={run_id}")
         try:
             reply = await self._ctx.agent_loop.process_direct(
                 text,
-                session_key=f"acp:{run_id}",
+                session_key=session_key or f"acp:{run_id}",
                 channel="acp",
                 chat_id=f"acp:{run_id}",
             )
