@@ -77,7 +77,7 @@ export function TerminalPanel({
       </div>
 
       {error && !isConnected && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/90 z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-claude-input/90 z-10">
           <div className="text-center">
             <p className="text-red-600 mb-2">{error}</p>
             <Button onClick={onConnect} disabled={isConnecting}>

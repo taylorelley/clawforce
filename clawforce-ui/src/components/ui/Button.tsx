@@ -8,9 +8,9 @@ const variants = {
   ghost:
     "text-claude-text-tertiary hover:bg-claude-surface hover:text-claude-text-secondary",
   danger:
-    "text-red-500 ring-1 ring-red-200 hover:text-red-600 hover:bg-red-50",
+    "text-red-500 ring-1 ring-red-200 hover:text-red-600 hover:bg-red-50 dark:bg-red-950/40",
   success:
-    "text-green-600 hover:text-green-700 hover:bg-green-50",
+    "text-green-600 hover:text-green-700 hover:bg-green-50 dark:bg-green-950/40",
 } as const;
 
 const sizes = {

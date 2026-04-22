@@ -73,7 +73,7 @@ export function ProcessLogView({ agentId, token }: { agentId: string; token: str
         if (c === 34) return '<span class="text-blue-400">';
         if (c === 35) return '<span class="text-purple-400">';
         if (c === 36) return '<span class="text-cyan-400">';
-        if (c === 90) return '<span class="text-gray-500">';
+        if (c === 90) return '<span class="text-claude-text-tertiary">';
         return '';
       })
       .replace(/\x1b\[\d+;\d+m/g, '');
@@ -107,7 +107,7 @@ export function ProcessLogView({ agentId, token }: { agentId: string; token: str
           </div>
         )}
         {lines.map((line, i) => (
-          <div key={i} className="hover:bg-white/5" dangerouslySetInnerHTML={{ __html: ansiToHtml(line) }} />
+          <div key={i} className="hover:bg-claude-input/5" dangerouslySetInnerHTML={{ __html: ansiToHtml(line) }} />
         ))}
         <div ref={endRef} />
       </div>

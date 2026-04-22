@@ -69,13 +69,13 @@ export default function ClawsList() {
                   <button
                     onClick={() => stopAgent.mutate(claw.id)}
                     disabled={stopAgent.isPending}
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-red-600 bg-red-50 ring-1 ring-red-600/20 hover:bg-red-100 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-red-600 bg-red-50 dark:bg-red-950/40 ring-1 ring-red-600/20 hover:bg-red-100 dark:bg-red-950/50 transition-colors disabled:opacity-50"
                   >
                     <StopIcon className="h-2.5 w-2.5" />
                     Stop
                   </button>
                 ) : isTransitioning ? (
-                  <span className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-amber-600 bg-amber-50 ring-1 ring-amber-600/20 opacity-75">
+                  <span className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-amber-600 bg-amber-50 dark:bg-amber-950/40 ring-1 ring-amber-600/20 opacity-75">
                     <svg className="h-2.5 w-2.5 animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -86,7 +86,7 @@ export default function ClawsList() {
                   <button
                     onClick={() => startAgent.mutate(claw.id)}
                     disabled={startAgent.isPending}
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-green-700 bg-green-50 ring-1 ring-green-600/20 hover:bg-green-100 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-green-700 bg-green-50 dark:bg-green-950/40 ring-1 ring-green-600/20 hover:bg-green-100 dark:bg-green-950/50 transition-colors disabled:opacity-50"
                   >
                     <PlayIcon className="h-2.5 w-2.5" />
                     Start

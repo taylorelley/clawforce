@@ -64,9 +64,9 @@ export function LogsViewer({
       case "info":
         return "text-blue-600";
       case "debug":
-        return "text-gray-500";
+        return "text-claude-text-tertiary";
       default:
-        return "text-gray-700";
+        return "text-claude-text-secondary";
     }
   };
 
@@ -150,12 +150,12 @@ export function LogsViewer({
         ) : (
           filteredLogs.map((entry, index) => (
             <div key={index} className="flex gap-3 py-0.5 hover:bg-claude-surface rounded px-1">
-              <span className="text-gray-400 shrink-0 w-16">{formatTimestamp(entry.timestamp)}</span>
+              <span className="text-claude-text-muted shrink-0 w-16">{formatTimestamp(entry.timestamp)}</span>
               <span className={`shrink-0 w-12 font-semibold ${getLevelColor(entry.level)}`}>
                 {entry.level.toUpperCase()}
               </span>
-              {entry.source && <span className="text-gray-400 shrink-0 w-20">[{entry.source}]</span>}
-              <span className="text-gray-700 break-all">{entry.message}</span>
+              {entry.source && <span className="text-claude-text-muted shrink-0 w-20">[{entry.source}]</span>}
+              <span className="text-claude-text-secondary break-all">{entry.message}</span>
             </div>
           ))
         )}
@@ -163,7 +163,7 @@ export function LogsViewer({
       </div>
 
       {error && !isConnected && (
-        <div className="px-4 py-2 bg-red-50 border-t border-red-200">
+        <div className="px-4 py-2 bg-red-50 dark:bg-red-950/40 border-t border-red-200 dark:border-red-900">
           <p className="text-red-600 text-sm">{error}</p>
         </div>
       )}

@@ -64,9 +64,9 @@ const EMPTY_FORM: FormState = {
 const css = {
   label: "mb-1 block text-xs text-claude-text-muted font-medium",
   input:
-    "w-full rounded-lg border border-claude-border bg-white px-3 py-1.5 text-sm text-claude-text-primary placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
+    "w-full rounded-lg border border-claude-border bg-claude-input px-3 py-1.5 text-sm text-claude-text-primary placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
   select:
-    "rounded-lg border border-claude-border bg-white px-2 py-1 text-xs text-claude-text-primary focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
+    "rounded-lg border border-claude-border bg-claude-input px-2 py-1 text-xs text-claude-text-primary focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
 };
 
 export default function AddPlanTemplateModal({ open, onClose, entryToEdit }: AddPlanTemplateModalProps) {
@@ -216,7 +216,7 @@ export default function AddPlanTemplateModal({ open, onClose, entryToEdit }: Add
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-3 py-1.5 text-xs border border-claude-border bg-white hover:bg-claude-surface transition-colors"
+            className="rounded-lg px-3 py-1.5 text-xs border border-claude-border bg-claude-input hover:bg-claude-surface transition-colors"
           >
             Cancel
           </button>
@@ -233,7 +233,7 @@ export default function AddPlanTemplateModal({ open, onClose, entryToEdit }: Add
     >
       <form id="plan-template-form" onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 px-3 py-2 text-xs text-red-700">
             {error}
           </div>
         )}

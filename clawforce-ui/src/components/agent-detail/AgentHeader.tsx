@@ -28,14 +28,14 @@ export function AgentHeader({
   const getStatusColor = (status: string | undefined) => {
     switch (status) {
       case "running":
-        return "bg-green-50 text-green-700 ring-1 ring-green-200";
+        return "bg-green-50 dark:bg-green-950/40 text-green-700 ring-1 ring-green-200";
       case "stopped":
         return "bg-claude-surface text-claude-text-muted ring-1 ring-claude-border";
       case "failed":
-        return "bg-red-50 text-red-700 ring-1 ring-red-200";
+        return "bg-red-50 dark:bg-red-950/40 text-red-700 ring-1 ring-red-200";
       case "provisioning":
       case "connecting":
-        return "bg-amber-50 text-amber-700 ring-1 ring-amber-200";
+        return "bg-amber-50 dark:bg-amber-950/40 text-amber-700 ring-1 ring-amber-200";
       default:
         return "bg-claude-surface text-claude-text-muted ring-1 ring-claude-border";
     }

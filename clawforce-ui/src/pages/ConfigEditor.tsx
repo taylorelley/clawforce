@@ -42,7 +42,7 @@ export default function ConfigEditor() {
           onClick={save}
           disabled={saveMut.isPending}
           variant={saved ? "secondary" : "primary"}
-          className={saved ? "bg-green-50 text-green-700 ring-1 ring-green-200" : ""}
+          className={saved ? "bg-green-50 dark:bg-green-950/40 text-green-700 ring-1 ring-green-200" : ""}
         >
           {saved ? "Saved ✓" : saveMut.isPending ? "Saving..." : "Save"}
         </Button>

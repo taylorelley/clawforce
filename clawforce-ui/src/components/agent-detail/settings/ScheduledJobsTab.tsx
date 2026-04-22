@@ -28,14 +28,14 @@ function CronJobsSection({ agentId }: { agentId: string }) {
               <div className="flex items-center gap-2">
                 <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${j.enabled ? "bg-green-500" : "bg-claude-border-strong"}`} />
                 <span className="text-sm font-medium text-claude-text-primary truncate">{j.name}</span>
-                <span className={`rounded px-1.5 py-px text-[10px] font-medium ${j.schedule.kind === "cron" ? "bg-purple-50 text-purple-700 ring-1 ring-purple-200"
-                    : j.schedule.kind === "at" ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200"
-                      : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+                <span className={`rounded px-1.5 py-px text-[10px] font-medium ${j.schedule.kind === "cron" ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 ring-1 ring-purple-200"
+                    : j.schedule.kind === "at" ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 ring-1 ring-blue-200"
+                      : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 ring-1 ring-amber-200"
                   }`}>
                   {j.schedule.kind}
                 </span>
                 {j.deleteAfterRun && (
-                  <span className="rounded px-1.5 py-px text-[10px] font-medium bg-gray-50 text-gray-500 ring-1 ring-gray-200">once</span>
+                  <span className="rounded px-1.5 py-px text-[10px] font-medium bg-claude-surface text-claude-text-tertiary ring-1 ring-gray-200">once</span>
                 )}
               </div>
               <p className="mt-0.5 text-xs text-claude-text-muted truncate">{j.payload.message}</p>

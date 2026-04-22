@@ -99,7 +99,7 @@ export function MCPServerManager({
       case "failed":
         return <span className="text-red-500">●</span>;
       case "skipped":
-        return <span className="text-gray-400">○</span>;
+        return <span className="text-claude-text-muted">○</span>;
       default:
         return <span className="text-amber-500 animate-pulse">●</span>;
     }

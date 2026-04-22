@@ -6,9 +6,9 @@ import type { SoftwareCatalogEntry, SoftwareInstallResult, AgentSummary } from "
 const css = {
   btn: "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
   select:
-    "w-full rounded-lg border border-claude-border bg-white px-3 py-2 text-sm focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
+    "w-full rounded-lg border border-claude-border bg-claude-input px-3 py-2 text-sm focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
   input:
-    "w-full rounded-lg border border-claude-border bg-white px-3 py-2 text-sm placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
+    "w-full rounded-lg border border-claude-border bg-claude-input px-3 py-2 text-sm placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
 };
 
 function sanitizeSoftwareKey(s: string): string {
@@ -146,7 +146,7 @@ export default function InstallSoftwareModal({ open, onClose, entry, agentId: pr
       {succeeded && (
         <div className="space-y-4">
           <div className="flex flex-col items-center justify-center py-4 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 mb-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/50 mb-3">
               <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
@@ -204,7 +204,7 @@ export default function InstallSoftwareModal({ open, onClose, entry, agentId: pr
       {failed && (
         <div className="space-y-4">
           <div className="flex flex-col items-center justify-center py-4 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/50 mb-3">
               <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -218,7 +218,7 @@ export default function InstallSoftwareModal({ open, onClose, entry, agentId: pr
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-medium text-claude-text-secondary">Install logs (exit code: {result.exit_code})</span>
               </div>
-              <pre className="max-h-56 overflow-auto rounded-lg border border-red-200 bg-gray-900 p-3 text-[11px] leading-relaxed text-gray-200 font-mono whitespace-pre-wrap">
+              <pre className="max-h-56 overflow-auto rounded-lg border border-red-200 dark:border-red-900 bg-gray-900 p-3 text-[11px] leading-relaxed text-gray-200 font-mono whitespace-pre-wrap">
                 {result.logs}
               </pre>
             </div>
@@ -230,7 +230,7 @@ export default function InstallSoftwareModal({ open, onClose, entry, agentId: pr
       {!result && (
         <div className="space-y-4">
           {installing && (
-            <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            <div className="flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 text-xs text-amber-700">
               <svg className="h-4 w-4 shrink-0 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -262,7 +262,7 @@ export default function InstallSoftwareModal({ open, onClose, entry, agentId: pr
               {agentsLoading ? (
                 <p className="text-xs text-claude-text-muted">Loading agents...</p>
               ) : runningAgents.length === 0 ? (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                <div className="rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 text-xs text-amber-700">
                   No running agents. Start an agent first to install software.
                 </div>
               ) : (
@@ -283,7 +283,7 @@ export default function InstallSoftwareModal({ open, onClose, entry, agentId: pr
           )}
 
           {agentNotRunning && (
-            <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+            <div className="flex items-center gap-2 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 px-3 py-2">
               <svg className="h-4 w-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
@@ -294,7 +294,7 @@ export default function InstallSoftwareModal({ open, onClose, entry, agentId: pr
           )}
 
           {alreadyInstalled && !agentNotRunning && (
-            <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+            <div className="flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-3 py-2">
               <svg className="h-4 w-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -327,7 +327,7 @@ export default function InstallSoftwareModal({ open, onClose, entry, agentId: pr
           )}
 
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 px-3 py-2 text-xs text-red-700">
               {error}
             </div>
           )}

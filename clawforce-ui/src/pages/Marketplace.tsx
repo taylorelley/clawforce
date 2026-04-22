@@ -30,7 +30,7 @@ import {
 type Tab = "templates" | "plan-templates" | "skills" | "mcp" | "software";
 
 const css = {
-  input: "w-full rounded-lg border border-claude-border bg-white px-3 py-2 text-sm placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
+  input: "w-full rounded-lg border border-claude-border bg-claude-input px-3 py-2 text-sm placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent/30 transition-colors",
   btn: "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
 };
 
@@ -67,7 +67,7 @@ export default function Marketplace() {
   const tabClass = (t: Tab) =>
     `px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
       tab === t
-        ? "bg-white text-claude-text-primary shadow-sm"
+        ? "bg-claude-input text-claude-text-primary shadow-sm"
         : "text-claude-text-muted hover:text-claude-text-secondary"
     }`;
 
@@ -134,7 +134,7 @@ function PlanTemplatesTab() {
         </p>
         <button
           onClick={() => setShowAdd(true)}
-          className={`${css.btn} flex items-center gap-1.5 border border-claude-border bg-white hover:bg-claude-surface text-claude-text-primary text-xs shrink-0`}
+          className={`${css.btn} flex items-center gap-1.5 border border-claude-border bg-claude-input hover:bg-claude-surface text-claude-text-primary text-xs shrink-0`}
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -158,7 +158,7 @@ function PlanTemplatesTab() {
             return (
               <div
                 key={entry.id}
-                className="rounded-xl border border-claude-border bg-white p-4 hover:border-claude-accent/30 transition-colors flex flex-col"
+                className="rounded-xl border border-claude-border bg-claude-input p-4 hover:border-claude-accent/30 transition-colors flex flex-col"
               >
                 <button
                   onClick={() => setDetailId(entry.id)}
@@ -203,7 +203,7 @@ function PlanTemplatesTab() {
                         </button>
                         <button
                           onClick={() => handleDelete(entry)}
-                          className="rounded-md p-1 text-claude-border-strong hover:text-red-500 hover:bg-red-50 transition-all"
+                          className="rounded-md p-1 text-claude-border-strong hover:text-red-500 hover:bg-red-50 dark:bg-red-950/40 transition-all"
                           title="Delete custom template"
                         >
                           <TrashIcon className="h-3.5 w-3.5" />
@@ -278,7 +278,7 @@ function TemplatesTab({ templates, isLoading }: { templates: { value: string; la
           <button
             key={t.value}
             onClick={() => setDetailTemplate(t.value)}
-            className="rounded-xl border border-claude-border bg-white p-4 hover:border-claude-accent/50 hover:shadow-sm transition-all text-left group"
+            className="rounded-xl border border-claude-border bg-claude-input p-4 hover:border-claude-accent/50 hover:shadow-sm transition-all text-left group"
           >
             <div className="flex items-center gap-3 mb-2">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-claude-accent/10 group-hover:bg-claude-accent/20 transition-colors">
@@ -366,7 +366,7 @@ function SkillsTab() {
       onClick={() => setSourceFilter(f)}
       className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
         sourceFilter === f
-          ? "bg-white text-claude-text-primary shadow-sm"
+          ? "bg-claude-input text-claude-text-primary shadow-sm"
           : "text-claude-text-muted hover:text-claude-text-secondary"
       }`}
     >
@@ -394,7 +394,7 @@ function SkillsTab() {
         </div>
         <button
           onClick={() => setShowAddCustom(true)}
-          className={`${css.btn} flex items-center gap-1.5 border border-claude-border bg-white hover:bg-claude-surface text-claude-text-primary text-xs shrink-0`}
+          className={`${css.btn} flex items-center gap-1.5 border border-claude-border bg-claude-input hover:bg-claude-surface text-claude-text-primary text-xs shrink-0`}
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -423,9 +423,9 @@ function SkillsTab() {
           >
             {isLoading ? (
               <span className="inline-flex items-center gap-1">
-                <span className="h-1 w-1 rounded-full bg-white animate-pulse" />
-                <span className="h-1 w-1 rounded-full bg-white animate-pulse [animation-delay:150ms]" />
-                <span className="h-1 w-1 rounded-full bg-white animate-pulse [animation-delay:300ms]" />
+                <span className="h-1 w-1 rounded-full bg-claude-input animate-pulse" />
+                <span className="h-1 w-1 rounded-full bg-claude-input animate-pulse [animation-delay:150ms]" />
+                <span className="h-1 w-1 rounded-full bg-claude-input animate-pulse [animation-delay:300ms]" />
               </span>
             ) : "Search"}
           </button>
@@ -439,7 +439,7 @@ function SkillsTab() {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 px-3 py-2 text-xs text-red-700">
           Search failed: {error instanceof Error ? error.message : "Unknown error"}
         </div>
       )}
@@ -569,7 +569,7 @@ function SkillCard({
   const isSelfHosted = skill.source === "self-hosted";
 
   return (
-    <div className="rounded-xl border border-claude-border bg-white p-4 hover:border-claude-accent/30 transition-colors flex flex-col">
+    <div className="rounded-xl border border-claude-border bg-claude-input p-4 hover:border-claude-accent/30 transition-colors flex flex-col">
       <div className="flex items-start justify-between gap-3">
         <button onClick={onSelect} className="flex items-center gap-3 min-w-0 text-left">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 shrink-0">
@@ -582,7 +582,7 @@ function SkillCard({
               <span className="text-sm font-medium text-claude-text-primary truncate">{skill.name}</span>
               {isSelfHosted && (
                 <span
-                  className="rounded px-1.5 py-px text-[10px] font-medium bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 shrink-0"
+                  className="rounded px-1.5 py-px text-[10px] font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 ring-1 ring-indigo-200 shrink-0"
                   title="Stored in this deployment's admin catalog"
                 >
                   Self-hosted
@@ -651,7 +651,7 @@ function SkillCard({
           {onDelete && (
             <button
               onClick={onDelete}
-              className="rounded-md p-1 text-claude-border-strong hover:text-red-500 hover:bg-red-50 transition-all"
+              className="rounded-md p-1 text-claude-border-strong hover:text-red-500 hover:bg-red-50 dark:bg-red-950/40 transition-all"
               title="Delete self-hosted skill"
             >
               <TrashIcon className="h-3.5 w-3.5" />
@@ -720,7 +720,7 @@ function McpTab() {
       onClick={() => setSourceFilter(f)}
       className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
         sourceFilter === f
-          ? "bg-white text-claude-text-primary shadow-sm"
+          ? "bg-claude-input text-claude-text-primary shadow-sm"
           : "text-claude-text-muted hover:text-claude-text-secondary"
       }`}
     >
@@ -748,7 +748,7 @@ function McpTab() {
         </div>
         <button
           onClick={() => setShowAddCustom(true)}
-          className={`${css.btn} flex items-center gap-1.5 border border-claude-border bg-white hover:bg-claude-surface text-claude-text-primary text-xs shrink-0`}
+          className={`${css.btn} flex items-center gap-1.5 border border-claude-border bg-claude-input hover:bg-claude-surface text-claude-text-primary text-xs shrink-0`}
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -777,9 +777,9 @@ function McpTab() {
           >
             {isLoading ? (
               <span className="inline-flex items-center gap-1">
-                <span className="h-1 w-1 rounded-full bg-white animate-pulse" />
-                <span className="h-1 w-1 rounded-full bg-white animate-pulse [animation-delay:150ms]" />
-                <span className="h-1 w-1 rounded-full bg-white animate-pulse [animation-delay:300ms]" />
+                <span className="h-1 w-1 rounded-full bg-claude-input animate-pulse" />
+                <span className="h-1 w-1 rounded-full bg-claude-input animate-pulse [animation-delay:150ms]" />
+                <span className="h-1 w-1 rounded-full bg-claude-input animate-pulse [animation-delay:300ms]" />
               </span>
             ) : "Search"}
           </button>
@@ -793,7 +793,7 @@ function McpTab() {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 px-3 py-2 text-xs text-red-700">
           Search failed: {error instanceof Error ? error.message : "Unknown error"}
         </div>
       )}
@@ -917,7 +917,7 @@ function McpServerCard({
   const isSelfHosted = server.source === "self-hosted";
   const downloads = server.downloads || 0;
   return (
-    <div className="rounded-xl border border-claude-border bg-white p-4 hover:border-claude-accent/30 transition-colors flex flex-col">
+    <div className="rounded-xl border border-claude-border bg-claude-input p-4 hover:border-claude-accent/30 transition-colors flex flex-col">
       <div className="flex items-start justify-between gap-3">
         <button onClick={onSelect} className="flex items-center gap-3 min-w-0 text-left">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/20 shrink-0">
@@ -930,7 +930,7 @@ function McpServerCard({
               <span className="text-sm font-medium text-claude-text-primary">{server.name}</span>
               {isSelfHosted && (
                 <span
-                  className="rounded px-1.5 py-px text-[10px] font-medium bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 shrink-0"
+                  className="rounded px-1.5 py-px text-[10px] font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 ring-1 ring-indigo-200 shrink-0"
                   title="Stored in this deployment's admin catalog"
                 >
                   Self-hosted
@@ -962,7 +962,7 @@ function McpServerCard({
             </span>
           )}
           {isVerified && (
-            <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-px text-[10px] font-medium bg-green-50 text-green-700 ring-1 ring-green-200">
+            <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-px text-[10px] font-medium bg-green-50 dark:bg-green-950/40 text-green-700 ring-1 ring-green-200">
               <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
@@ -998,7 +998,7 @@ function McpServerCard({
           {onDelete && (
             <button
               onClick={onDelete}
-              className="rounded-md p-1 text-claude-border-strong hover:text-red-500 hover:bg-red-50 transition-all"
+              className="rounded-md p-1 text-claude-border-strong hover:text-red-500 hover:bg-red-50 dark:bg-red-950/40 transition-all"
               title="Delete self-hosted MCP server"
             >
               <TrashIcon className="h-3.5 w-3.5" />
@@ -1032,7 +1032,7 @@ function McpServerDetailModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+        className="bg-claude-input rounded-2xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-4 py-3 border-b border-claude-border flex items-center justify-between gap-3">
@@ -1044,7 +1044,7 @@ function McpServerDetailModal({
             </div>
             <h2 className="text-base font-semibold text-claude-text-primary truncate">{server.name}</h2>
             {isVerified && (
-              <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-px text-[10px] font-medium bg-green-50 text-green-700 ring-1 ring-green-200 shrink-0">
+              <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-px text-[10px] font-medium bg-green-50 dark:bg-green-950/40 text-green-700 ring-1 ring-green-200 shrink-0">
                 <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
@@ -1091,7 +1091,7 @@ function McpServerDetailModal({
                 {server.capabilities.map((cap) => (
                   <span
                     key={cap}
-                    className="rounded px-2 py-1 text-xs bg-green-50 text-green-700 ring-1 ring-green-200"
+                    className="rounded px-2 py-1 text-xs bg-green-50 dark:bg-green-950/40 text-green-700 ring-1 ring-green-200"
                   >
                     {cap}
                   </span>
@@ -1156,7 +1156,7 @@ function McpServerDetailModal({
         <div className="px-4 py-2 border-t border-claude-border bg-claude-surface/30 flex justify-end gap-2">
           <button
             onClick={onClose}
-            className={`${css.btn} border border-claude-border bg-white hover:bg-claude-surface text-xs px-3 py-1.5`}
+            className={`${css.btn} border border-claude-border bg-claude-input hover:bg-claude-surface text-xs px-3 py-1.5`}
           >
             Close
           </button>
@@ -1191,7 +1191,7 @@ function SkillDetailModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+        className="bg-claude-input rounded-2xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-4 py-3 border-b border-claude-border flex items-center justify-between gap-3">
@@ -1206,7 +1206,7 @@ function SkillDetailModal({
               <span className="text-[10px] font-mono text-claude-text-muted shrink-0">v{version}</span>
             )}
             {skill.source === "self-hosted" && (
-              <span className="rounded px-1.5 py-px text-[10px] font-medium bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 shrink-0">
+              <span className="rounded px-1.5 py-px text-[10px] font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 ring-1 ring-indigo-200 shrink-0">
                 Self-hosted
               </span>
             )}
@@ -1286,7 +1286,7 @@ function SkillDetailModal({
         <div className="px-4 py-2 border-t border-claude-border bg-claude-surface/30 flex justify-end gap-2">
           <button
             onClick={onClose}
-            className={`${css.btn} border border-claude-border bg-white hover:bg-claude-surface text-xs px-3 py-1.5`}
+            className={`${css.btn} border border-claude-border bg-claude-input hover:bg-claude-surface text-xs px-3 py-1.5`}
           >
             Close
           </button>
@@ -1325,7 +1325,7 @@ function SoftwareTab() {
         </p>
         <button
           onClick={() => setShowAddCustom(true)}
-          className={`${css.btn} flex items-center gap-1.5 border border-claude-border bg-white hover:bg-claude-surface text-claude-text-primary text-xs shrink-0`}
+          className={`${css.btn} flex items-center gap-1.5 border border-claude-border bg-claude-input hover:bg-claude-surface text-claude-text-primary text-xs shrink-0`}
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -1589,7 +1589,7 @@ function AddCustomSoftwareModal({ open, onClose, entryToEdit }: { open: boolean;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={handleClose}>
       <div
-        className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-claude-input rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-4 py-3 border-b border-claude-border flex items-center justify-between">
@@ -1612,7 +1612,7 @@ function AddCustomSoftwareModal({ open, onClose, entryToEdit }: { open: boolean;
               Import from GitHub URL (optional)
             </label>
             <input
-              className={css.input + " bg-white"}
+              className={css.input + " bg-claude-input"}
               placeholder="https://github.com/owner/repo/releases/tag/v1.2.3"
               value={form.githubUrl}
               onChange={(e) => handleGithubUrl(e.target.value)}
@@ -1828,7 +1828,7 @@ function SoftwareCard({
   onDelete?: () => void;
 }) {
   return (
-    <div className="rounded-xl border border-claude-border bg-white p-4 hover:border-claude-accent/30 transition-colors flex flex-col">
+    <div className="rounded-xl border border-claude-border bg-claude-input p-4 hover:border-claude-accent/30 transition-colors flex flex-col">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/20 shrink-0">
@@ -1859,7 +1859,7 @@ function SoftwareCard({
             {onDelete && (
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                className="p-1.5 rounded hover:bg-red-50 text-claude-text-muted hover:text-red-500 transition-colors"
+                className="p-1.5 rounded hover:bg-red-50 dark:bg-red-950/40 text-claude-text-muted hover:text-red-500 transition-colors"
                 title="Delete"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

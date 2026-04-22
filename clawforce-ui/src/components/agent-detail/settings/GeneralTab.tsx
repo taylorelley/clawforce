@@ -138,7 +138,7 @@ export function GeneralTab({ agentId, agent, update, updateTools }: { agentId: s
                   <ClawIcon className="h-6 w-6" color={agent.color || undefined} />
                 </button>
                 {showColorPicker && (
-                  <div className="absolute left-0 top-full z-20 mt-1.5 w-56 rounded-xl border border-claude-border bg-white p-3 shadow-lg">
+                  <div className="absolute left-0 top-full z-20 mt-1.5 w-56 rounded-xl border border-claude-border bg-claude-input p-3 shadow-lg">
                     <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-claude-text-muted">Pick a color</p>
                     <div className="grid grid-cols-8 gap-1.5">
                       {[

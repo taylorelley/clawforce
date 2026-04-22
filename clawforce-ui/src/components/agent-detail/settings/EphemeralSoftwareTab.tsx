@@ -121,7 +121,7 @@ export function EphemeralSoftwareTab({ agent, setTools }: { agent: Agent; setToo
         </div>
 
         {softwareInstalling && (
-          <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+          <div className="mb-3 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/40 px-3 py-2 text-sm text-blue-800">
             <span className="font-medium">Reinstalling software</span>
             <span className="mx-1">—</span>
             {warnings.length > 0
@@ -132,7 +132,7 @@ export function EphemeralSoftwareTab({ agent, setTools }: { agent: Agent; setToo
           </div>
         )}
         {!softwareInstalling && warnings.length > 0 && (
-          <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <div className="mb-3 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 text-sm text-amber-800">
             <span className="font-medium">Software unavailable</span>
             <span className="mx-1">—</span>
             {warnings.length === 1
@@ -155,17 +155,17 @@ export function EphemeralSoftwareTab({ agent, setTools }: { agent: Agent; setToo
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium text-claude-text-primary">{entry.name || key}</span>
-                        <span className="rounded px-1.5 py-px text-[10px] font-medium bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+                        <span className="rounded px-1.5 py-px text-[10px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 ring-1 ring-amber-200">
                           {entry.installed_via || "npm"}
                         </span>
                         {entry.verified === true && (
-                          <span className="rounded px-1.5 py-px text-[10px] font-medium bg-green-50 text-green-700 ring-1 ring-green-200">verified</span>
+                          <span className="rounded px-1.5 py-px text-[10px] font-medium bg-green-50 dark:bg-green-950/40 text-green-700 ring-1 ring-green-200">verified</span>
                         )}
                         {entry.verified === false && (
-                          <span className="rounded px-1.5 py-px text-[10px] font-medium bg-amber-50 text-amber-600 ring-1 ring-amber-200">unverified</span>
+                          <span className="rounded px-1.5 py-px text-[10px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-600 ring-1 ring-amber-200">unverified</span>
                         )}
                         {hasEnv && !isEditing && (
-                          <span className="rounded px-1.5 py-px text-[10px] font-medium bg-blue-50 text-blue-600 ring-1 ring-blue-200">
+                          <span className="rounded px-1.5 py-px text-[10px] font-medium bg-blue-50 dark:bg-blue-950/40 text-blue-600 ring-1 ring-blue-200">
                             {Object.keys(entry.env).length} secret{Object.keys(entry.env).length !== 1 ? "s" : ""}
                           </span>
                         )}

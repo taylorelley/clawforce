@@ -128,7 +128,7 @@ function TimelineLifecycleEvent({ ev, meta }: { ev: InboxEvent; meta: EventMeta 
     return (
       <div className="relative flex items-start gap-3 py-2">
         <div className="relative z-10 flex w-8 shrink-0 items-center justify-center pt-1.5">
-          <div className={`flex h-6 w-6 items-center justify-center rounded-full ${isComment ? "bg-purple-100 text-purple-600" : "bg-blue-100 text-blue-600"}`}>
+          <div className={`flex h-6 w-6 items-center justify-center rounded-full ${isComment ? "bg-purple-100 dark:bg-purple-950/50 text-purple-600" : "bg-blue-100 dark:bg-blue-950/50 text-blue-600"}`}>
             {isComment ? (
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -140,12 +140,12 @@ function TimelineLifecycleEvent({ ev, meta }: { ev: InboxEvent; meta: EventMeta 
             )}
           </div>
         </div>
-        <div className="flex-1 min-w-0 rounded-lg border border-claude-border/60 bg-white/50 px-3 py-2">
+        <div className="flex-1 min-w-0 rounded-lg border border-claude-border/60 bg-claude-input/50 px-3 py-2">
           <div className="flex items-center gap-2 mb-0.5">
             <Link to={`/agents/${ev.agent_id}`} className="text-xs font-medium text-claude-text-primary hover:text-claude-accent transition-colors">
               {ev.agent_name}
             </Link>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${isComment ? "bg-purple-50 text-purple-600" : "bg-blue-50 text-blue-600"}`}>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${isComment ? "bg-purple-50 dark:bg-purple-950/40 text-purple-600" : "bg-blue-50 dark:bg-blue-950/40 text-blue-600"}`}>
               {isComment ? "comment" : "status"}
             </span>
             <span className="text-[10px] text-claude-text-muted tabular-nums ml-auto shrink-0">{formatRelative(ev.timestamp)}</span>
@@ -181,7 +181,7 @@ function TimelineContentEvent({ ev }: { ev: InboxEvent; meta: EventMeta }) {
       <div className="relative z-10 flex w-8 shrink-0 items-center justify-center pt-1.5">
         <ClawIcon className="h-6 w-6" color={color} />
       </div>
-      <div className="flex-1 min-w-0 rounded-lg border border-claude-border/60 bg-white/50 px-3 py-2">
+      <div className="flex-1 min-w-0 rounded-lg border border-claude-border/60 bg-claude-input/50 px-3 py-2">
         <div className="flex items-center gap-2 mb-0.5">
           <Link to={`/agents/${ev.agent_id}`} className="text-xs font-medium text-claude-text-primary hover:text-claude-accent transition-colors">
             {ev.agent_name}
@@ -381,11 +381,11 @@ function PlanTimeline({
 function taskStatusColor(columnId: string): string {
   switch (columnId) {
     case "col-done":
-      return "bg-green-100 text-green-800";
+      return "bg-green-100 dark:bg-green-950/50 text-green-800";
     case "col-in-progress":
-      return "bg-blue-100 text-blue-800";
+      return "bg-blue-100 dark:bg-blue-950/50 text-blue-800";
     case "col-blocked":
-      return "bg-amber-100 text-amber-800";
+      return "bg-amber-100 dark:bg-amber-950/50 text-amber-800";
     default:
       return "bg-claude-surface text-claude-text-secondary";
   }
@@ -438,7 +438,7 @@ function TaskCard({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onClick={handleClick}
-      className={`min-w-0 w-full rounded-lg border border-claude-border bg-white p-3 shadow-sm transition-shadow ${
+      className={`min-w-0 w-full rounded-lg border border-claude-border bg-claude-input p-3 shadow-sm transition-shadow ${
         dragging ? "opacity-60" : "hover:shadow-md hover:border-claude-accent/40"
       } cursor-pointer active:cursor-grabbing`}
     >
@@ -464,7 +464,7 @@ function TaskCard({
                 deleteTask.mutate(task.id);
               }}
               disabled={deleteTask.isPending}
-              className="rounded p-0.5 text-claude-text-muted hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
+              className="rounded p-0.5 text-claude-text-muted hover:bg-red-50 dark:bg-red-950/40 hover:text-red-600 transition-colors disabled:opacity-50"
               title="Delete task"
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -943,7 +943,7 @@ function ArtifactSection({
                   type="button"
                   onClick={(e) => { e.stopPropagation(); deleteArtifact.mutate(a.id); }}
                   disabled={deleteArtifact.isPending}
-                  className="shrink-0 rounded p-0.5 text-claude-text-muted opacity-0 transition-all hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 disabled:opacity-50"
+                  className="shrink-0 rounded p-0.5 text-claude-text-muted opacity-0 transition-all hover:bg-red-50 dark:bg-red-950/40 hover:text-red-600 group-hover:opacity-100 disabled:opacity-50"
                   title="Delete"
                 >
                   <TrashIcon className="h-3 w-3" />
@@ -976,7 +976,7 @@ function ArtifactSection({
             onChange={(e) => setRenameValue(e.target.value)}
             placeholder="New name"
             autoFocus
-            className="mb-4 w-full rounded-lg border border-claude-border bg-white px-3 py-2 text-sm text-claude-text-primary placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent"
+            className="mb-4 w-full rounded-lg border border-claude-border bg-claude-input px-3 py-2 text-sm text-claude-text-primary placeholder:text-claude-text-muted focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent"
           />
           {renameArtifactMutation.isError && (
             <p className="mb-2 text-[11px] text-red-600">{renameArtifactMutation.error?.message ?? "Rename failed"}</p>
@@ -1006,7 +1006,7 @@ function ArtifactSection({
           <select
             value={moveTaskId}
             onChange={(e) => setMoveTaskId(e.target.value)}
-            className="mb-4 w-full rounded-lg border border-claude-border bg-white px-3 py-2 text-sm text-claude-text-primary focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent"
+            className="mb-4 w-full rounded-lg border border-claude-border bg-claude-input px-3 py-2 text-sm text-claude-text-primary focus:border-claude-accent focus:outline-none focus:ring-1 focus:ring-claude-accent"
           >
             <option value="">(No task - general plan file)</option>
             {tasks.map((t) => (
@@ -1072,7 +1072,7 @@ function ArtifactSection({
                       }
                     }, 200);
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 transition-colors hover:bg-blue-100"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 text-[11px] font-medium text-blue-700 transition-colors hover:bg-blue-100 dark:bg-blue-950/50"
                 >
                   <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m9.86-2.54a4.5 4.5 0 0 0-1.242-7.244l-4.5-4.5a4.5 4.5 0 0 0-6.364 6.364L4.343 8.69" /></svg>
                   Task {viewArtifact.task_id.slice(0, 8)}…
@@ -1371,7 +1371,7 @@ export default function PlanBoard() {
         </div>
 
         {/* Right: General | Timeline tab + content */}
-        <div className="flex min-w-0 flex-1 flex-col rounded-xl border border-claude-border bg-white overflow-hidden">
+        <div className="flex min-w-0 flex-1 flex-col rounded-xl border border-claude-border bg-claude-input overflow-hidden">
           <div className="flex shrink-0 border-b border-claude-border">
             <button
               type="button"

@@ -29,8 +29,8 @@ export function ChatInput({
   }
 
   return (
-    <div className="shrink-0 border-t border-claude-border bg-white p-3">
-      <div className="flex items-end gap-2 rounded-xl border border-claude-border bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-claude-accent/30 focus-within:border-claude-accent">
+    <div className="shrink-0 border-t border-claude-border bg-claude-input p-3">
+      <div className="flex items-end gap-2 rounded-xl border border-claude-border bg-claude-input px-3 py-2 focus-within:ring-2 focus-within:ring-claude-accent/30 focus-within:border-claude-accent">
         <textarea
           ref={textareaRef}
           value={value}
