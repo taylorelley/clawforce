@@ -10,7 +10,9 @@ from pathlib import Path
 
 import pytest
 import yaml
+from pydantic import ValidationError
 
+from clawforce.apis.mcp_registry import CustomMCPRequest
 from clawlib.mcpregistry import OfficialMCPRegistry, YamlMCPRegistry
 
 
@@ -217,14 +219,19 @@ class TestYamlMCPRegistryHardening:
         path = tmp_path / "custom_mcp.yaml"
         reg = YamlMCPRegistry(custom_catalog_path=path)
 
+        errors: list[tuple[int, BaseException]] = []
+
         def add(i: int) -> None:
-            reg.add_custom_entry(
-                {
-                    "slug": f"s{i}",
-                    "name": f"n{i}",
-                    "install_config": {"command": "echo", "args": []},
-                }
-            )
+            try:
+                reg.add_custom_entry(
+                    {
+                        "slug": f"s{i}",
+                        "name": f"n{i}",
+                        "install_config": {"command": "echo", "args": []},
+                    }
+                )
+            except BaseException as exc:  # noqa: BLE001 — capture any thread failure
+                errors.append((i, exc))
 
         threads = [threading.Thread(target=add, args=(i,)) for i in range(20)]
         for t in threads:
@@ -232,5 +239,68 @@ class TestYamlMCPRegistryHardening:
         for t in threads:
             t.join()
 
+        assert not errors, f"threads raised: {errors!r}"
         slugs = sorted(e["slug"] for e in reg.list_custom_entries())
         assert slugs == sorted(f"s{i}" for i in range(20))
+
+
+class TestCustomMCPRequestValidation:
+    """Payload validation for the self-hosted MCP CRUD endpoints."""
+
+    def _base(self, **overrides) -> dict:
+        payload = {
+            "slug": "ok",
+            "name": "Ok",
+            "install_config": {"command": "npx", "args": []},
+        }
+        payload.update(overrides)
+        return payload
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://example.com/mcp",
+            "http://localhost:8080/sse",
+            "https://api.example.com:443/path?q=1",
+        ],
+    )
+    def test_http_url_accepted(self, url: str):
+        req = CustomMCPRequest.model_validate(
+            self._base(install_config={"url": url})
+        )
+        assert req.install_config == {"url": url}
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "ftp://example.com/mcp",
+            "file:///etc/passwd",
+            "example.com/mcp",
+            "http:///no-host",
+            "  ",
+        ],
+    )
+    def test_bad_url_rejected(self, url: str):
+        with pytest.raises(ValidationError):
+            CustomMCPRequest.model_validate(
+                self._base(install_config={"url": url})
+            )
+
+    def test_install_config_must_be_one_of(self):
+        with pytest.raises(ValidationError):
+            CustomMCPRequest.model_validate(self._base(install_config={}))
+        with pytest.raises(ValidationError):
+            CustomMCPRequest.model_validate(
+                self._base(install_config={"command": "npx", "url": "https://x"})
+            )
+
+    def test_command_must_be_non_empty(self):
+        with pytest.raises(ValidationError):
+            CustomMCPRequest.model_validate(
+                self._base(install_config={"command": "   ", "args": []})
+            )
+
+    @pytest.mark.parametrize("slug", ["BAD", "servers", "custom", "-foo", "foo-"])
+    def test_bad_slug_rejected(self, slug: str):
+        with pytest.raises(ValidationError):
+            CustomMCPRequest.model_validate(self._base(slug=slug))

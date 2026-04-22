@@ -3,6 +3,7 @@
 import logging
 import re
 from typing import Any
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field, field_validator
@@ -111,7 +112,11 @@ class CustomMCPRequest(BaseModel):
         url = v.get("url")
         if not isinstance(url, str) or not url.strip():
             raise ValueError("install_config.url must be a non-empty string")
-        return {"url": url.strip()}
+        trimmed = url.strip()
+        parsed = urlparse(trimmed)
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
+            raise ValueError("install_config.url must be a valid http(s) URL with host")
+        return {"url": trimmed}
 
 
 @router.get("/api/mcp-registry/custom")

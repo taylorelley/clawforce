@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Modal from "./Modal";
 import { useAddCustomMcpServer, useUpdateCustomMcpServer } from "../lib/queries";
 import type { AddCustomMcpPayload, CustomMcpEntry } from "../lib/types";
@@ -70,6 +70,21 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [slugOverride, setSlugOverride] = useState("");
   const [error, setError] = useState("");
+
+  const idPrefix = useId();
+  const fieldId = (name: string) => `${idPrefix}-${name}`;
+  const transportGroupLabelId = fieldId("transport-label");
+  const stdioBtnRef = useRef<HTMLButtonElement | null>(null);
+  const httpBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  function handleTransportKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = form.transport === "stdio" ? "http" : "stdio";
+      setForm((f) => ({ ...f, transport: next }));
+      (next === "stdio" ? stdioBtnRef : httpBtnRef).current?.focus();
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -212,8 +227,9 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className={css.label}>Name *</label>
+            <label className={css.label} htmlFor={fieldId("name")}>Name *</label>
             <input
+              id={fieldId("name")}
               className={css.input}
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -222,8 +238,9 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
             />
           </div>
           <div>
-            <label className={css.label}>Slug *</label>
+            <label className={css.label} htmlFor={fieldId("slug")}>Slug *</label>
             <input
+              id={fieldId("slug")}
               className={css.input}
               value={derivedSlug}
               onChange={(e) => setSlugOverride(e.target.value)}
@@ -237,8 +254,9 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
         </div>
 
         <div>
-          <label className={css.label}>Description</label>
+          <label className={css.label} htmlFor={fieldId("description")}>Description</label>
           <input
+            id={fieldId("description")}
             className={css.input}
             value={form.description}
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -248,8 +266,9 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
-            <label className={css.label}>Author</label>
+            <label className={css.label} htmlFor={fieldId("author")}>Author</label>
             <input
+              id={fieldId("author")}
               className={css.input}
               value={form.author}
               onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
@@ -257,8 +276,9 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
             />
           </div>
           <div>
-            <label className={css.label}>Version</label>
+            <label className={css.label} htmlFor={fieldId("version")}>Version</label>
             <input
+              id={fieldId("version")}
               className={css.input}
               value={form.version}
               onChange={(e) => setForm((f) => ({ ...f, version: e.target.value }))}
@@ -266,8 +286,9 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
             />
           </div>
           <div>
-            <label className={css.label}>Categories</label>
+            <label className={css.label} htmlFor={fieldId("categories")}>Categories</label>
             <input
+              id={fieldId("categories")}
               className={css.input}
               value={form.categories}
               onChange={(e) => setForm((f) => ({ ...f, categories: e.target.value }))}
@@ -278,8 +299,9 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className={css.label}>Homepage</label>
+            <label className={css.label} htmlFor={fieldId("homepage")}>Homepage</label>
             <input
+              id={fieldId("homepage")}
               className={css.input}
               value={form.homepage}
               onChange={(e) => setForm((f) => ({ ...f, homepage: e.target.value }))}
@@ -287,8 +309,9 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
             />
           </div>
           <div>
-            <label className={css.label}>Repository</label>
+            <label className={css.label} htmlFor={fieldId("repository")}>Repository</label>
             <input
+              id={fieldId("repository")}
               className={css.input}
               value={form.repository}
               onChange={(e) => setForm((f) => ({ ...f, repository: e.target.value }))}
@@ -298,11 +321,20 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
         </div>
 
         <div>
-          <label className={css.label}>Transport *</label>
-          <div className="flex gap-2">
+          <span id={transportGroupLabelId} className={css.label}>Transport *</span>
+          <div
+            role="radiogroup"
+            aria-labelledby={transportGroupLabelId}
+            className="flex gap-2"
+          >
             <button
               type="button"
+              ref={stdioBtnRef}
+              role="radio"
+              aria-checked={form.transport === "stdio"}
+              tabIndex={form.transport === "stdio" ? 0 : -1}
               onClick={() => setForm((f) => ({ ...f, transport: "stdio" }))}
+              onKeyDown={handleTransportKeyDown}
               className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
                 form.transport === "stdio"
                   ? "border-claude-accent bg-claude-accent/5 text-claude-text-primary"
@@ -313,7 +345,12 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
             </button>
             <button
               type="button"
+              ref={httpBtnRef}
+              role="radio"
+              aria-checked={form.transport === "http"}
+              tabIndex={form.transport === "http" ? 0 : -1}
               onClick={() => setForm((f) => ({ ...f, transport: "http" }))}
+              onKeyDown={handleTransportKeyDown}
               className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
                 form.transport === "http"
                   ? "border-claude-accent bg-claude-accent/5 text-claude-text-primary"
@@ -328,8 +365,9 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
         {form.transport === "stdio" ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className={css.label}>Command *</label>
+              <label className={css.label} htmlFor={fieldId("command")}>Command *</label>
               <input
+                id={fieldId("command")}
                 className={css.input}
                 value={form.command}
                 onChange={(e) => setForm((f) => ({ ...f, command: e.target.value }))}
@@ -337,8 +375,9 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
               />
             </div>
             <div className="md:col-span-2">
-              <label className={css.label}>Arguments (one per line)</label>
+              <label className={css.label} htmlFor={fieldId("args")}>Arguments (one per line)</label>
               <textarea
+                id={fieldId("args")}
                 className={css.textarea}
                 rows={4}
                 value={form.args}
@@ -350,8 +389,9 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
           </div>
         ) : (
           <div>
-            <label className={css.label}>URL *</label>
+            <label className={css.label} htmlFor={fieldId("url")}>URL *</label>
             <input
+              id={fieldId("url")}
               className={css.input}
               value={form.url}
               onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
@@ -361,8 +401,9 @@ export default function AddCustomMcpModal({ open, onClose, entryToEdit }: AddCus
         )}
 
         <div>
-          <label className={css.label}>Required env vars (one per line)</label>
+          <label className={css.label} htmlFor={fieldId("required-env")}>Required env vars (one per line)</label>
           <textarea
+            id={fieldId("required-env")}
             className={css.textarea}
             rows={3}
             value={form.requiredEnv}
