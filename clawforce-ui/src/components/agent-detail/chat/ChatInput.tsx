@@ -21,6 +21,7 @@ export function ChatInput({
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.nativeEvent.isComposing) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       submit();
@@ -41,6 +42,7 @@ export function ChatInput({
           }}
           onKeyDown={onKeyDown}
           placeholder={placeholder ?? "Type a message…"}
+          aria-label="Message"
           rows={1}
           disabled={disabled}
           className="flex-1 resize-none bg-transparent text-sm text-claude-text-primary placeholder:text-claude-text-muted focus:outline-none disabled:opacity-60"

@@ -23,7 +23,13 @@ export function ChatMessageList({ messages }: { messages: ChatMessageT[] }) {
   }
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-3">
+    <div
+      role="log"
+      aria-live="polite"
+      aria-relevant="additions"
+      aria-label="Chat transcript"
+      className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-3"
+    >
       {messages.map((m) => (
         <ChatMessage key={m.id} message={m} />
       ))}

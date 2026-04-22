@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../../../lib/api";
 import { ChatInput } from "./ChatInput";
 import { ChatMessageList } from "./ChatMessageList";
@@ -11,8 +11,16 @@ function newId(): string {
 export function ChatTab({ agentId }: { agentId: string; token: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
+  const currentSessionRef = useRef(0);
+
+  useEffect(() => {
+    currentSessionRef.current += 1;
+    setMessages([]);
+    setSending(false);
+  }, [agentId]);
 
   async function handleSend(text: string) {
+    const session = currentSessionRef.current;
     const userMsg: ChatMessage = {
       id: newId(),
       role: "user",
@@ -32,6 +40,7 @@ export function ChatTab({ agentId }: { agentId: string; token: string }) {
 
     try {
       const res = await api.agents.chat(agentId, text);
+      if (currentSessionRef.current !== session) return;
       setMessages((prev) =>
         prev.map((m) =>
           m.id === placeholderId
@@ -40,6 +49,7 @@ export function ChatTab({ agentId }: { agentId: string; token: string }) {
         ),
       );
     } catch (err) {
+      if (currentSessionRef.current !== session) return;
       const detail = err instanceof Error ? err.message : String(err);
       setMessages((prev) =>
         prev.map((m) =>
@@ -49,7 +59,7 @@ export function ChatTab({ agentId }: { agentId: string; token: string }) {
         ),
       );
     } finally {
-      setSending(false);
+      if (currentSessionRef.current === session) setSending(false);
     }
   }
 

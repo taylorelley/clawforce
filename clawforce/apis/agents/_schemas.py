@@ -44,6 +44,8 @@ class A2AMessageBody(BaseModel):
     message: str
 
 
+# Kept separate from A2AMessageBody: user chat and A2A share a shape today but
+# are expected to diverge (session/stream/attachments on chat; peer context on A2A).
 class ChatMessageBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 

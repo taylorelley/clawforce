@@ -14,6 +14,8 @@ import { ScheduledJobsTab } from "../components/agent-detail/settings/ScheduledJ
 import { SettingsContent } from "../components/agent-detail/settings/SettingsContent";
 import type { Agent, MainTab, ToolsCfg } from "../components/agent-detail/types";
 
+const RUNTIME_GATED_TABS: ReadonlySet<MainTab> = new Set(["workspace", "chat", "logs", "jobs"]);
+
 /** Secret field names (from CHANNEL_DEFS password fields). Omit these when value is redacted so backend keeps existing. */
 const CHANNEL_SECRET_KEYS = new Set(
   CHANNEL_DEFS.flatMap((ch) => ch.fields.filter((f) => f.type === "password").map((f) => f.name))
@@ -397,7 +399,7 @@ export default function AgentDetail() {
         ))}
       </div>
 
-      {(agent.status === "provisioning" || agent.status === "connecting") && (mainTab === "workspace" || mainTab === "chat" || mainTab === "logs" || mainTab === "jobs") ? (
+      {(agent.status === "provisioning" || agent.status === "connecting") && RUNTIME_GATED_TABS.has(mainTab) ? (
         <div className="rounded-xl border border-claude-border bg-claude-bg p-8 text-center">
           <div className="flex justify-center mb-4">
             <svg className="h-10 w-10 animate-spin text-claude-accent" fill="none" viewBox="0 0 24 24">
@@ -424,11 +426,11 @@ export default function AgentDetail() {
             </button>
           )}
         </div>
-      ) : agent.status !== "running" && (mainTab === "workspace" || mainTab === "chat" || mainTab === "logs" || mainTab === "jobs") ? (
+      ) : agent.status !== "running" && RUNTIME_GATED_TABS.has(mainTab) ? (
         <div className="rounded-xl border border-claude-border bg-claude-bg p-8 text-center">
           <p className="text-sm font-medium text-claude-text-primary mb-1">Agent is not started</p>
           <p className="text-xs text-claude-text-muted mb-4 max-w-sm mx-auto">
-            Start the agent to view workspace files, activity, logs, and scheduled jobs. Settings can be edited anytime.
+            Start the agent to view workspace files, chat, activity, logs, and scheduled jobs. Settings can be edited anytime.
           </p>
           <button onClick={startAgent} className={`${css.btn} bg-claude-accent text-white hover:bg-claude-accent-hover`}>
             Start agent

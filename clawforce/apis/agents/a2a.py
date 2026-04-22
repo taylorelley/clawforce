@@ -175,7 +175,11 @@ async def send_chat_message(
             detail=f"Agent is not running (status: {runtime_status.status})",
         )
 
-    user_id = current.get("user_id") or current.get("sub") or ""
+    user_id = current.get("id") or current.get("user_id") or current.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authenticated user is missing an identifier"
+        )
     session_key = f"webchat:{user_id}:{agent_id}"
 
     run_id = uuid.uuid4().hex
@@ -183,16 +187,23 @@ async def send_chat_message(
     future: asyncio.Future = loop.create_future()
     run_store.create(run_id, future)
 
-    await ws_manager.send_to_agent(
-        agent_id,
-        {
-            "type": "acp_run",
-            "run_id": run_id,
-            "text": body.message,
-            "from_agent_id": f"user:{user_id}",
-            "session_key": session_key,
-        },
-    )
+    try:
+        await ws_manager.send_to_agent(
+            agent_id,
+            {
+                "type": "acp_run",
+                "run_id": run_id,
+                "text": body.message,
+                "from_agent_id": f"user:{user_id}",
+                "session_key": session_key,
+            },
+        )
+    except Exception as e:
+        logger.error(f"chat send failed for run_id={run_id}: {e}", exc_info=True)
+        run_store.remove(run_id)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail="Agent delivery failed"
+        )
 
     try:
         reply = await asyncio.wait_for(future, timeout=120.0)
@@ -206,5 +217,5 @@ async def send_chat_message(
         logger.error(f"chat error for run_id={run_id}: {e}", exc_info=True)
         run_store.remove(run_id)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Chat message failed: {e}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Chat message failed"
         )
