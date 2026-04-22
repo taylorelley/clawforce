@@ -4,8 +4,216 @@ import {
   type RuntimeInfo,
 } from "../lib/api";
 import { Card, PageHeader, PageContainer, Button, Input } from "../components/ui";
+import { useAuth } from "../contexts/AuthContext";
 
-type TabType = "general" | "password";
+type TabType = "general" | "password" | "users";
+
+type AdminUser = {
+  id: string;
+  username: string;
+  role: string;
+  created_at: string;
+};
+
+function UsersTab() {
+  const { user: currentUser } = useAuth();
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newRole, setNewRole] = useState("user");
+  const [creating, setCreating] = useState(false);
+
+  const load = useCallback(async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const list = await api.users.listAdmin();
+      setUsers(list);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function handleCreate() {
+    setError("");
+    if (!newUsername || !newPassword) {
+      setError("Username and password are required");
+      return;
+    }
+    setCreating(true);
+    try {
+      await api.users.create({
+        username: newUsername,
+        password: newPassword,
+        role: newRole,
+      });
+      setNewUsername("");
+      setNewPassword("");
+      setNewRole("user");
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to create user");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function handleChangeRole(userId: string, role: string) {
+    setError("");
+    try {
+      await api.users.update(userId, { role });
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to change role");
+    }
+  }
+
+  async function handleResetPassword(userId: string) {
+    const next = window.prompt("Enter a new password for this user:");
+    if (!next) return;
+    setError("");
+    try {
+      await api.users.update(userId, { password: next });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to reset password");
+    }
+  }
+
+  async function handleDelete(userId: string, username: string) {
+    if (!window.confirm(`Delete user ${username}? This cannot be undone.`)) return;
+    setError("");
+    try {
+      await api.users.delete(userId);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to delete user");
+    }
+  }
+
+  return (
+    <Card>
+      <SectionHeader
+        icon={<LockIcon className="h-4 w-4 text-claude-text-muted" />}
+        title="User management"
+        description="Create users, set roles, reset passwords. Only admins can manage users."
+      />
+
+      {error && <ErrorBanner message={error} />}
+
+      <div className="mb-5 space-y-2 rounded-lg border border-claude-border bg-claude-surface p-3">
+        <h3 className="text-xs font-semibold text-claude-text-primary">
+          Create user
+        </h3>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex-1 min-w-[160px]">
+            <label className="mb-1 block text-xs font-medium text-claude-text-muted">
+              Username
+            </label>
+            <Input
+              value={newUsername}
+              onChange={(e) => setNewUsername(e.target.value)}
+              placeholder="alice"
+              disabled={creating}
+            />
+          </div>
+          <div className="flex-1 min-w-[160px]">
+            <label className="mb-1 block text-xs font-medium text-claude-text-muted">
+              Password
+            </label>
+            <Input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="initial password"
+              disabled={creating}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-claude-text-muted">
+              Role
+            </label>
+            <select
+              value={newRole}
+              onChange={(e) => setNewRole(e.target.value)}
+              className="rounded border border-claude-border bg-claude-bg px-2 py-2 text-sm"
+              disabled={creating}
+            >
+              <option value="user">user</option>
+              <option value="admin">admin</option>
+            </select>
+          </div>
+          <Button onClick={handleCreate} disabled={creating}>
+            {creating ? "Creating…" : "Create"}
+          </Button>
+        </div>
+      </div>
+
+      {loading ? (
+        <p className="text-xs text-claude-text-muted">Loading users…</p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-claude-text-muted">
+              <th className="pb-2 font-medium">Username</th>
+              <th className="pb-2 font-medium">Role</th>
+              <th className="pb-2 font-medium">Created</th>
+              <th className="pb-2" />
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((u) => {
+              const isSelf = u.id === currentUser?.id;
+              return (
+                <tr key={u.id} className="border-t border-claude-border">
+                  <td className="py-2 text-claude-text-primary">{u.username}</td>
+                  <td className="py-2">
+                    <select
+                      value={u.role}
+                      onChange={(e) => handleChangeRole(u.id, e.target.value)}
+                      disabled={isSelf}
+                      className="rounded border border-claude-border bg-claude-bg px-2 py-1 text-xs disabled:opacity-60"
+                    >
+                      <option value="user">user</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </td>
+                  <td className="py-2 text-xs text-claude-text-muted">
+                    {u.created_at?.slice(0, 10)}
+                  </td>
+                  <td className="py-2 text-right space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => handleResetPassword(u.id)}
+                      className="text-xs text-claude-accent hover:underline"
+                    >
+                      Reset password
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(u.id, u.username)}
+                      disabled={isSelf}
+                      className="text-xs text-red-600 hover:underline disabled:opacity-40 disabled:no-underline"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </Card>
+  );
+}
 
 function SettingsIcon({ className }: { className?: string }) {
   return (
@@ -85,6 +293,8 @@ function SuccessBanner({ message }: { message: string }) {
 }
 
 export default function AdminSettings() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [activeTab, setActiveTab] = useState<TabType>("general");
   const [runtimeInfo, setRuntimeInfo] = useState<RuntimeInfo | null>(null);
   const [runtimeError, setRuntimeError] = useState("");
@@ -196,6 +406,18 @@ export default function AdminSettings() {
           >
             Password
           </button>
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab("users")}
+              className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${
+                activeTab === "users"
+                  ? "border-claude-accent text-claude-accent"
+                  : "border-transparent text-claude-text-muted hover:text-claude-text-primary"
+              }`}
+            >
+              Users
+            </button>
+          )}
         </div>
       </div>
 
@@ -275,6 +497,9 @@ export default function AdminSettings() {
             </Card>
           </>
         )}
+
+        {/* ── Users Tab ─────────────────────────────────────────── */}
+        {activeTab === "users" && isAdmin && <UsersTab />}
 
         {/* ── Password Tab ──────────────────────────────────────── */}
         {activeTab === "password" && (

@@ -11,6 +11,7 @@ import { WorkspaceTab } from "../components/agent-detail/workspace/WorkspaceTab"
 import { LogsTab } from "../components/agent-detail/logs/LogsTab";
 import { ScheduledJobsTab } from "../components/agent-detail/settings/ScheduledJobsTab";
 import { SettingsContent } from "../components/agent-detail/settings/SettingsContent";
+import SharesPanel from "../components/SharesPanel";
 import type { Agent, MainTab, ToolsCfg } from "../components/agent-detail/types";
 
 /** Secret field names (from CHANNEL_DEFS password fields). Omit these when value is redacted so backend keeps existing. */
@@ -293,11 +294,16 @@ export default function AgentDetail() {
 
   const showOnboarding = showOnboardingModal;
 
+  const canManageShares =
+    agent.effective_permission === "owner" ||
+    agent.effective_permission === "manager" ||
+    agent.effective_permission === undefined; // admin response omits the field
   const mainTabs: { key: MainTab; label: string }[] = [
     { key: "workspace", label: "Workspace" },
     { key: "logs", label: "Logs" },
     { key: "jobs", label: "Schedule" },
     { key: "settings", label: "Settings" },
+    ...(canManageShares ? [{ key: "sharing" as MainTab, label: "Sharing" }] : []),
   ];
 
   return (
@@ -462,6 +468,18 @@ export default function AgentDetail() {
             JSON.stringify(agent.security?.docker) !== JSON.stringify(lastSavedAgent?.security?.docker)
           }
         />
+      )}
+      {mainTab === "sharing" && agent && (
+        <div className="rounded-lg border border-claude-border bg-claude-bg p-4">
+          <h2 className="mb-3 text-sm font-semibold text-claude-text-primary">
+            Sharing
+          </h2>
+          <SharesPanel
+            resourceType="agent"
+            resourceId={agent.id}
+            ownerUserId={agent.owner_user_id}
+          />
+        </div>
       )}
     </PageContainer>
   );

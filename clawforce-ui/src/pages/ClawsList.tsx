@@ -5,6 +5,7 @@ import { CHANNEL_DEFS } from "../components/agent-detail/constants";
 import { PageHeader, PageContainer, Badge, Button, ListCard, ListItem, PlayIcon, StopIcon, ChevronRightIcon } from "../components/ui";
 import { useClaws, useStartAgent, useStopAgent } from "../lib/queries";
 import CreateClawModal from "../components/CreateClawModal";
+import { useAuth } from "../contexts/AuthContext";
 
 const CHANNEL_LABEL_MAP: Record<string, string> = Object.fromEntries(
   CHANNEL_DEFS.map((c) => [c.key, c.label])
@@ -12,6 +13,7 @@ const CHANNEL_LABEL_MAP: Record<string, string> = Object.fromEntries(
 
 export default function ClawsList() {
   const { data: claws = [] } = useClaws();
+  const { user } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const startAgent = useStartAgent();
   const stopAgent = useStopAgent();
@@ -112,6 +114,11 @@ export default function ClawsList() {
                     {claw.name}
                   </Link>
                   <Badge status={claw.status} />
+                  {claw.owner_user_id && user?.id && claw.owner_user_id !== user.id && (
+                    <span className="rounded px-1.5 py-px text-[10px] font-medium bg-claude-surface text-claude-text-muted ring-1 ring-claude-border">
+                      Shared
+                    </span>
+                  )}
                 </div>
               </div>
             </ListItem>

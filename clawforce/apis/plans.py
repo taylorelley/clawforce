@@ -17,10 +17,15 @@ from sse_starlette.sse import EventSourceResponse
 
 from clawforce.auth import decode_token, get_current_user, get_user_or_agent
 from clawforce.core.domain.runtime import AgentRuntimeBackend
-from clawforce.core.plan_access import require_plan_access
+from clawforce.core.plan_access import (
+    require_plan_owner,
+    require_plan_read,
+    require_plan_write,
+)
 from clawforce.core.store.agents import AgentStore
 from clawforce.core.store.plan_artifacts import PlanArtifactStore
 from clawforce.core.store.plans import PlanStore
+from clawforce.core.store.shares import ShareStore
 from clawforce.core.stream_token import verify_stream_token
 from clawforce.deps import (
     get_activity_events_store,
@@ -28,6 +33,7 @@ from clawforce.deps import (
     get_plan_artifact_store,
     get_plan_store,
     get_runtime,
+    get_share_store,
 )
 from clawlib.activity import ActivityEvent
 from clawlib.registry import get_plan_template_registry
@@ -235,9 +241,12 @@ def _build_plan_context_message(plan, agent_id: str = "") -> str:
 
 @router.get("/api/plans")
 def list_plans(
-    _: dict = Depends(get_user_or_agent),
+    caller: dict = Depends(get_user_or_agent),
     store: PlanStore = Depends(get_plan_store),
 ):
+    # Agents still see every plan; their per-plan access is gated at read/write.
+    if caller.get("type") == "user" and caller.get("role") != "admin":
+        return store.list_plans(visible_to_user_id=caller.get("id"))
     return store.list_plans()
 
 
@@ -247,6 +256,7 @@ def create_plan(
     caller: dict = Depends(get_user_or_agent),
     store: PlanStore = Depends(get_plan_store),
 ):
+    owner_user_id = caller.get("id", "") if caller.get("type") == "user" else ""
     if body.template_id:
         template = get_plan_template_registry().get_entry(body.template_id)
         if not template:
@@ -255,10 +265,17 @@ def create_plan(
                 detail=f"Plan template '{body.template_id}' not found",
             )
         plan = store.create_plan_from_template(
-            name=body.name, description=body.description, template=template
+            name=body.name,
+            description=body.description,
+            template=template,
+            owner_user_id=owner_user_id,
         )
     else:
-        plan = store.create_plan(name=body.name, description=body.description)
+        plan = store.create_plan(
+            name=body.name,
+            description=body.description,
+            owner_user_id=owner_user_id,
+        )
     if caller.get("type") == "agent":
         store.assign_agent(plan.id, caller["agent_id"])
         plan.agent_ids = [caller["agent_id"]]
@@ -268,12 +285,14 @@ def create_plan(
 @router.get("/api/plans/{plan_id}")
 def get_plan(
     plan_id: str,
-    _: dict = Depends(get_user_or_agent),
+    caller: dict = Depends(get_user_or_agent),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
 ):
     plan = store.get_plan(plan_id)
     if not plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
+    require_plan_read(caller, plan, share_store)
     return _plan_response(plan)
 
 
@@ -281,12 +300,14 @@ def get_plan(
 def update_plan(
     plan_id: str,
     body: PlanUpdate,
-    _: dict = Depends(get_current_user),
+    caller: dict = Depends(get_current_user),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
 ):
     plan = store.get_plan(plan_id)
     if not plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
+    require_plan_write({"type": "user", **caller}, plan, share_store)
     kwargs = body.model_dump(exclude_unset=True)
     updated = store.update_plan(plan_id, **kwargs)
     return _plan_response(updated)
@@ -295,10 +316,15 @@ def update_plan(
 @router.delete("/api/plans/{plan_id}")
 def delete_plan(
     plan_id: str,
-    _: dict = Depends(get_current_user),
+    caller: dict = Depends(get_current_user),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
     artifact_store: PlanArtifactStore = Depends(get_plan_artifact_store),
 ):
+    plan = store.get_plan(plan_id)
+    if not plan:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
+    require_plan_owner({"type": "user", **caller}, plan, share_store)
     if not store.delete_plan(plan_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
     artifact_store.delete_all_for_plan(plan_id)
@@ -354,16 +380,14 @@ async def update_task(
     body: TaskUpdate,
     caller: dict = Depends(get_user_or_agent),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
     runtime: AgentRuntimeBackend = Depends(get_runtime),
     activity_store=Depends(get_activity_events_store),
 ):
     plan = store.get_plan(plan_id)
     if not plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
-    if caller.get("type") == "user":
-        pass
-    else:
-        require_plan_access(plan, caller)
+    require_plan_write(caller, plan, share_store)
 
     old_task = next((t for t in plan.tasks if t.id == task_id), None)
     old_column_id = old_task.column_id if old_task else None
@@ -491,11 +515,12 @@ def list_task_comments(
     task_id: str,
     caller: dict = Depends(get_user_or_agent),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
 ):
     plan = store.get_plan(plan_id)
     if not plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
-    require_plan_access(plan, caller)
+    require_plan_read(caller, plan, share_store)
     if not any(t.id == task_id for t in plan.tasks):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
     comments = store.list_comments(plan_id, task_id)
@@ -517,6 +542,7 @@ async def add_task_comment(
     body: CommentCreate,
     caller: dict = Depends(get_user_or_agent),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
     agent_store: AgentStore = Depends(get_agent_store),
     runtime: AgentRuntimeBackend = Depends(get_runtime),
     activity_store=Depends(get_activity_events_store),
@@ -524,7 +550,7 @@ async def add_task_comment(
     plan = store.get_plan(plan_id)
     if not plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
-    require_plan_access(plan, caller)
+    require_plan_write(caller, plan, share_store)
     if caller.get("type") == "user":
         author_type = "admin"
         author_id = caller.get("id", "")
@@ -643,6 +669,7 @@ async def list_plan_assignees(
     plan_id: str,
     caller: dict = Depends(get_user_or_agent),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
     agent_store: AgentStore = Depends(get_agent_store),
     runtime: AgentRuntimeBackend = Depends(get_runtime),
 ):
@@ -655,7 +682,7 @@ async def list_plan_assignees(
     plan = store.get_plan(plan_id)
     if not plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
-    require_plan_access(plan, caller)
+    require_plan_read(caller, plan, share_store)
 
     # Exclude the calling agent from the assignees list. The coordinator (the
     # agent managing the plan) should not appear as a valid task assignee —
@@ -685,12 +712,15 @@ async def list_plan_assignees(
 def assign_agent(
     plan_id: str,
     agent_id: str,
-    _: dict = Depends(get_current_user),
+    caller: dict = Depends(get_current_user),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
     agent_store: AgentStore = Depends(get_agent_store),
 ):
-    if not store.get_plan(plan_id):
+    plan = store.get_plan(plan_id)
+    if not plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
+    require_plan_write({"type": "user", **caller}, plan, share_store)
     if not agent_store.get_agent(agent_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found")
     store.assign_agent(plan_id, agent_id)
@@ -701,11 +731,14 @@ def assign_agent(
 def remove_agent(
     plan_id: str,
     agent_id: str,
-    _: dict = Depends(get_current_user),
+    caller: dict = Depends(get_current_user),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
 ):
-    if not store.get_plan(plan_id):
+    plan = store.get_plan(plan_id)
+    if not plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
+    require_plan_write({"type": "user", **caller}, plan, share_store)
     store.remove_agent(plan_id, agent_id)
     return {"ok": True}
 
@@ -797,13 +830,14 @@ async def activate_plan(
     plan_id: str,
     caller: dict = Depends(get_user_or_agent),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
     runtime: AgentRuntimeBackend = Depends(get_runtime),
 ):
     """Mark plan active and send context to running agents. Coordinator decides when to engage others via plan assistant. Does NOT require all agents to be running."""
     plan = store.get_plan(plan_id)
     if not plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
-    require_plan_access(plan, caller)
+    require_plan_write(caller, plan, share_store)
 
     agent_ids = plan.agent_ids or []
 
@@ -881,12 +915,13 @@ def add_artifact(
     body: ArtifactCreate,
     caller: dict = Depends(get_user_or_agent),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
     artifact_store: PlanArtifactStore = Depends(get_plan_artifact_store),
 ):
     plan = store.get_plan(plan_id)
     if not plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
-    require_plan_access(plan, caller)
+    require_plan_write(caller, plan, share_store)
     artifact = artifact_store.add(
         plan_id,
         name=body.name or "artifact",
@@ -903,12 +938,13 @@ def list_artifacts(
     task_id: str | None = None,
     caller: dict = Depends(get_user_or_agent),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
     artifact_store: PlanArtifactStore = Depends(get_plan_artifact_store),
 ):
     plan = store.get_plan(plan_id)
     if not plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
-    require_plan_access(plan, caller)
+    require_plan_read(caller, plan, share_store)
     return artifact_store.list_artifacts(plan_id, task_id=task_id)
 
 
@@ -918,12 +954,13 @@ def get_artifact(
     artifact_id: str,
     caller: dict = Depends(get_user_or_agent),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
     artifact_store: PlanArtifactStore = Depends(get_plan_artifact_store),
 ):
     plan = store.get_plan(plan_id)
     if not plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
-    require_plan_access(plan, caller)
+    require_plan_read(caller, plan, share_store)
     artifact = artifact_store.get_artifact(plan_id, artifact_id)
     if not artifact:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Artifact not found")
@@ -968,13 +1005,14 @@ def download_artifact(
     artifact_id: str,
     caller: dict = Depends(get_user_or_agent),
     store: PlanStore = Depends(get_plan_store),
+    share_store: ShareStore = Depends(get_share_store),
     artifact_store: PlanArtifactStore = Depends(get_plan_artifact_store),
 ):
     """Download a plan artifact file."""
     plan = store.get_plan(plan_id)
     if not plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
-    require_plan_access(plan, caller)
+    require_plan_read(caller, plan, share_store)
     result = artifact_store.read_file(plan_id, artifact_id)
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Artifact not found")

@@ -411,4 +411,56 @@ export const api = {
     updateSettings: (settings: Record<string, any>) =>
       put<Record<string, any>>("/admin/settings", settings),
   },
+  users: {
+    list: () =>
+      request<{ id: string; username: string }[]>("/users"),
+    listAdmin: () =>
+      request<{ id: string; username: string; role: string; created_at: string }[]>(
+        "/users/admin",
+      ),
+    create: (data: { username: string; password: string; role: string }) =>
+      post<{ id: string; username: string; role: string; created_at: string }>(
+        "/users",
+        data,
+      ),
+    update: (id: string, data: { role?: string; password?: string }) =>
+      request<{ id: string; username: string; role: string; created_at: string }>(
+        `/users/${id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      ),
+    delete: (id: string) =>
+      request<{ ok: boolean }>(`/users/${id}`, { method: "DELETE" }),
+  },
+  shares: {
+    listForAgent: (agentId: string) =>
+      request<
+        { agent_id: string; user_id: string; username: string; permission: string }[]
+      >(`/agents/${agentId}/shares`),
+    setForAgent: (agentId: string, userId: string, permission: string) =>
+      put<{ agent_id: string; user_id: string; username: string; permission: string }>(
+        `/agents/${agentId}/shares/${userId}`,
+        { permission },
+      ),
+    removeForAgent: (agentId: string, userId: string) =>
+      request<{ ok: boolean }>(`/agents/${agentId}/shares/${userId}`, {
+        method: "DELETE",
+      }),
+    listForPlan: (planId: string) =>
+      request<
+        { plan_id: string; user_id: string; username: string; permission: string }[]
+      >(`/plans/${planId}/shares`),
+    setForPlan: (planId: string, userId: string, permission: string) =>
+      put<{ plan_id: string; user_id: string; username: string; permission: string }>(
+        `/plans/${planId}/shares/${userId}`,
+        { permission },
+      ),
+    removeForPlan: (planId: string, userId: string) =>
+      request<{ ok: boolean }>(`/plans/${planId}/shares/${userId}`, {
+        method: "DELETE",
+      }),
+  },
 };
