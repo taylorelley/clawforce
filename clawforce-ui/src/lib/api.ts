@@ -139,6 +139,8 @@ export const api = {
     delete: (id: string) => request<{ ok: boolean }>(`/agents/${id}`, { method: "DELETE" }),
     start: (id: string) => post(`/agents/${id}/start`),
     stop: (id: string) => post(`/agents/${id}/stop`),
+    chat: (id: string, message: string) =>
+      post<{ ok: boolean; reply: string }>(`/agents/${id}/chat`, { message }),
     config: (id: string) => request<Record<string, unknown>>(`/agents/${id}/config`),
     updateConfig: (id: string, config: unknown) => put(`/agents/${id}/config`, config),
     variables: (id: string) => request<Record<string, string>>(`/agents/${id}/variables`),

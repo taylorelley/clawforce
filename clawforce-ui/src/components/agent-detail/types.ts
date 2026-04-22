@@ -107,7 +107,8 @@ export type Agent = {
   effective_permission?: "viewer" | "editor" | "manager" | "owner";
 };
 
-export type MainTab = "workspace" | "jobs" | "logs" | "settings" | "sharing";
+export type MainTab = "workspace" | "chat" | "jobs" | "logs" | "settings" | "sharing";
+
 export type SettingsTab = "general" | "variables" | "channels" | "tools" | "skills" | "software";
 
 export type FieldDef = { name: string; label: string; type: "text" | "password" | "number" | "toggle" | "tags"; placeholder?: string };
