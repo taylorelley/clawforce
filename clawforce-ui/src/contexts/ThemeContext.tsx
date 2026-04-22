@@ -10,11 +10,35 @@ const ThemeContext = createContext<{
   toggleTheme: () => void;
 } | null>(null);
 
+function safeGetStoredTheme(): Theme | null {
+  try {
+    if (typeof window === "undefined") return null;
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return stored === "light" || stored === "dark" ? stored : null;
+  } catch {
+    return null;
+  }
+}
+
+function safeSetStoredTheme(theme: Theme) {
+  try {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // Storage may be disabled (Safari private mode, quota, policy). Ignore —
+    // the in-memory state update is what keeps the UI correct this session.
+  }
+}
+
 function getInitialTheme(): Theme {
-  const stored = localStorage.getItem(THEME_STORAGE_KEY);
-  if (stored === "light" || stored === "dark") return stored;
-  if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-    return "dark";
+  const stored = safeGetStoredTheme();
+  if (stored) return stored;
+  try {
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      return "dark";
+    }
+  } catch {
+    // matchMedia unsupported — fall through.
   }
   return "light";
 }
@@ -23,6 +47,7 @@ function applyThemeClass(theme: Theme) {
   const root = document.documentElement;
   if (theme === "dark") root.classList.add("dark");
   else root.classList.remove("dark");
+  root.style.colorScheme = theme;
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -34,13 +59,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
-    localStorage.setItem(THEME_STORAGE_KEY, next);
+    safeSetStoredTheme(next);
   }, []);
 
   const toggleTheme = useCallback(() => {
     setThemeState((prev) => {
       const next: Theme = prev === "dark" ? "light" : "dark";
-      localStorage.setItem(THEME_STORAGE_KEY, next);
+      safeSetStoredTheme(next);
       return next;
     });
   }, []);
@@ -48,11 +73,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const mql = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (e: MediaQueryListEvent) => {
-      if (localStorage.getItem(THEME_STORAGE_KEY)) return;
+      if (safeGetStoredTheme()) return;
       setThemeState(e.matches ? "dark" : "light");
     };
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key !== THEME_STORAGE_KEY) return;
+      if (e.newValue === "light" || e.newValue === "dark") {
+        setThemeState(e.newValue);
+      }
+    };
     mql.addEventListener("change", handleChange);
-    return () => mql.removeEventListener("change", handleChange);
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      mql.removeEventListener("change", handleChange);
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
 
   return (
