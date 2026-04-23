@@ -2,19 +2,19 @@
 set -euo pipefail
 cd "$(dirname "$0")/.." || exit 1
 
-IMAGE_NAME="clawbot-test"
+IMAGE_NAME="specialagent-test"
 
 echo "=== Building Docker image ==="
 docker build -t "$IMAGE_NAME" .
 
 echo ""
-echo "=== Running 'clawbot onboard' ==="
-docker run --name clawbot-test-run "$IMAGE_NAME" onboard
+echo "=== Running 'specialagent onboard' ==="
+docker run --name specialagent-test-run "$IMAGE_NAME" onboard
 
 echo ""
-echo "=== Running 'clawbot status' ==="
-STATUS_OUTPUT=$(docker commit clawbot-test-run clawbot-test-onboarded > /dev/null && \
-    docker run --rm clawbot-test-onboarded status 2>&1) || true
+echo "=== Running 'specialagent status' ==="
+STATUS_OUTPUT=$(docker commit specialagent-test-run specialagent-test-onboarded > /dev/null && \
+    docker run --rm specialagent-test-onboarded status 2>&1) || true
 
 echo "$STATUS_OUTPUT"
 
@@ -31,7 +31,7 @@ check() {
     fi
 }
 
-check "clawbot Status"
+check "specialagent Status"
 check "Config:"
 check "Workspace:"
 check "Model:"
@@ -50,7 +50,7 @@ fi
 # Cleanup
 echo ""
 echo "=== Cleanup ==="
-docker rm -f clawbot-test-run 2>/dev/null || true
-docker rmi -f clawbot-test-onboarded 2>/dev/null || true
+docker rm -f specialagent-test-run 2>/dev/null || true
+docker rmi -f specialagent-test-onboarded 2>/dev/null || true
 docker rmi -f "$IMAGE_NAME" 2>/dev/null || true
 echo "Done."

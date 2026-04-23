@@ -1,6 +1,6 @@
-"""Tests for control_plane_overrides (clawforce.core.domain.agent)."""
+"""Tests for control_plane_overrides (specops.core.domain.agent)."""
 
-from clawforce.core.domain.agent import AgentDef, control_plane_overrides
+from specops.core.domain.agent import AgentDef, control_plane_overrides
 
 
 class TestControlPlaneOverrides:

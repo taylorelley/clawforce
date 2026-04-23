@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from cryptography.fernet import Fernet
 
-from clawforce.core.database import Database
-from clawforce.core.store.agent_config import AgentConfigStore
+from specops.core.database import Database
+from specops.core.store.agent_config import AgentConfigStore
 
 
 @pytest.fixture

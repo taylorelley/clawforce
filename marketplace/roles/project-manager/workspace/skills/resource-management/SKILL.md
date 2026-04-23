@@ -1,7 +1,7 @@
 ---
 name: resource-management
 description: "Team capacity and resource allocation. Use when planning resources, managing capacity, or balancing workload."
-metadata: {"clawbot":{"emoji":"👥"}}
+metadata: {"specialagent":{"emoji":"👥"}}
 ---
 
 # Resource Management

@@ -1,7 +1,7 @@
 ---
 name: infrastructure-automation
 description: "Infrastructure as Code and automation practices. Use when provisioning, managing, or troubleshooting infrastructure."
-metadata: {"clawbot":{"emoji":"🏗️"}}
+metadata: {"specialagent":{"emoji":"🏗️"}}
 ---
 
 # Infrastructure Automation

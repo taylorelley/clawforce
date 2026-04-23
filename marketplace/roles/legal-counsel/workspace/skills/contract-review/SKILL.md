@@ -1,7 +1,7 @@
 ---
 name: contract-review
 description: "Framework for reviewing, drafting, and negotiating contracts. Use when reviewing vendor agreements, customer contracts, NDAs, employment agreements, or any legal document requiring review."
-metadata: {"clawbot":{"emoji":"📄"}}
+metadata: {"specialagent":{"emoji":"📄"}}
 ---
 
 # Contract Review

@@ -1,7 +1,7 @@
 ---
 name: ci-cd
 description: "CI/CD pipeline design and management. Use when building, troubleshooting, or optimizing build and deployment pipelines."
-metadata: {"clawbot":{"emoji":"🔄"}}
+metadata: {"specialagent":{"emoji":"🔄"}}
 ---
 
 # CI/CD Pipelines

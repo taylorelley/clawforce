@@ -1,7 +1,7 @@
 ---
 name: onboarding
 description: "Framework for welcoming new hires: first week setup, 30-60-90 day plans, buddy assignments, and onboarding feedback. Use when onboarding new employees, tracking progress, or improving the onboarding experience."
-metadata: {"clawbot":{"emoji":"👋"}}
+metadata: {"specialagent":{"emoji":"👋"}}
 ---
 
 # Onboarding

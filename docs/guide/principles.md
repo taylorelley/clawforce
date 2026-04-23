@@ -1,12 +1,12 @@
 # Product Principles & Best Practices
 
-Clawforce is designed for **easy-to-use agent team setup** and **background automation**. This guide outlines product philosophy and recommended practices.
+SpecOps is designed for **easy-to-use agent team setup** and **background automation**. This guide outlines product philosophy and recommended practices.
 
 ---
 
 ## Our Focus: Easy Agent Team Setup
 
-Clawforce prioritizes:
+SpecOps prioritizes:
 
 - **1-Click Deployment** — Deploy pre-built agents from the marketplace; no code required
 - **Visual Configuration** — Set objectives, tools, and integrations via the dashboard
@@ -17,7 +17,7 @@ Clawforce prioritizes:
 
 ## Background Agents
 
-Clawforce agents are **background workers** — they run 24/7 in isolated containers, triggered by cron, events, or channels. We want to keep it simple and run purely in the background. Therefore. We do **not** introduce:
+SpecOps agents are **background workers** — they run 24/7 in isolated containers, triggered by cron, events, or channels. We want to keep it simple and run purely in the background. Therefore. We do **not** introduce:
 
 - **Computer Use** — Direct mouse/keyboard control of desktops
 - **Browser Use** — Automated browser driving (including headless mode)
@@ -32,7 +32,7 @@ Clawforce agents are **background workers** — they run 24/7 in isolated contai
 - **Sandboxed mode** when possible — Read-only rootfs, no network for sensitive workloads
 - **Secrets** — Use the vault; never hardcode API keys
 - **Approval gates** — Enable `ask_before_run` for sensitive tools (`exec`, `write_file`, etc.)
-- **Audit logs** — Capture and monitor `clawforce.audit` for security events
+- **Audit logs** — Capture and monitor `specops.audit` for security events
 
 See [Security](/guide/security) for details.
 

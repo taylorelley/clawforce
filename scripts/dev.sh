@@ -11,19 +11,19 @@
 set -euo pipefail
 
 # ── Config (override via env) ────────────────────────────────────────────────
-IMAGE="${IMAGE:-clawforce:latest}"
-CONTAINER="${CONTAINER:-clawforce}"
+IMAGE="${IMAGE:-specops:latest}"
+CONTAINER="${CONTAINER:-specops}"
 DATA_DIR="${DATA_DIR:-./data}"
 PORT="${PORT:-8080}"
 ADMIN_USER="${ADMIN_SETUP_USERNAME:-admin}"
 ADMIN_PASS="${ADMIN_SETUP_PASSWORD:-admin}"
 # Stable JWT secret so browser tokens survive container restarts.
 # Override via env for production; this default is fine for local dev.
-JWT_SECRET="${ADMIN_JWT_SECRET:-clawforce-local-dev-secret-do-not-use-in-prod}"
+JWT_SECRET="${ADMIN_JWT_SECRET:-specops-local-dev-secret-do-not-use-in-prod}"
 
 # ── Container engine: docker (default) or podman ────────────────────────────
-if [ -n "$CLAWFORCE_ENGINE" ]; then
-    ENGINE="$CLAWFORCE_ENGINE"
+if [ -n "$SPECOPS_ENGINE" ]; then
+    ENGINE="$SPECOPS_ENGINE"
 elif command -v docker &>/dev/null; then
     ENGINE="docker"
 elif command -v podman &>/dev/null; then
@@ -51,11 +51,11 @@ for arg in "$@"; do
       echo "  --logs       Tail container logs after starting"
       echo ""
       echo "Environment overrides:"
-      echo "  IMAGE=...              Container image name  (default: clawforce:latest)"
+      echo "  IMAGE=...              Container image name  (default: specops:latest)"
       echo "  PORT=...               Host port             (default: 8080)"
       echo "  ADMIN_JWT_SECRET=...   JWT signing secret    (stable default for local dev)"
       echo "  PROCESS_POOL=true      Use process pool instead of container isolation"
-      echo "  CLAWFORCE_ENGINE=...   Container engine: docker or podman (default: auto-detect)"
+      echo "  SPECOPS_ENGINE=...   Container engine: docker or podman (default: auto-detect)"
       exit 0
       ;;
   esac
@@ -85,8 +85,8 @@ if ! $ENGINE info &>/dev/null; then
   exit 1
 fi
 
-# ── Stop agent worker containers (clawbot-agent-*) ──────────────────────────
-AGENT_CONTAINERS=$($ENGINE ps -aq --filter "name=clawbot-agent-" 2>/dev/null || true)
+# ── Stop agent worker containers (specialagent-*) ──────────────────────────
+AGENT_CONTAINERS=$($ENGINE ps -aq --filter "name=specialagent-" 2>/dev/null || true)
 if [ -n "$AGENT_CONTAINERS" ]; then
   info "Stopping orphaned agent worker containers ..."
   echo "$AGENT_CONTAINERS" | xargs $ENGINE rm -f 2>/dev/null || true

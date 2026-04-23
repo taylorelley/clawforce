@@ -1,7 +1,7 @@
 ---
 name: roadmap
 description: "Framework for product roadmap management, feature specification, prioritization, and release planning. Use when creating roadmaps, writing PRDs, prioritizing features, or planning releases."
-metadata: {"clawbot":{"emoji":"🗺️"}}
+metadata: {"specialagent":{"emoji":"🗺️"}}
 ---
 
 # Product Roadmap Management

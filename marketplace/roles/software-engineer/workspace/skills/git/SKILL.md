@@ -1,7 +1,7 @@
 ---
 name: git
 description: "Version control with git. Clone, branch, commit, push. Required for repo workflows."
-metadata: {"clawbot":{"emoji":"📦","requires":{"bins":["git"]}}}
+metadata: {"specialagent":{"emoji":"📦","requires":{"bins":["git"]}}}
 ---
 
 # Git Skill

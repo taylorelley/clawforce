@@ -1,9 +1,9 @@
 @echo off
-REM Clawforce Installer - Windows Command Prompt wrapper
+REM SpecOps Installer - Windows Command Prompt wrapper
 REM This script launches the PowerShell installer
 
 echo.
-echo Clawforce Installer
+echo SpecOps Installer
 echo.
 echo Launching PowerShell installer...
 echo.
@@ -16,13 +16,13 @@ if %errorLevel% neq 0 (
 )
 
 REM Launch PowerShell with execution policy bypass for this script
-powershell -ExecutionPolicy Bypass -Command "& { irm https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.ps1 | iex }"
+powershell -ExecutionPolicy Bypass -Command "& { irm https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.ps1 | iex }"
 
 if %errorLevel% neq 0 (
     echo.
     echo If PowerShell download failed, you can run manually:
     echo   1. Open PowerShell as Administrator
-    echo   2. Run: irm https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.ps1 ^| iex
+    echo   2. Run: irm https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.ps1 ^| iex
     echo.
     pause
 )

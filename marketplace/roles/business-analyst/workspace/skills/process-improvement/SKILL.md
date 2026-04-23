@@ -1,7 +1,7 @@
 ---
 name: process-improvement
 description: "Business process analysis and improvement. Use when mapping, analyzing, or optimizing processes."
-metadata: {"clawbot":{"emoji":"⚙️"}}
+metadata: {"specialagent":{"emoji":"⚙️"}}
 ---
 
 # Process Improvement

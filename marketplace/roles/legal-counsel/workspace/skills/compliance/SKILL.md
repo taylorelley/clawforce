@@ -1,7 +1,7 @@
 ---
 name: compliance
 description: "Framework for regulatory compliance including GDPR, CCPA, employment law, and industry-specific regulations. Use when assessing compliance requirements, drafting policies, or conducting compliance audits."
-metadata: {"clawbot":{"emoji":"✅"}}
+metadata: {"specialagent":{"emoji":"✅"}}
 ---
 
 # Compliance

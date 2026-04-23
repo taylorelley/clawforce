@@ -1,4 +1,4 @@
-# Contributing to Clawforce
+# Contributing to SpecOps
 
 Thank you for your interest in contributing!
 
@@ -6,8 +6,8 @@ Thank you for your interest in contributing!
 
 ```bash
 # Clone the repository
-git clone https://github.com/saolalab/clawforce.git
-cd clawforce
+git clone https://github.com/taylorelley/specops.git
+cd specops
 
 # Install dependencies
 make install
@@ -73,18 +73,18 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ### PyPI Publishing
 
-Python packages (`clawlib`, `clawbot`, `clawforce`) are built as part of CI (`ci.yml`) and uploaded as artifacts, but are not automatically published to PyPI in the current release workflow. To publish to PyPI, use [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC, no API tokens needed). If you add a PyPI publish step to `release.yml`, configure a trusted publisher in PyPI for each package:
-- Repository: `saolalab/clawforce`
+Python packages (`specops_lib`, `specialagent`, `specops`) are built as part of CI (`ci.yml`) and uploaded as artifacts, but are not automatically published to PyPI in the current release workflow. To publish to PyPI, use [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC, no API tokens needed). If you add a PyPI publish step to `release.yml`, configure a trusted publisher in PyPI for each package:
+- Repository: `taylorelley/specops`
 - Workflow: `release.yml`
 - Environment: `release`
 
 ## Project Structure
 
 ```
-├── clawlib/         # Shared library (published first)
-├── clawbot/         # Agent framework (depends on clawlib)
-├── clawforce/       # Admin control plane (depends on both)
-├── clawforce-ui/    # Admin dashboard (React)
+├── specops_lib/         # Shared library (published first)
+├── specialagent/         # Agent framework (depends on specops_lib)
+├── specops/       # Admin control plane (depends on both)
+├── specops-ui/    # Admin dashboard (React)
 ├── bridges/         # Node.js bridges (whatsapp, zalo)
 └── tests/           # Test suite
 ```

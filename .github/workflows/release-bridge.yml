@@ -62,7 +62,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: whatsapp-bridge-tarball
-          path: bridges/whatsapp/clawbot-whatsapp-bridge-*.tgz
+          path: bridges/whatsapp/specialagent-whatsapp-bridge-*.tgz
 
   github-release:
     runs-on: ubuntu-latest
@@ -86,16 +86,16 @@ jobs:
           draft: false
           files: dist/*.tgz
           body: |
-            ## @clawbot/whatsapp-bridge v${{ needs.version.outputs.version }}
+            ## @specialagent/whatsapp-bridge v${{ needs.version.outputs.version }}
 
             Install directly from this release (no npm registry required):
 
             ```bash
-            npm install https://github.com/saolalab/clawforce/releases/download/bridge%2Fv${{ needs.version.outputs.version }}/clawbot-whatsapp-bridge-${{ needs.version.outputs.version }}.tgz
+            npm install https://github.com/taylorelley/specops/releases/download/bridge%2Fv${{ needs.version.outputs.version }}/specialagent-whatsapp-bridge-${{ needs.version.outputs.version }}.tgz
             ```
 
             Or pin it in `package.json`:
 
             ```json
-            "@clawbot/whatsapp-bridge": "https://github.com/saolalab/clawforce/releases/download/bridge%2Fv${{ needs.version.outputs.version }}/clawbot-whatsapp-bridge-${{ needs.version.outputs.version }}.tgz"
+            "@specialagent/whatsapp-bridge": "https://github.com/taylorelley/specops/releases/download/bridge%2Fv${{ needs.version.outputs.version }}/specialagent-whatsapp-bridge-${{ needs.version.outputs.version }}.tgz"
             ```

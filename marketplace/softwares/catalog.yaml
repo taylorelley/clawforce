@@ -163,7 +163,7 @@
 - id: whatsapp-bridge
   name: WhatsApp Bridge
   icon: message-circle
-  author: Clawbot
+  author: SpecialAgent
   description: >-
     Connect agents to WhatsApp via Baileys. Enables bidirectional messaging
     through WebSocket bridge.
@@ -173,13 +173,13 @@
     - messaging
   install:
     type: npm
-    package: "https://github.com/saolalab/clawforce/releases/download/bridge%2Fv0.1.1/clawbot-whatsapp-bridge-0.1.1.tgz"
+    package: "https://github.com/taylorelley/specops/releases/download/bridge%2Fv0.1.1/specialagent-whatsapp-bridge-0.1.1.tgz"
   post_install:
-    command: clawbot-whatsapp-bridge
+    command: specialagent-whatsapp-bridge
     args: ["start"]
     daemon: true
   run:
-    command: clawbot-whatsapp-bridge
+    command: specialagent-whatsapp-bridge
     args: []
     stdin: false
     port: 3001
@@ -188,7 +188,7 @@
 # - id: zalo-personal-bridge
 #   name: Zalo Personal Bridge
 #   icon: message-circle
-#   author: Clawbot
+#   author: SpecialAgent
 #   description: >-
 #     Connect agents to Zalo Personal accounts via zca-js. Enables bidirectional
 #     messaging through WebSocket bridge. Requires QR-code login on first run.
@@ -198,9 +198,9 @@
 #     - messaging
 #   install:
 #     type: npm
-#     package: "https://github.com/saolalab/clawforce/releases/download/bridge%2Fzalo%2Fv0.1.0/clawbot-zalo-personal-bridge-0.1.0.tgz"
+#     package: "https://github.com/taylorelley/specops/releases/download/bridge%2Fzalo%2Fv0.1.0/specialagent-zalo-personal-bridge-0.1.0.tgz"
 #   run:
-#     command: clawbot-zalo-personal-bridge
+#     command: specialagent-zalo-personal-bridge
 #     args: []
 #     stdin: false
 #     port: 3002

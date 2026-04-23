@@ -1,7 +1,7 @@
 ---
 name: project-tracking
 description: "Project status tracking and reporting. Use when monitoring progress, creating reports, or managing timelines."
-metadata: {"clawbot":{"emoji":"📈"}}
+metadata: {"specialagent":{"emoji":"📈"}}
 ---
 
 # Project Tracking

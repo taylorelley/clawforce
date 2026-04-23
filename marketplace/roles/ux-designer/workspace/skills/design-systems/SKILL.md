@@ -1,7 +1,7 @@
 ---
 name: design-systems
 description: "Design system management and component documentation. Use when creating, updating, or documenting design system components."
-metadata: {"clawbot":{"emoji":"🎨"}}
+metadata: {"specialagent":{"emoji":"🎨"}}
 ---
 
 # Design Systems

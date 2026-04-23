@@ -1,7 +1,7 @@
 ---
 name: api-docs
 description: "API documentation standards and practices. Use when documenting APIs, endpoints, or integrations."
-metadata: {"clawbot":{"emoji":"🔌"}}
+metadata: {"specialagent":{"emoji":"🔌"}}
 ---
 
 # API Documentation

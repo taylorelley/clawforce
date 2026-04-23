@@ -12,8 +12,8 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from clawforce.apis.mcp_registry import CustomMCPRequest
-from clawlib.mcpregistry import OfficialMCPRegistry, YamlMCPRegistry
+from specops.apis.mcp_registry import CustomMCPRequest
+from specops_lib.mcpregistry import OfficialMCPRegistry, YamlMCPRegistry
 
 
 class _StubOfficialMCPRegistry(OfficialMCPRegistry):

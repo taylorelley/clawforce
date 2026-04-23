@@ -1,7 +1,7 @@
 ---
 name: monitoring
 description: "Framework for defining SLIs/SLOs, designing alerts and dashboards, and tracking error budgets. Use when setting up monitoring, reviewing SLOs, or optimizing observability."
-metadata: {"clawbot":{"emoji":"📊"}}
+metadata: {"specialagent":{"emoji":"📊"}}
 ---
 
 # Monitoring & Observability

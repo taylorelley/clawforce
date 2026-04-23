@@ -1,7 +1,7 @@
 ---
 name: architecture-review
 description: "Framework for reviewing system architecture, creating RFCs, documenting ADRs, and managing tech debt. Use when evaluating architecture changes, reviewing designs, or making technical decisions."
-metadata: {"clawbot":{"emoji":"🏗️"}}
+metadata: {"specialagent":{"emoji":"🏗️"}}
 ---
 
 # Architecture Review

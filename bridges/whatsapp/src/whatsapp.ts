@@ -60,7 +60,7 @@ export class WhatsAppClient {
       version,
       logger,
       printQRInTerminal: false,
-      browser: ['clawbot', 'cli', VERSION],
+      browser: ['specialagent', 'cli', VERSION],
       syncFullHistory: false,
       markOnlineOnConnect: false,
     });
@@ -106,7 +106,7 @@ export class WhatsAppClient {
         console.log('✅ Connected to WhatsApp');
         this.options.onStatus('connected');
         if (this.options.exitOnConnect) {
-          console.log('Session saved. You can close this terminal and start the bridge with: clawbot-whatsapp-bridge start');
+          console.log('Session saved. You can close this terminal and start the bridge with: specialagent-whatsapp-bridge start');
           process.exit(0);
         }
       }

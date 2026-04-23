@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * Clawbot WhatsApp Bridge
+ * SpecialAgent WhatsApp Bridge
  *
- * This bridge connects WhatsApp Web to Clawbot's Python backend
+ * This bridge connects WhatsApp Web to SpecialAgent's Python backend
  * via WebSocket. It handles authentication, message forwarding,
  * and reconnection logic.
  *
  * Usage:
- *   clawbot-whatsapp-bridge          # QR-only mode: show QR, save session, exit (no ports)
- *   clawbot-whatsapp-bridge start    # Daemon mode: start WebSocket server (used by post_install)
+ *   specialagent-whatsapp-bridge          # QR-only mode: show QR, save session, exit (no ports)
+ *   specialagent-whatsapp-bridge start    # Daemon mode: start WebSocket server (used by post_install)
  *
  * Env: WHATSAPP_BRIDGE_PORT (3001), AUTH_DIR, BRIDGE_TOKEN
  */
@@ -29,12 +29,12 @@ const PORT = parseInt(
   10
 );
 const ADMIN_PORT = process.env.ADMIN_PORT ? parseInt(process.env.ADMIN_PORT, 10) : undefined;
-const AUTH_DIR = process.env.AUTH_DIR || join(homedir(), '.clawbot', 'whatsapp-auth');
+const AUTH_DIR = process.env.AUTH_DIR || join(homedir(), '.specialagent', 'whatsapp-auth');
 const TOKEN = process.env.BRIDGE_TOKEN || undefined;
 
 const subcommand = process.argv[2];
 
-console.log('🐈 Clawbot WhatsApp Bridge');
+console.log('🐈 SpecialAgent WhatsApp Bridge');
 console.log('========================\n');
 
 if (!subcommand) {
@@ -71,6 +71,6 @@ if (!subcommand) {
   });
 } else {
   console.error(`Unknown subcommand: ${subcommand}`);
-  console.error('Usage: clawbot-whatsapp-bridge [start]');
+  console.error('Usage: specialagent-whatsapp-bridge [start]');
   process.exit(1);
 }

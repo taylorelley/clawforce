@@ -1,6 +1,6 @@
 """Tests for crud._build_update_overrides."""
 
-from clawforce.apis.agents.crud import _build_update_overrides
+from specops.apis.agents.crud import _build_update_overrides
 
 
 class TestBuildUpdateOverrides:

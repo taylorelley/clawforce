@@ -1,7 +1,7 @@
 ---
 name: pipeline-management
 description: "Sales pipeline management and forecasting. Use when tracking opportunities, forecasting revenue, or managing deals."
-metadata: {"clawbot":{"emoji":"📊"}}
+metadata: {"specialagent":{"emoji":"📊"}}
 ---
 
 # Pipeline Management

@@ -1,7 +1,7 @@
 ---
 name: growth-analytics
 description: "Frameworks and templates for marketing analytics including funnel metrics, campaign performance reports, SEO audits, A/B testing, attribution models, and marketing KPIs. Use when analyzing performance, optimizing campaigns, or reporting results."
-metadata: {"clawbot":{"emoji":"📊"}}
+metadata: {"specialagent":{"emoji":"📊"}}
 ---
 
 # Growth Analytics

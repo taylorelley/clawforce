@@ -1,7 +1,7 @@
 ---
 name: integration-patterns
 description: "Integration patterns and API design. Use when designing integrations, APIs, or data flows."
-metadata: {"clawbot":{"emoji":"🔗"}}
+metadata: {"specialagent":{"emoji":"🔗"}}
 ---
 
 # Integration Patterns

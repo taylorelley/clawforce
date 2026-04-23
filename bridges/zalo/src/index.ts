@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Clawbot Zalo Personal Bridge
+ * SpecialAgent Zalo Personal Bridge
  *
- * Connects Zalo Personal (via zca-js) to Clawbot's Python backend via WebSocket.
+ * Connects Zalo Personal (via zca-js) to SpecialAgent's Python backend via WebSocket.
  *
  * Usage:
  *   npm run build && npm start
@@ -19,10 +19,10 @@ const PORT = parseInt(
   10
 );
 const ADMIN_PORT = process.env.ADMIN_PORT ? parseInt(process.env.ADMIN_PORT, 10) : undefined;
-const AUTH_DIR = process.env.AUTH_DIR || join(homedir(), '.clawbot', 'zalo-auth');
+const AUTH_DIR = process.env.AUTH_DIR || join(homedir(), '.specialagent', 'zalo-auth');
 const TOKEN = process.env.BRIDGE_TOKEN || undefined;
 
-console.log('🐈 Clawbot Zalo Personal Bridge');
+console.log('🐈 SpecialAgent Zalo Personal Bridge');
 console.log('==============================\n');
 
 const server = new ZaloBridgeServer(PORT, AUTH_DIR, TOKEN, ADMIN_PORT);

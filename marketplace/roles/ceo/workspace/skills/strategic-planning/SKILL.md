@@ -1,7 +1,7 @@
 ---
 name: strategic-planning
 description: "Framework for setting company vision, OKRs, and quarterly goals. Use when defining strategy, running planning sessions, or evaluating strategic options."
-metadata: {"clawbot":{"emoji":"🎯"}}
+metadata: {"specialagent":{"emoji":"🎯"}}
 ---
 
 # Strategic Planning

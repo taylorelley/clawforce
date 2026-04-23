@@ -26,7 +26,7 @@ tests/
 admin-frontend/node_modules/
 bridge/node_modules/
 bridge/dist/
-clawforce-ui/node_modules/
+specops-ui/node_modules/
 
 # Pre-built static (rebuilt in Docker from source)
 admin_api/static/

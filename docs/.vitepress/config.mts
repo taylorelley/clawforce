@@ -1,14 +1,14 @@
 import { defineConfig } from "vitepress";
 
 export default defineConfig({
-  base: "/clawforce/",
+  base: "/specops/",
   ignoreDeadLinks: true,
-  appearance: false, // Light theme only, match clawforce-ui
-  title: "Clawforce",
+  appearance: false, // Light theme only, match specops-ui
+  title: "SpecOps",
   description:
     "Deploy autonomous AI teams that run your work — 24/7, securely, at scale. Infrastructure for persistent, proactive agent workforces.",
   themeConfig: {
-    logo: "/clawforce.png",
+    logo: "/specops.png",
     nav: [
       { text: "Home", link: "/" },
       { text: "Guide", link: "/guide/quickstart" },
@@ -39,7 +39,7 @@ export default defineConfig({
     socialLinks: [
       {
         icon: "github",
-        link: "https://github.com/saolalab/clawforce",
+        link: "https://github.com/taylorelley/specops",
       },
     ],
   },
