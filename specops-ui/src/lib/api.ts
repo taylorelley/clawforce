@@ -417,10 +417,22 @@ export const api = {
       post<{ ok: boolean }>(`/plans/${planId}/workspace-folder/${path}`),
   },
   providers: {
-    listModels: (provider: string, apiKey: string, agentId?: string, apiBase?: string) =>
+    listModels: (
+      provider: string,
+      apiKey: string,
+      agentId?: string,
+      apiBase?: string,
+      providerRef?: string,
+    ) =>
       post<{ provider: string; prefix: string; models: { id: string; name: string }[] }>(
         "/providers/models",
-        { provider, api_key: apiKey, agent_id: agentId || "", api_base: apiBase || "" },
+        {
+          provider,
+          api_key: apiKey,
+          agent_id: agentId || "",
+          api_base: apiBase || "",
+          provider_ref: providerRef || "",
+        },
       ),
     oauthStatus: (provider: string, agentId?: string) =>
       request<{ provider: string; authorized: boolean; account_id?: string }>(
@@ -432,11 +444,73 @@ export const api = {
         { agent_id: agentId || "" },
       ),
   },
+  llmProviders: {
+    list: () =>
+      request<{ id: string; name: string; type: string }[]>("/llm-providers"),
+  },
   admin: {
     getSettings: () =>
       request<Record<string, any>>("/admin/settings"),
     updateSettings: (settings: Record<string, any>) =>
       put<Record<string, any>>("/admin/settings", settings),
+    llmProviders: {
+      listTypes: () =>
+        request<{ name: string; display_name: string; is_gateway: boolean; is_local: boolean; requires_api_base: boolean }[]>(
+          "/admin/llm-providers/types",
+        ),
+      list: () =>
+        request<{
+          id: string;
+          name: string;
+          type: string;
+          api_key: string;
+          api_base: string;
+          extra_headers: Record<string, string> | null;
+          created_at: string;
+          updated_at: string;
+        }[]>("/admin/llm-providers"),
+      create: (data: {
+        name: string;
+        type: string;
+        api_key: string;
+        api_base?: string;
+        extra_headers?: Record<string, string> | null;
+      }) =>
+        post<{
+          id: string;
+          name: string;
+          type: string;
+          api_key: string;
+          api_base: string;
+          extra_headers: Record<string, string> | null;
+          created_at: string;
+          updated_at: string;
+        }>("/admin/llm-providers", data),
+      update: (
+        id: string,
+        data: {
+          name?: string;
+          type?: string;
+          api_key?: string;
+          api_base?: string;
+          extra_headers?: Record<string, string> | null;
+        },
+      ) =>
+        patch<{
+          id: string;
+          name: string;
+          type: string;
+          api_key: string;
+          api_base: string;
+          extra_headers: Record<string, string> | null;
+          created_at: string;
+          updated_at: string;
+        }>(`/admin/llm-providers/${encodeURIComponent(id)}`, data),
+      delete: (id: string) =>
+        request<{ ok: boolean }>(`/admin/llm-providers/${encodeURIComponent(id)}`, {
+          method: "DELETE",
+        }),
+    },
   },
   users: {
     list: () =>

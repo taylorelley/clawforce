@@ -17,15 +17,20 @@ from specops_lib.config.schema import (
 )
 
 
-def validate_providers(raw: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
+def validate_providers(raw: dict[str, Any] | None) -> dict[str, Any]:
     """Validate all provider configs through Pydantic, returning snake_case dicts for storage.
 
     Accepts both camelCase and snake_case input. Returns dict of name -> validated dict.
+    The ``provider_ref`` / ``providerRef`` scalar (points at an admin-managed provider
+    row) is passed through as ``provider_ref``.
     """
     if not raw or not isinstance(raw, dict):
         return {}
-    result: dict[str, dict[str, Any]] = {}
+    result: dict[str, Any] = {}
     for name, cfg in raw.items():
+        if name in ("provider_ref", "providerRef"):
+            result["provider_ref"] = cfg if cfg is None else str(cfg)
+            continue
         if isinstance(cfg, dict):
             validated = ProviderConfig.model_validate(cfg)
             result[name] = validated.model_dump(exclude_none=True)

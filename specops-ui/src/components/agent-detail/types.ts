@@ -95,7 +95,9 @@ export type Agent = {
   tools: ToolsCfg;
   skills?: SkillsCfg;
   channels: Record<string, Record<string, unknown>>;
-  providers?: Record<string, Record<string, unknown>>;
+  // Values are either provider config dicts (per-type slot) or a scalar
+  // `provider_ref` string referencing a centrally-managed provider row.
+  providers?: Record<string, unknown>;
   heartbeat?: HeartbeatCfg;
   security?: SecurityCfg;
   mcp_status?: Record<string, MCPStatusInfo>;
