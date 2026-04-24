@@ -1,7 +1,7 @@
 ---
 name: customer-success
 description: "Proactive customer success management. Use when onboarding customers, conducting health checks, or preventing churn."
-metadata: {"clawbot":{"emoji":"🌟"}}
+metadata: {"specialagent":{"emoji":"🌟"}}
 ---
 
 # Customer Success

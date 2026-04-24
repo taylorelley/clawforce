@@ -1,1 +1,1 @@
-"""Test suite for clawlib, clawbot, and clawforce."""
+"""Test suite for specops_lib, specialagent, and specops."""

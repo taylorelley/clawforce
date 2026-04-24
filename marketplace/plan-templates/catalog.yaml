@@ -3,7 +3,7 @@
   description: >-
     Coordinate launch activities across engineering, marketing, and support.
     Includes scope, collateral, demo, enablement, and launch-day tasks.
-  author: Clawforce
+  author: SpecOps
   categories:
     - product
     - launch
@@ -29,7 +29,7 @@
   description: >-
     Standard two-week sprint scaffold: groom the backlog, plan the sprint,
     work the plan, then run demo and retro.
-  author: Clawforce
+  author: SpecOps
   categories:
     - engineering
   tasks:
@@ -57,7 +57,7 @@
   description: >-
     Intake and prioritise a batch of bugs with a clear pipeline from report
     through to verified fix.
-  author: Clawforce
+  author: SpecOps
   categories:
     - engineering
     - quality
@@ -94,7 +94,7 @@
   name: Research Project
   description: >-
     Structured research effort from open questions through publication.
-  author: Clawforce
+  author: SpecOps
   categories:
     - research
   columns:

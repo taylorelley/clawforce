@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from cryptography.fernet import Fernet
 
-from clawforce.core.database import Database
-from clawforce.core.store.agent_variables import AgentVariablesStore, default_git_variables
+from specops.core.database import Database
+from specops.core.store.agent_variables import AgentVariablesStore, default_git_variables
 
 
 @pytest.fixture
@@ -53,12 +53,12 @@ def test_default_git_variables_uses_agent_name():
     assert v["GIT_AUTHOR_NAME"] == "My Agent"
     assert v["GIT_COMMITTER_NAME"] == "My Agent"
     assert "my-agent" in v["GIT_AUTHOR_EMAIL"]
-    assert v["GIT_AUTHOR_EMAIL"].endswith("@clawforce.local")
+    assert v["GIT_AUTHOR_EMAIL"].endswith("@specops.local")
 
 
 def test_default_git_variables_empty_name():
     v = default_git_variables("")
-    assert v["GIT_AUTHOR_NAME"] == "Clawforce Agent"
+    assert v["GIT_AUTHOR_NAME"] == "SpecOps Agent"
     assert "agent" in v["GIT_AUTHOR_EMAIL"]
 
 

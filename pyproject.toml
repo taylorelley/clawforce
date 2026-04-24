@@ -1,5 +1,5 @@
 [tool.uv.workspace]
-members = ["clawlib", "clawbot", "clawforce"]
+members = ["specops_lib", "specialagent", "specops"]
 
 [dependency-groups]
 dev = [
@@ -14,9 +14,9 @@ dev = [
 ]
 
 [tool.uv.sources]
-clawlib = { workspace = true }
-clawbot = { workspace = true }
-clawforce = { workspace = true }
+specops_lib = { workspace = true }
+specialagent = { workspace = true }
+specops = { workspace = true }
 
 [tool.ruff]
 line-length = 100
@@ -41,62 +41,62 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # CLI entry points: lazy imports reduce startup latency for --help / simple commands
-"clawforce/cli.py" = ["PLC0415"]
-"clawbot/cli.py" = ["PLC0415"]
+"specops/cli.py" = ["PLC0415"]
+"specialagent/cli.py" = ["PLC0415"]
 # Channel manager: plugin pattern — only import enabled channels (SDKs may be missing)
-"clawlib/channels/manager.py" = ["PLC0415"]
+"specops_lib/channels/manager.py" = ["PLC0415"]
 # Individual channels: optional third-party SDKs wrapped in try/except ImportError
-"clawlib/channels/telegram.py" = ["PLC0415"]
-"clawlib/channels/feishu.py" = ["PLC0415"]
-"clawlib/channels/whatsapp.py" = ["PLC0415"]
-"clawlib/channels/zalouser.py" = ["PLC0415"]
+"specops_lib/channels/telegram.py" = ["PLC0415"]
+"specops_lib/channels/feishu.py" = ["PLC0415"]
+"specops_lib/channels/whatsapp.py" = ["PLC0415"]
+"specops_lib/channels/zalouser.py" = ["PLC0415"]
 # Factory pattern: only import the selected runtime backend
-"clawforce/core/runtimes/factory.py" = ["PLC0415"]
+"specops/core/runtimes/factory.py" = ["PLC0415"]
 # Optional docker SDK (admin-docker extra)
-"clawforce/core/runtimes/docker.py" = ["PLC0415"]
+"specops/core/runtimes/docker.py" = ["PLC0415"]
 # Local runtime: platform-specific imports (fcntl/termios for PTY resize)
-"clawforce/core/runtimes/local.py" = ["PLC0415"]
-# Deps: lazy registry imports (optional clawlib)
-"clawforce/deps.py" = ["PLC0415"]
+"specops/core/runtimes/local.py" = ["PLC0415"]
+# Deps: lazy registry imports (optional specops_lib)
+"specops/deps.py" = ["PLC0415"]
 # Terminal API: factory pattern for terminal backends (docker/local)
-"clawforce/apis/terminal.py" = ["PLC0415"]
+"specops/apis/terminal.py" = ["PLC0415"]
 # Optional cron dependency (croniter try/except)
-"clawbot/core/cron/service.py" = ["PLC0415"]
+"specialagent/core/cron/service.py" = ["PLC0415"]
 # MCP: streamable_http_client conditional import (may not exist in all mcp versions)
-"clawbot/agent/tools/mcp.py" = ["PLC0415"]
-# Worker: storage from clawlib when AGENT_ID is set
-"clawbot/worker/resolve.py" = ["PLC0415"]
+"specialagent/agent/tools/mcp.py" = ["PLC0415"]
+# Worker: storage from specops_lib when AGENT_ID is set
+"specialagent/worker/resolve.py" = ["PLC0415"]
 # Config loader: lazy import yaml/json for faster CLI startup
-"clawbot/core/config/loader.py" = ["PLC0415"]
+"specialagent/core/config/loader.py" = ["PLC0415"]
 # Agent loop: conditional tool imports based on config
-"clawbot/agent/loop.py" = ["PLC0415"]
+"specialagent/agent/loop.py" = ["PLC0415"]
 # Entry point discovery: importlib.metadata in function
-"clawbot/agent/tools/registry.py" = ["PLC0415"]
+"specialagent/agent/tools/registry.py" = ["PLC0415"]
 # Control client: lazy httpx for pull_config
-"clawbot/control/client.py" = ["PLC0415"]
+"specialagent/control/client.py" = ["PLC0415"]
 # Admin client: no in-function imports after refactor (keep exemption for safety)
-"clawbot/core/admin.py" = ["PLC0415"]
+"specialagent/core/admin.py" = ["PLC0415"]
 # Worker handlers: lazy config imports (optional deps)
-"clawbot/worker/handlers/admin.py" = ["PLC0415"]
+"specialagent/worker/handlers/admin.py" = ["PLC0415"]
 # Heartbeat: optional croniter/zoneinfo
-"clawbot/core/heartbeat.py" = ["PLC0415"]
+"specialagent/core/heartbeat.py" = ["PLC0415"]
 # Provision: lazy yaml import
-"clawbot/worker/provision.py" = ["PLC0415"]
+"specialagent/worker/provision.py" = ["PLC0415"]
 # Storage: factory pattern for S3 backend
-"clawlib/storage/local.py" = ["PLC0415"]
-"clawlib/storage/s3.py" = ["PLC0415"]
+"specops_lib/storage/local.py" = ["PLC0415"]
+"specops_lib/storage/s3.py" = ["PLC0415"]
 # Database: lazy storage import to avoid circular deps
-"clawforce/core/database.py" = ["PLC0415"]
+"specops/core/database.py" = ["PLC0415"]
 # Plan artifacts: lazy database import
-"clawforce/core/store/plan_artifacts.py" = ["PLC0415"]
+"specops/core/store/plan_artifacts.py" = ["PLC0415"]
 # Web tool: camelCase parameter names match JSON schema
-"clawbot/agent/tools/web.py" = ["N803"]
+"specialagent/agent/tools/web.py" = ["N803"]
 # Plan tool: optional pypdf for PDF extraction
-"clawbot/agent/tools/plan.py" = ["PLC0415"]
+"specialagent/agent/tools/plan.py" = ["PLC0415"]
 # Tests: fixtures use in-function imports to respect monkeypatched env vars before import
-"tests/test_clawforce_api.py" = ["PLC0415"]
-"tests/test_clawforce_multiuser.py" = ["PLC0415"]
-"tests/test_clawforce_domain.py" = ["PLC0415"]
+"tests/test_specops_api.py" = ["PLC0415"]
+"tests/test_specops_multiuser.py" = ["PLC0415"]
+"tests/test_specops_domain.py" = ["PLC0415"]
 "tests/test_plan_templates.py" = ["PLC0415"]
 
 [tool.pytest.ini_options]
@@ -104,7 +104,7 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.coverage.run]
-source = ["clawlib", "clawbot", "clawforce"]
+source = ["specops_lib", "specialagent", "specops"]
 omit = ["*/tests/*", "*/__pycache__/*"]
 
 [tool.coverage.report]

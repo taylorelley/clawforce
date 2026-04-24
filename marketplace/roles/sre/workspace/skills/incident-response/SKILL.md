@@ -1,7 +1,7 @@
 ---
 name: incident-response
 description: "Framework for managing incidents from detection through postmortem. Use during active incidents, for creating runbooks, or when conducting postmortems."
-metadata: {"clawbot":{"emoji":"🚨"}}
+metadata: {"specialagent":{"emoji":"🚨"}}
 ---
 
 # Incident Response

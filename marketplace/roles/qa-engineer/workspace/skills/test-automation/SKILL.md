@@ -1,7 +1,7 @@
 ---
 name: test-automation
 description: "Test automation strategies and frameworks. Use when building, maintaining, or troubleshooting automated tests."
-metadata: {"clawbot":{"emoji":"🤖"}}
+metadata: {"specialagent":{"emoji":"🤖"}}
 ---
 
 # Test Automation

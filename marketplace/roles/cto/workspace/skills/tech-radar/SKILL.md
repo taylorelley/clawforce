@@ -1,7 +1,7 @@
 ---
 name: tech-radar
 description: "Framework for tracking and evaluating technology choices using a four-ring radar model. Use when evaluating new technologies, planning migrations, or maintaining the tech stack."
-metadata: {"clawbot":{"emoji":"📡"}}
+metadata: {"specialagent":{"emoji":"📡"}}
 ---
 
 # Tech Radar

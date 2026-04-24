@@ -9,9 +9,9 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "clawbot",
-    "clawforce",
-    "clawlib",
+    "specialagent",
+    "specops",
+    "specops-lib",
 ]
 
 [manifest.dependency-groups]
@@ -539,179 +539,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/da/5f/6b8f83a55bb8278772c5ae54a577f3099025f9ade59d0136ac24a0df4bde/charset_normalizer-3.4.4-cp314-cp314-win_arm64.whl", hash = "sha256:de00632ca48df9daf77a2c65a484531649261ec9f25489917f09e455cb09ddb2", size = 100743, upload-time = "2025-10-14T04:41:52.122Z" },
     { url = "https://files.pythonhosted.org/packages/0a/4c/925909008ed5a988ccbb72dcc897407e5d6d3bd72410d69e051fc0c14647/charset_normalizer-3.4.4-py3-none-any.whl", hash = "sha256:7a32c560861a02ff789ad905a2fe94e3f840803362c84fecf1851cb4cf3dc37f", size = 53402, upload-time = "2025-10-14T04:42:31.76Z" },
 ]
-
-[[package]]
-name = "clawbot"
-source = { editable = "clawbot" }
-dependencies = [
-    { name = "clawlib" },
-    { name = "croniter" },
-    { name = "ddgs" },
-    { name = "httpx" },
-    { name = "json-repair" },
-    { name = "litellm" },
-    { name = "loguru" },
-    { name = "mcp" },
-    { name = "msgpack" },
-    { name = "oauth-cli-kit" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "pypdf" },
-    { name = "python-socketio" },
-    { name = "python-socks" },
-    { name = "pyyaml" },
-    { name = "readability-lxml" },
-    { name = "rich" },
-    { name = "socksio" },
-    { name = "typer" },
-    { name = "websocket-client" },
-    { name = "websockets" },
-]
-
-[package.optional-dependencies]
-all-channels = [
-    { name = "lark-oapi" },
-    { name = "python-telegram-bot", extra = ["socks"] },
-    { name = "slack-sdk" },
-    { name = "slackify-markdown" },
-]
-feishu = [
-    { name = "lark-oapi" },
-]
-slack = [
-    { name = "slack-sdk" },
-    { name = "slackify-markdown" },
-]
-telegram = [
-    { name = "python-telegram-bot", extra = ["socks"] },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "clawlib", editable = "clawlib" },
-    { name = "croniter", specifier = ">=2.0.0" },
-    { name = "ddgs", specifier = ">=1.0" },
-    { name = "httpx", specifier = ">=0.25.0" },
-    { name = "json-repair", specifier = ">=0.30.0" },
-    { name = "lark-oapi", marker = "extra == 'all-channels'", specifier = ">=1.0.0" },
-    { name = "lark-oapi", marker = "extra == 'feishu'", specifier = ">=1.0.0" },
-    { name = "litellm", specifier = ">=1.0.0" },
-    { name = "loguru", specifier = ">=0.7.0" },
-    { name = "mcp", specifier = ">=1.26.0" },
-    { name = "msgpack", specifier = ">=1.0.8" },
-    { name = "oauth-cli-kit", specifier = ">=0.1.1" },
-    { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "pydantic-settings", specifier = ">=2.0.0" },
-    { name = "pypdf", specifier = ">=4.0.0" },
-    { name = "python-socketio", specifier = ">=5.11.0" },
-    { name = "python-socks", extras = ["asyncio"], specifier = ">=2.4.0" },
-    { name = "python-telegram-bot", extras = ["socks"], marker = "extra == 'all-channels'", specifier = ">=21.0" },
-    { name = "python-telegram-bot", extras = ["socks"], marker = "extra == 'telegram'", specifier = ">=21.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "readability-lxml", specifier = ">=0.8.0" },
-    { name = "rich", specifier = ">=13.0.0" },
-    { name = "slack-sdk", marker = "extra == 'all-channels'", specifier = ">=3.26.0" },
-    { name = "slack-sdk", marker = "extra == 'slack'", specifier = ">=3.26.0" },
-    { name = "slackify-markdown", marker = "extra == 'all-channels'", specifier = ">=0.2.0" },
-    { name = "slackify-markdown", marker = "extra == 'slack'", specifier = ">=0.2.0" },
-    { name = "socksio", specifier = ">=1.0.0" },
-    { name = "typer", specifier = ">=0.9.0" },
-    { name = "websocket-client", specifier = ">=1.6.0" },
-    { name = "websockets", specifier = ">=12.0" },
-]
-provides-extras = ["all-channels", "discord", "email", "feishu", "slack", "telegram", "whatsapp"]
-
-[[package]]
-name = "clawforce"
-source = { editable = "clawforce" }
-dependencies = [
-    { name = "bcrypt" },
-    { name = "clawlib", extra = ["all-channels"] },
-    { name = "docker" },
-    { name = "fastapi" },
-    { name = "pyjwt" },
-    { name = "python-multipart" },
-    { name = "rich" },
-    { name = "slowapi" },
-    { name = "sse-starlette" },
-    { name = "typer" },
-    { name = "uvicorn", extra = ["standard"] },
-]
-
-[package.optional-dependencies]
-s3 = [
-    { name = "clawlib", extra = ["s3"] },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "bcrypt", specifier = ">=4.0.1" },
-    { name = "clawlib", extras = ["all-channels"], editable = "clawlib" },
-    { name = "clawlib", extras = ["s3"], marker = "extra == 's3'", editable = "clawlib" },
-    { name = "docker", specifier = ">=7.0.0" },
-    { name = "fastapi", specifier = ">=0.115.0" },
-    { name = "pyjwt", specifier = ">=2.8.0" },
-    { name = "python-multipart", specifier = ">=0.0.9" },
-    { name = "rich", specifier = ">=13.0.0" },
-    { name = "slowapi", specifier = ">=0.1.9" },
-    { name = "sse-starlette", specifier = ">=2.0.0" },
-    { name = "typer", specifier = ">=0.9.0" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.0" },
-]
-provides-extras = ["s3"]
-
-[[package]]
-name = "clawlib"
-source = { editable = "clawlib" }
-dependencies = [
-    { name = "croniter" },
-    { name = "httpx" },
-    { name = "loguru" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "pyyaml" },
-]
-
-[package.optional-dependencies]
-all-channels = [
-    { name = "lark-oapi" },
-    { name = "python-telegram-bot", extra = ["socks"] },
-    { name = "slack-sdk" },
-    { name = "slackify-markdown" },
-]
-feishu = [
-    { name = "lark-oapi" },
-]
-s3 = [
-    { name = "boto3" },
-]
-slack = [
-    { name = "slack-sdk" },
-    { name = "slackify-markdown" },
-]
-telegram = [
-    { name = "python-telegram-bot", extra = ["socks"] },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "boto3", marker = "extra == 's3'", specifier = ">=1.28.0" },
-    { name = "croniter", specifier = ">=2.0.0" },
-    { name = "httpx", specifier = ">=0.25.0" },
-    { name = "lark-oapi", marker = "extra == 'all-channels'", specifier = ">=1.0.0" },
-    { name = "lark-oapi", marker = "extra == 'feishu'", specifier = ">=1.0.0" },
-    { name = "loguru", specifier = ">=0.7.0" },
-    { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "pydantic-settings", specifier = ">=2.0.0" },
-    { name = "python-telegram-bot", extras = ["socks"], marker = "extra == 'all-channels'", specifier = ">=21.0" },
-    { name = "python-telegram-bot", extras = ["socks"], marker = "extra == 'telegram'", specifier = ">=21.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "slack-sdk", marker = "extra == 'all-channels'", specifier = ">=3.26.0" },
-    { name = "slack-sdk", marker = "extra == 'slack'", specifier = ">=3.26.0" },
-    { name = "slackify-markdown", marker = "extra == 'all-channels'", specifier = ">=0.2.0" },
-    { name = "slackify-markdown", marker = "extra == 'slack'", specifier = ">=0.2.0" },
-]
-provides-extras = ["all-channels", "discord", "email", "feishu", "s3", "slack", "telegram", "whatsapp"]
 
 [[package]]
 name = "click"
@@ -3188,6 +3015,179 @@ sdist = { url = "https://files.pythonhosted.org/packages/f8/5c/48a7d9495be3d1c65
 wheels = [
     { url = "https://files.pythonhosted.org/packages/37/c3/6eeb6034408dac0fa653d126c9204ade96b819c936e136c5e8a6897eee9c/socksio-1.0.0-py3-none-any.whl", hash = "sha256:95dc1f15f9b34e8d7b16f06d74b8ccf48f609af32ab33c608d08761c5dcbb1f3", size = 12763, upload-time = "2020-04-17T15:50:31.878Z" },
 ]
+
+[[package]]
+name = "specialagent"
+source = { editable = "specialagent" }
+dependencies = [
+    { name = "croniter" },
+    { name = "ddgs" },
+    { name = "httpx" },
+    { name = "json-repair" },
+    { name = "litellm" },
+    { name = "loguru" },
+    { name = "mcp" },
+    { name = "msgpack" },
+    { name = "oauth-cli-kit" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "pypdf" },
+    { name = "python-socketio" },
+    { name = "python-socks" },
+    { name = "pyyaml" },
+    { name = "readability-lxml" },
+    { name = "rich" },
+    { name = "socksio" },
+    { name = "specops-lib" },
+    { name = "typer" },
+    { name = "websocket-client" },
+    { name = "websockets" },
+]
+
+[package.optional-dependencies]
+all-channels = [
+    { name = "lark-oapi" },
+    { name = "python-telegram-bot", extra = ["socks"] },
+    { name = "slack-sdk" },
+    { name = "slackify-markdown" },
+]
+feishu = [
+    { name = "lark-oapi" },
+]
+slack = [
+    { name = "slack-sdk" },
+    { name = "slackify-markdown" },
+]
+telegram = [
+    { name = "python-telegram-bot", extra = ["socks"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "croniter", specifier = ">=2.0.0" },
+    { name = "ddgs", specifier = ">=1.0" },
+    { name = "httpx", specifier = ">=0.25.0" },
+    { name = "json-repair", specifier = ">=0.30.0" },
+    { name = "lark-oapi", marker = "extra == 'all-channels'", specifier = ">=1.0.0" },
+    { name = "lark-oapi", marker = "extra == 'feishu'", specifier = ">=1.0.0" },
+    { name = "litellm", specifier = ">=1.0.0" },
+    { name = "loguru", specifier = ">=0.7.0" },
+    { name = "mcp", specifier = ">=1.26.0" },
+    { name = "msgpack", specifier = ">=1.0.8" },
+    { name = "oauth-cli-kit", specifier = ">=0.1.1" },
+    { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "pydantic-settings", specifier = ">=2.0.0" },
+    { name = "pypdf", specifier = ">=4.0.0" },
+    { name = "python-socketio", specifier = ">=5.11.0" },
+    { name = "python-socks", extras = ["asyncio"], specifier = ">=2.4.0" },
+    { name = "python-telegram-bot", extras = ["socks"], marker = "extra == 'all-channels'", specifier = ">=21.0" },
+    { name = "python-telegram-bot", extras = ["socks"], marker = "extra == 'telegram'", specifier = ">=21.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "readability-lxml", specifier = ">=0.8.0" },
+    { name = "rich", specifier = ">=13.0.0" },
+    { name = "slack-sdk", marker = "extra == 'all-channels'", specifier = ">=3.26.0" },
+    { name = "slack-sdk", marker = "extra == 'slack'", specifier = ">=3.26.0" },
+    { name = "slackify-markdown", marker = "extra == 'all-channels'", specifier = ">=0.2.0" },
+    { name = "slackify-markdown", marker = "extra == 'slack'", specifier = ">=0.2.0" },
+    { name = "socksio", specifier = ">=1.0.0" },
+    { name = "specops-lib", editable = "specops_lib" },
+    { name = "typer", specifier = ">=0.9.0" },
+    { name = "websocket-client", specifier = ">=1.6.0" },
+    { name = "websockets", specifier = ">=12.0" },
+]
+provides-extras = ["all-channels", "discord", "email", "feishu", "slack", "telegram", "whatsapp"]
+
+[[package]]
+name = "specops"
+source = { editable = "specops" }
+dependencies = [
+    { name = "bcrypt" },
+    { name = "docker" },
+    { name = "fastapi" },
+    { name = "pyjwt" },
+    { name = "python-multipart" },
+    { name = "rich" },
+    { name = "slowapi" },
+    { name = "specops-lib", extra = ["all-channels"] },
+    { name = "sse-starlette" },
+    { name = "typer" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.optional-dependencies]
+s3 = [
+    { name = "specops-lib", extra = ["s3"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bcrypt", specifier = ">=4.0.1" },
+    { name = "docker", specifier = ">=7.0.0" },
+    { name = "fastapi", specifier = ">=0.115.0" },
+    { name = "pyjwt", specifier = ">=2.8.0" },
+    { name = "python-multipart", specifier = ">=0.0.9" },
+    { name = "rich", specifier = ">=13.0.0" },
+    { name = "slowapi", specifier = ">=0.1.9" },
+    { name = "specops-lib", extras = ["all-channels"], editable = "specops_lib" },
+    { name = "specops-lib", extras = ["s3"], marker = "extra == 's3'", editable = "specops_lib" },
+    { name = "sse-starlette", specifier = ">=2.0.0" },
+    { name = "typer", specifier = ">=0.9.0" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.0" },
+]
+provides-extras = ["s3"]
+
+[[package]]
+name = "specops-lib"
+source = { editable = "specops_lib" }
+dependencies = [
+    { name = "croniter" },
+    { name = "httpx" },
+    { name = "loguru" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "pyyaml" },
+]
+
+[package.optional-dependencies]
+all-channels = [
+    { name = "lark-oapi" },
+    { name = "python-telegram-bot", extra = ["socks"] },
+    { name = "slack-sdk" },
+    { name = "slackify-markdown" },
+]
+feishu = [
+    { name = "lark-oapi" },
+]
+s3 = [
+    { name = "boto3" },
+]
+slack = [
+    { name = "slack-sdk" },
+    { name = "slackify-markdown" },
+]
+telegram = [
+    { name = "python-telegram-bot", extra = ["socks"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "boto3", marker = "extra == 's3'", specifier = ">=1.28.0" },
+    { name = "croniter", specifier = ">=2.0.0" },
+    { name = "httpx", specifier = ">=0.25.0" },
+    { name = "lark-oapi", marker = "extra == 'all-channels'", specifier = ">=1.0.0" },
+    { name = "lark-oapi", marker = "extra == 'feishu'", specifier = ">=1.0.0" },
+    { name = "loguru", specifier = ">=0.7.0" },
+    { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "pydantic-settings", specifier = ">=2.0.0" },
+    { name = "python-telegram-bot", extras = ["socks"], marker = "extra == 'all-channels'", specifier = ">=21.0" },
+    { name = "python-telegram-bot", extras = ["socks"], marker = "extra == 'telegram'", specifier = ">=21.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "slack-sdk", marker = "extra == 'all-channels'", specifier = ">=3.26.0" },
+    { name = "slack-sdk", marker = "extra == 'slack'", specifier = ">=3.26.0" },
+    { name = "slackify-markdown", marker = "extra == 'all-channels'", specifier = ">=0.2.0" },
+    { name = "slackify-markdown", marker = "extra == 'slack'", specifier = ">=0.2.0" },
+]
+provides-extras = ["all-channels", "discord", "email", "feishu", "s3", "slack", "telegram", "whatsapp"]
 
 [[package]]
 name = "sse-starlette"

@@ -1,16 +1,16 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Clawforce Installer for Windows
+    SpecOps Installer for Windows
 
 .DESCRIPTION
-    Installs Docker Desktop (if needed) and runs Clawforce in a container.
+    Installs Docker Desktop (if needed) and runs SpecOps in a container.
 
 .PARAMETER Port
     Port to expose (default: 8080)
 
 .PARAMETER DataDir
-    Data directory path (default: $env:USERPROFILE\.clawforce\data)
+    Data directory path (default: $env:USERPROFILE\.specops\data)
 
 .PARAMETER AdminUser
     Admin username (default: admin)
@@ -25,27 +25,27 @@
     Skip Docker installation check
 
 .PARAMETER Uninstall
-    Remove Clawforce container and optionally data
+    Remove SpecOps container and optionally data
 
 .EXAMPLE
     # Quick install (PowerShell)
-    irm https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.ps1 | iex
+    irm https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.ps1 | iex
 
     # Or download and run with parameters
     .\install.ps1 -Port 9000 -AdminPass "mypassword"
 
 .LINK
-    https://github.com/saolalab/clawforce
+    https://github.com/taylorelley/specops
 #>
 
 [CmdletBinding()]
 param(
     [int]$Port = 8080,
-    [string]$DataDir = "$env:USERPROFILE\.clawforce\data",
+    [string]$DataDir = "$env:USERPROFILE\.specops\data",
     [string]$AdminUser = "admin",
     [string]$AdminPass = "admin",
-    [string]$Image = "ghcr.io/saolalab/clawforce:latest",
-    [string]$Container = "clawforce",
+    [string]$Image = "ghcr.io/taylorelley/specops:latest",
+    [string]$Container = "specops",
     [ValidateSet("docker", "podman", "")]
     [string]$Engine = "",
     [switch]$ProcessPool,
@@ -67,8 +67,8 @@ function Test-Command { param($cmd) return [bool](Get-Command $cmd -ErrorAction 
 
 # Auto-detect container engine
 if (-not $Engine) {
-    if ($env:CLAWFORCE_ENGINE) {
-        $Engine = $env:CLAWFORCE_ENGINE
+    if ($env:SPECOPS_ENGINE) {
+        $Engine = $env:SPECOPS_ENGINE
     } elseif (Test-Command "docker") {
         $Engine = "docker"
     } elseif (Test-Command "podman") {
@@ -109,7 +109,7 @@ if ($Uninstall) {
         Write-Err "Neither docker nor podman found. Nothing to uninstall."
         exit 1
     }
-    Write-Info "Uninstalling Clawforce..."
+    Write-Info "Uninstalling SpecOps..."
 
     # Stop and remove container
     try {
@@ -128,7 +128,7 @@ if ($Uninstall) {
 
     # Stop agent workers
     try {
-        $agentContainers = & $Engine ps -aq --filter "name=clawbot-agent-" 2>&1
+        $agentContainers = & $Engine ps -aq --filter "name=specialagent-" 2>&1
         if ($agentContainers) {
             Write-Info "Stopping agent workers..."
             $agentContainers | ForEach-Object { & $Engine rm -f $_ 2>&1 | Out-Null }
@@ -148,7 +148,7 @@ if ($Uninstall) {
         }
     }
     
-    Write-Success "Clawforce uninstalled"
+    Write-Success "SpecOps uninstalled"
     exit 0
 }
 
@@ -307,7 +307,7 @@ if (-not $ProcessPool -and $Engine -eq "docker") {
 try {
     $containerExists = & $Engine inspect $Container 2>&1
     if ($LASTEXITCODE -eq 0) {
-        Write-Info "Stopping existing Clawforce container..."
+        Write-Info "Stopping existing SpecOps container..."
         & $Engine stop $Container 2>&1 | Out-Null
         & $Engine rm $Container 2>&1 | Out-Null
     }
@@ -315,7 +315,7 @@ try {
 
 # Stop orphaned agent workers
 try {
-    $agentContainers = & $Engine ps -aq --filter "name=clawbot-agent-" 2>&1
+    $agentContainers = & $Engine ps -aq --filter "name=specialagent-" 2>&1
     if ($agentContainers -and $LASTEXITCODE -eq 0) {
         Write-Info "Cleaning up agent workers..."
         $agentContainers | ForEach-Object { & $Engine rm -f $_ 2>&1 | Out-Null }
@@ -376,7 +376,7 @@ if ($imageRegistry -match '\.') {
 # ─────────────────────────────────────────────────────────────────────────────
 # Pull image
 # ─────────────────────────────────────────────────────────────────────────────
-Write-Info "Pulling Clawforce image: $Image"
+Write-Info "Pulling SpecOps image: $Image"
 & $Engine pull $Image
 if ($LASTEXITCODE -ne 0) {
     Write-Err "Failed to pull image"
@@ -387,7 +387,7 @@ Write-Success "Image pulled"
 # ─────────────────────────────────────────────────────────────────────────────
 # Run container
 # ─────────────────────────────────────────────────────────────────────────────
-Write-Info "Starting Clawforce on port $Port..."
+Write-Info "Starting SpecOps on port $Port..."
 
 $runArgs = @(
     "run", "-d",
@@ -449,7 +449,7 @@ for ($i = 1; $i -le $maxAttempts; $i++) {
 # Success
 # ─────────────────────────────────────────────────────────────────────────────
 Write-Host ""
-Write-Success "Clawforce is running!"
+Write-Success "SpecOps is running!"
 Write-Host ""
 Write-Host "  ┌─────────────────────────────────────────────────────────────────┐" -ForegroundColor Green
 Write-Host "  │                                                                 │" -ForegroundColor Green
@@ -467,7 +467,7 @@ Write-Host "    Stop:           $Engine stop $Container"
 Write-Host "    Start:          $Engine start $Container"
 Write-Host "    Uninstall:      .\install.ps1 -Uninstall"
 Write-Host ""
-Write-Host "  Documentation:    https://github.com/saolalab/clawforce"
+Write-Host "  Documentation:    https://github.com/taylorelley/specops"
 Write-Host ""
 
 # Open browser

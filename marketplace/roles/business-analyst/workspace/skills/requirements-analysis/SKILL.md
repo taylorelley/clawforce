@@ -1,7 +1,7 @@
 ---
 name: requirements-analysis
 description: "Requirements gathering and documentation. Use when eliciting, documenting, or validating requirements."
-metadata: {"clawbot":{"emoji":"📋"}}
+metadata: {"specialagent":{"emoji":"📋"}}
 ---
 
 # Requirements Analysis

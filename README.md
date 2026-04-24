@@ -1,14 +1,14 @@
-# Clawforce
+# SpecOps
 
 <div align="center">
 
-<img src="clawforce-ui/src/assets/clawforce.png" alt="Clawforce" width="160" />
+<img src="specops-ui/src/assets/specops.svg" alt="SpecOps" width="160" />
 
 **Your AI agent team. One click away.**
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![CI](https://github.com/saolalab/clawforce/actions/workflows/ci.yml/badge.svg)](https://github.com/saolalab/clawforce/actions/workflows/ci.yml)
+[![CI](https://github.com/taylorelley/specops/actions/workflows/ci.yml/badge.svg)](https://github.com/taylorelley/specops/actions/workflows/ci.yml)
 
 </div>
 
@@ -16,7 +16,7 @@
 
 > **Deploy autonomous AI teams that run your work — 24/7, securely, at scale.**
 >
-> Clawforce is the infrastructure for deploying **persistent, proactive agent workforces** that execute complex workflows, collaborate as teams, and deliver real outcomes — without constant human supervision.
+> SpecOps is the infrastructure for deploying **persistent, proactive agent workforces** that execute complex workflows, collaborate as teams, and deliver real outcomes — without constant human supervision.
 
 <p align="center">
   <a href="https://www.loom.com/share/ec254662421346cba0c9827cc6cf3e0c">
@@ -42,7 +42,7 @@ Deploy from idea to production in seconds — no code required.
 
 ### 🤖 24/7 Background Companions
 
-Built on Clawbot functionalities; adds workspace management and team collaboration.
+Built on SpecialAgent functionalities; adds workspace management and team collaboration.
 
 - **Persistent** — Agents maintain state, remember context, and keep working across sessions
 - **Proactive** — Schedule via cron, trigger on events, or let agents monitor and act autonomously
@@ -82,7 +82,7 @@ Isolation at every layer:
 - **Background Agents, No GUI Automation** — We do not support Computer Use or Browser Use. Use **MCP** (Model Context Protocol) instead.
 - **Best Practices** — Security first; use trusted software; internal MaaS (MCP-as-a-Service); internal MCP & Skills Registry; approval gates for sensitive tools.
 
-See [Product Principles & Best Practices](https://saolalab.github.io/clawforce/guide/principles) in the docs.
+See [Product Principles & Best Practices](https://taylorelley.github.io/specops/guide/principles) in the docs.
 
 
 ## How It Works
@@ -126,22 +126,22 @@ Each agent worker runs in a **fully isolated container** (Docker or Podman) with
 
 ### One-Line Install (Recommended)
 
-The fastest way to get started — installs Docker (if needed) and runs Clawforce.
+The fastest way to get started — installs Docker (if needed) and runs SpecOps.
 Works with both **Docker** (default) and **Podman**.
 
 **macOS / Linux:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.sh | bash
 ```
 
 **With Podman:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.sh | bash -s -- --engine podman
+curl -fsSL https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.sh | bash -s -- --engine podman
 ```
 
 **Windows:**
 ```powershell
-irm https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.ps1 | iex
 
 # Or with Podman:
 .\install.ps1 -Engine podman
@@ -161,19 +161,19 @@ After installation, open **http://localhost:8080** and log in with `admin`/`admi
 
 ```bash
 # Custom port and admin password
-curl -fsSL https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.sh | bash -s -- --port 9000 --admin-pass mypassword
+curl -fsSL https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.sh | bash -s -- --port 9000 --admin-pass mypassword
 
 # Custom port and admin password (Podman)
-curl -fsSL https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.sh | bash -s -- --engine podman --port 9000 --admin-pass mypassword
+curl -fsSL https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.sh | bash -s -- --engine podman --port 9000 --admin-pass mypassword
 
 # Use process runtime instead of container isolation
-curl -fsSL https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.sh | bash -s -- --process-runtime
+curl -fsSL https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.sh | bash -s -- --process-runtime
 
 # Uninstall (Docker)
-curl -fsSL https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.sh | bash -s -- --uninstall
+curl -fsSL https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.sh | bash -s -- --uninstall
 
 # Uninstall (Podman)
-curl -fsSL https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.sh | bash -s -- --engine podman --uninstall
+curl -fsSL https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.sh | bash -s -- --engine podman --uninstall
 ```
 
 **Windows:**
@@ -193,9 +193,9 @@ Maximum security — each agent runs in its own isolated container:
 ```bash
 docker run -d -p 8080:8080 \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $HOME/.clawforce-data:/data \
-  -e AGENT_STORAGE_HOST_PATH=$HOME/.clawforce-data \
-  ghcr.io/saolalab/clawforce:latest
+  -v $HOME/.specops-data:/data \
+  -e AGENT_STORAGE_HOST_PATH=$HOME/.specops-data \
+  ghcr.io/taylorelley/specops:latest
 ```
 
 **Podman:**
@@ -209,44 +209,44 @@ docker run -d -p 8080:8080 \
 ```bash
 podman run -d -p 8080:8080 \
   -v $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock \
-  -v $HOME/.clawforce-data:/data \
-  -e AGENT_STORAGE_HOST_PATH=$HOME/.clawforce-data \
+  -v $HOME/.specops-data:/data \
+  -e AGENT_STORAGE_HOST_PATH=$HOME/.specops-data \
   -e CONTAINER_ENGINE=podman \
-  ghcr.io/saolalab/clawforce:latest
+  ghcr.io/taylorelley/specops:latest
 ```
 
 ### Deploy Behind a Reverse Proxy
 
-Host Clawforce on a public subdomain (e.g. `https://clawforce.example.com`) behind your existing reverse proxy. Bind the container to loopback so only the proxy reaches it, and set the public origin for CORS:
+Host SpecOps on a public subdomain (e.g. `https://specops.example.com`) behind your existing reverse proxy. Bind the container to loopback so only the proxy reaches it, and set the public origin for CORS:
 
 ```bash
-docker run -d --name clawforce --restart unless-stopped \
+docker run -d --name specops --restart unless-stopped \
   -p 127.0.0.1:8080:8080 \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $HOME/.clawforce-data:/data \
-  -e AGENT_STORAGE_HOST_PATH=$HOME/.clawforce-data \
+  -v $HOME/.specops-data:/data \
+  -e AGENT_STORAGE_HOST_PATH=$HOME/.specops-data \
   -e ADMIN_SETUP_USERNAME=admin \
   -e ADMIN_SETUP_PASSWORD='change-me-now' \
-  -e CORS_ORIGINS=https://clawforce.example.com \
-  ghcr.io/saolalab/clawforce:latest
+  -e CORS_ORIGINS=https://specops.example.com \
+  ghcr.io/taylorelley/specops:latest
 ```
 
 Then point your proxy at it. **Caddy** is the shortest working example — TLS and WebSocket upgrades are automatic:
 
 ```caddy
-clawforce.example.com {
+specops.example.com {
     reverse_proxy 127.0.0.1:8080
 }
 ```
 
-For **Nginx**, `docker-compose`, multi-worker sticky sessions, and the `ADMIN_PUBLIC_URL` tradeoff for sibling agent containers, see the [Reverse Proxy guide](https://saolalab.github.io/clawforce/guide/reverse-proxy).
+For **Nginx**, `docker-compose`, multi-worker sticky sessions, and the `ADMIN_PUBLIC_URL` tradeoff for sibling agent containers, see the [Reverse Proxy guide](https://taylorelley.github.io/specops/guide/reverse-proxy).
 
 ### Native Install
 
 ```bash
-pip install git+https://github.com/saolalab/clawforce.git
-clawforce setup
-clawforce serve
+pip install git+https://github.com/taylorelley/specops.git
+specops setup
+specops serve
 ```
 
 ---
@@ -268,10 +268,10 @@ clawforce serve
 
 ## Terminology
 
-- **Control Plane** (`clawforce`): The API server, scheduler, and orchestration hub
+- **Control Plane** (`specops`): The API server, scheduler, and orchestration hub
 - **Agent**: A logical workload specification — role, objectives, tools, permissions
-- **Worker** (`clawbot`): The runtime that executes one agent instance in isolation
-- **Plan**: Orchestrator for agent work — shared Kanban board, tasks, artifacts. Coordinator decides when each agent engages; activation marks plan ready. Agents pull from external systems (GitHub, Jira) and create tasks; Plan does not sync. See [Plans guide](https://saolalab.github.io/clawforce/guide/plans).
+- **Worker** (`specialagent`): The runtime that executes one agent instance in isolation
+- **Plan**: Orchestrator for agent work — shared Kanban board, tasks, artifacts. Coordinator decides when each agent engages; activation marks plan ready. Agents pull from external systems (GitHub, Jira) and create tasks; Plan does not sync. See [Plans guide](https://taylorelley.github.io/specops/guide/plans).
 - **Workspace**: Isolated filesystem directory where an agent reads, writes, and builds
 
 ---
@@ -279,8 +279,8 @@ clawforce serve
 ## Development
 
 ```bash
-git clone https://github.com/saolalab/clawforce.git
-cd clawforce
+git clone https://github.com/taylorelley/specops.git
+cd specops
 make install && make setup
 make backend   # Terminal 1: API at http://localhost:8080
 make frontend  # Terminal 2: Vite at http://localhost:5173
@@ -290,25 +290,25 @@ Build from source:
 
 **Docker:**
 ```bash
-docker build -t clawforce:latest -f deploy/Dockerfile .
+docker build -t specops:latest -f deploy/Dockerfile .
 docker run -d -p 8080:8080 \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $HOME/.clawforce-data:/data \
-  -e AGENT_STORAGE_HOST_PATH=$HOME/.clawforce-data \
-  -e AGENT_IMAGE=clawforce:latest \
-  clawforce:latest
+  -v $HOME/.specops-data:/data \
+  -e AGENT_STORAGE_HOST_PATH=$HOME/.specops-data \
+  -e AGENT_IMAGE=specops:latest \
+  specops:latest
 ```
 
 **Podman:**
 ```bash
-podman build -t clawforce:latest -f deploy/Dockerfile .
+podman build -t specops:latest -f deploy/Dockerfile .
 podman run -d -p 8080:8080 \
   -v $XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock \
-  -v $HOME/.clawforce-data:/data \
-  -e AGENT_STORAGE_HOST_PATH=$HOME/.clawforce-data \
-  -e AGENT_IMAGE=clawforce:latest \
+  -v $HOME/.specops-data:/data \
+  -e AGENT_STORAGE_HOST_PATH=$HOME/.specops-data \
+  -e AGENT_IMAGE=specops:latest \
   -e CONTAINER_ENGINE=podman \
-  clawforce:latest
+  specops:latest
 ```
 
 Or using the Makefile (auto-detects engine, override with `ENGINE=podman`):

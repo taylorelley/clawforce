@@ -2,10 +2,10 @@
 
 ## Reporting a Vulnerability
 
-**Do not open a public GitHub issue.** Create a [private security advisory](https://github.com/saolalab/clawforce/security/advisories/new) on GitHub or email the maintainers.
+**Do not open a public GitHub issue.** Create a [private security advisory](https://github.com/taylorelley/specops/security/advisories/new) on GitHub or email the maintainers.
 ## Disclaimer
 
-AI agents are inherently susceptible to prompt injection, indirect prompt injection, social engineering, and jailbreaking. No security control fully prevents a sufficiently sophisticated attack. By using Clawforce you accept full responsibility for any actions the agent takes on your behalf.
+AI agents are inherently susceptible to prompt injection, indirect prompt injection, social engineering, and jailbreaking. No security control fully prevents a sufficiently sophisticated attack. By using SpecOps you accept full responsibility for any actions the agent takes on your behalf.
 
 ---
 
@@ -55,15 +55,15 @@ When `ADMIN_RUNTIME_BACKEND=process`, agents run as host subprocesses. There is 
 
 Agent API keys and tokens live in `.config/agent.json` inside the agent's directory. This file is:
 - **Hidden from the agent itself** — `AgentFS` blocks read/write access to `.config/`, `.sessions/`, and `.logs/`
-- **Never returned by the config API** — `clawlib.config.helpers.redact()` masks `api_key`, `agent_token`, `password`, and other secret fields before any GET response
+- **Never returned by the config API** — `specops_lib.config.helpers.redact()` masks `api_key`, `agent_token`, `password`, and other secret fields before any GET response
 - **Not overwritten by config PUT** — redacted placeholders are stripped server-side so round-trips never erase real secrets
 
 ### Production recommendations
 
 - Set `chmod 600` on `{ADMIN_STORAGE_ROOT}/agents/*/\.config/agent.json`
 - Set `chmod 700` on the storage root directory
-- Set `ADMIN_JWT_SECRET` to a strong random value (required when `CLAWFORCE_ENV=production`)
-- Rotate agent tokens with `clawforce agent token <id> --regenerate` if compromise is suspected
+- Set `ADMIN_JWT_SECRET` to a strong random value (required when `SPECOPS_ENV=production`)
+- Rotate agent tokens with `specops agent token <id> --regenerate` if compromise is suspected
 - Restrict `CORS_ORIGINS` to the exact admin UI origin in production
 
 ---
@@ -74,7 +74,7 @@ Agent API keys and tokens live in `.config/agent.json` inside the agent's direct
 - **JWT tokens** — used for dashboard/API auth; `ADMIN_JWT_SECRET` is required in production
 - **Login rate limiting** — 5 requests/minute per IP
 - **RBAC** — agents have an optional `owner_user_id`; only the owner or a `superadmin` can access settings, start/stop, or delete an agent
-- **User management** — no HTTP API exposes user listing or creation; CLI-only (`clawforce user create`, `clawforce user update`, `clawforce user list`, `clawforce user reset`)
+- **User management** — no HTTP API exposes user listing or creation; CLI-only (`specops user create`, `specops user update`, `specops user list`, `specops user reset`)
 
 ---
 
@@ -117,7 +117,7 @@ Three layers of protection run in order:
 
 By default, every outbound HTTPS call (LLM providers, channel APIs, MCP HTTP servers, admin API, registries) and every SMTP/IMAP TLS connection verifies the remote certificate against the system trust store. `httpx` already honors `SSL_CERT_FILE` and `REQUESTS_CA_BUNDLE`, so the correct way to trust a private/internal CA in production is to install that bundle and point these variables at it.
 
-As a last-resort escape hatch for lab, air-gapped, or MITM-proxy environments, set `CLAWFORCE_DISABLE_SSL_VERIFY=1` (or `true`/`yes`/`on`) to turn verification off globally — in clawforce, clawbot, clawlib, and every agent container spawned by the Docker runtime (the variable is passed through automatically). A one-time warning is logged the first time any component reads the flag.
+As a last-resort escape hatch for lab, air-gapped, or MITM-proxy environments, set `SPECOPS_DISABLE_SSL_VERIFY=1` (or `true`/`yes`/`on`) to turn verification off globally — in specops, specialagent, specops_lib, and every agent container spawned by the Docker runtime (the variable is passed through automatically). A one-time warning is logged the first time any component reads the flag.
 
 **Never set this in production.** Disabling verification exposes the deployment to man-in-the-middle attacks on every outbound connection.
 
@@ -139,7 +139,7 @@ channels:
 
 ## Audit Logging
 
-Security events are emitted to the `clawforce.audit` logger:
+Security events are emitted to the `specops.audit` logger:
 
 | Event | Fields |
 |-------|--------|
@@ -161,15 +161,15 @@ Configure your log aggregator to capture this logger for security monitoring.
 
 ## Production Checklist
 
-- [ ] `CLAWFORCE_ENV=production` and `ADMIN_JWT_SECRET` set
+- [ ] `SPECOPS_ENV=production` and `ADMIN_JWT_SECRET` set
 - [ ] Storage root and config files have restricted permissions (`700`/`600`)
 - [ ] `CORS_ORIGINS` locked to the admin UI origin
 - [ ] `allowFrom` configured for all active channels
 - [ ] Running as a non-root user or inside a container
 - [ ] Dependencies up to date (`pip-audit`, `npm audit`)
-- [ ] `clawforce.audit` logger captured and monitored
+- [ ] `specops.audit` logger captured and monitored
 - [ ] Agent tokens rotated after any suspected exposure
 
 ---
 
-For the latest security advisories: [GitHub Security Advisories](https://github.com/saolalab/clawforce/security/advisories)
+For the latest security advisories: [GitHub Security Advisories](https://github.com/taylorelley/specops/security/advisories)

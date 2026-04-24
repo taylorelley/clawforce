@@ -1,7 +1,7 @@
 ---
 name: quality-assurance
 description: "Quality assurance processes and methodologies. Use when planning testing, managing bugs, or improving quality."
-metadata: {"clawbot":{"emoji":"✅"}}
+metadata: {"specialagent":{"emoji":"✅"}}
 ---
 
 # Quality Assurance

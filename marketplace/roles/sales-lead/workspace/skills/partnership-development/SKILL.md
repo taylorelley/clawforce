@@ -1,7 +1,7 @@
 ---
 name: partnership-development
 description: "Strategic partnership development and management. Use when identifying, negotiating, or managing partnerships."
-metadata: {"clawbot":{"emoji":"🤝"}}
+metadata: {"specialagent":{"emoji":"🤝"}}
 ---
 
 # Partnership Development

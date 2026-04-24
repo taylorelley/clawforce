@@ -1,27 +1,27 @@
 # Reverse Proxy
 
-Run Clawforce behind an existing reverse proxy with a public subdomain, e.g. `https://clawforce.example.com`. TLS is terminated at the proxy; the container stays on loopback.
+Run SpecOps behind an existing reverse proxy with a public subdomain, e.g. `https://specops.example.com`. TLS is terminated at the proxy; the container stays on loopback.
 
 ## Minimum working setup
 
 Bind the container to `127.0.0.1` so only the proxy can reach it:
 
 ```bash
-docker run -d --name clawforce --restart unless-stopped \
+docker run -d --name specops --restart unless-stopped \
   -p 127.0.0.1:8080:8080 \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $HOME/.clawforce-data:/data \
-  -e AGENT_STORAGE_HOST_PATH=$HOME/.clawforce-data \
+  -v $HOME/.specops-data:/data \
+  -e AGENT_STORAGE_HOST_PATH=$HOME/.specops-data \
   -e ADMIN_SETUP_USERNAME=admin \
   -e ADMIN_SETUP_PASSWORD='change-me-now' \
-  -e CORS_ORIGINS=https://clawforce.example.com \
-  ghcr.io/saolalab/clawforce:latest
+  -e CORS_ORIGINS=https://specops.example.com \
+  ghcr.io/taylorelley/specops:latest
 ```
 
 Then point your proxy at it. Caddy is the shortest working example — it handles TLS and WebSocket upgrades automatically:
 
 ```caddy
-clawforce.example.com {
+specops.example.com {
     reverse_proxy 127.0.0.1:8080
 }
 ```
@@ -32,19 +32,19 @@ Easier to redeploy and pin env separately:
 
 ```yaml
 services:
-  clawforce:
-    image: ghcr.io/saolalab/clawforce:latest
+  specops:
+    image: ghcr.io/taylorelley/specops:latest
     restart: unless-stopped
     ports:
       - "127.0.0.1:8080:8080"
     environment:
-      AGENT_STORAGE_HOST_PATH: /srv/clawforce/data
+      AGENT_STORAGE_HOST_PATH: /srv/specops/data
       ADMIN_SETUP_USERNAME: admin
-      ADMIN_SETUP_PASSWORD: ${CLAWFORCE_ADMIN_PASSWORD}
-      CORS_ORIGINS: https://clawforce.example.com
+      ADMIN_SETUP_PASSWORD: ${SPECOPS_ADMIN_PASSWORD}
+      CORS_ORIGINS: https://specops.example.com
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /srv/clawforce/data:/data
+      - /srv/specops/data:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
       interval: 30s
@@ -59,7 +59,7 @@ Nginx needs explicit headers for the features that silently break otherwise — 
 ```nginx
 server {
     listen 443 ssl http2;
-    server_name clawforce.example.com;
+    server_name specops.example.com;
     # ssl_certificate ...; ssl_certificate_key ...;
 
     client_max_body_size 100m;
@@ -111,7 +111,7 @@ If you do override to the public URL, ensure the proxy passes WebSocket upgrades
 When running `uvicorn --workers N > 1`, each worker holds its own WebSocket connections and activity registry. Pin per-client traffic to one worker so `/api/control/ws` and `/api/agents/*/logs` stay consistent:
 
 ```nginx
-upstream clawforce_backend {
+upstream specops_backend {
     ip_hash;
     server 127.0.0.1:8080;
     # add more workers / backends here
@@ -120,7 +120,7 @@ upstream clawforce_backend {
 server {
     # ...
     location / {
-        proxy_pass http://clawforce_backend;
+        proxy_pass http://specops_backend;
         # + all the proxy_set_header / buffering lines above
     }
 }
@@ -130,7 +130,7 @@ See [Configuration → 503 Agent Offline](/guide/configuration#troubleshooting-5
 
 ## TLS certificate verification
 
-If agents talk to MCP servers or APIs with private CAs, see [Security → TLS Certificate Verification](/guide/security) for `SSL_CERT_FILE`, `REQUESTS_CA_BUNDLE`, and `CLAWFORCE_DISABLE_SSL_VERIFY`.
+If agents talk to MCP servers or APIs with private CAs, see [Security → TLS Certificate Verification](/guide/security) for `SSL_CERT_FILE`, `REQUESTS_CA_BUNDLE`, and `SPECOPS_DISABLE_SSL_VERIFY`.
 
 ## Security notes
 
@@ -142,8 +142,8 @@ If agents talk to MCP servers or APIs with private CAs, see [Security → TLS Ce
 
 Once the container is running and the proxy is configured:
 
-1. `https://clawforce.example.com` loads the dashboard and accepts the admin login.
+1. `https://specops.example.com` loads the dashboard and accepts the admin login.
 2. Open an agent's **Terminal** panel — proves WebSocket upgrade is working.
 3. Tail agent **Logs** — proves SSE works (no buffering, no mid-stream disconnect).
 4. Deploy an agent from the **Marketplace** — proves Docker socket mount and `AGENT_STORAGE_HOST_PATH` are correct.
-5. `curl -I https://clawforce.example.com/api/health` returns `200 OK`.
+5. `curl -I https://specops.example.com/api/health` returns `200 OK`.

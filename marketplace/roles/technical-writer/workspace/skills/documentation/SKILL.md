@@ -1,7 +1,7 @@
 ---
 name: documentation
 description: "Documentation best practices and templates. Use when creating or improving technical documentation."
-metadata: {"clawbot":{"emoji":"📝"}}
+metadata: {"specialagent":{"emoji":"📝"}}
 ---
 
 # Documentation

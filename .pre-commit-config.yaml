@@ -17,5 +17,5 @@ repos:
             .*\.svg|
             .*\.png|
             .*\.ico|
-            clawforce/static/.*
+            specops/static/.*
           )$

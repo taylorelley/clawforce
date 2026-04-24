@@ -1,11 +1,11 @@
 # Configuration Reference
 
-Environment variables and configuration for Clawforce (admin control plane). For terminology (control plane, agent, worker, pool), see [Terminology](/reference/terminology).
+Environment variables and configuration for SpecOps (admin control plane). For terminology (control plane, agent, worker, pool), see [Terminology](/reference/terminology).
 
 ## Naming convention
 
-- **`ADMIN_`** — Config for the control plane (clawforce): storage, auth, pool backend, public URL, etc.
-- **`AGENT_`** — Config for the agent instance runtime (clawbot worker): image, host path for bind mounts, Docker resource limits, etc.
+- **`ADMIN_`** — Config for the control plane (specops): storage, auth, pool backend, public URL, etc.
+- **`AGENT_`** — Config for the agent instance runtime (specialagent worker): image, host path for bind mounts, Docker resource limits, etc.
 
 ## Quick Start Defaults (Docker image)
 
@@ -15,7 +15,7 @@ These are pre-set in the published Docker image for a minimal startup command:
 |----------|---------|-------|
 | `ADMIN_SETUP_USERNAME` | `admin` | Override in production |
 | `ADMIN_SETUP_PASSWORD` | `admin` | Override in production |
-| `AGENT_IMAGE` | `ghcr.io/saolalab/clawforce:latest` | Worker container image |
+| `AGENT_IMAGE` | `ghcr.io/taylorelley/specops:latest` | Worker container image |
 | `ADMIN_RUNTIME_BACKEND` | `docker` | Use `process` for subprocess runtime |
 | `ADMIN_PUBLIC_URL` | `http://host.docker.internal:8080` | Worker→admin connectivity. **Critical for Docker runtime.** See [Troubleshooting](#troubleshooting-503-agent-offline) if workspace returns 503. |
 
@@ -24,15 +24,15 @@ These are pre-set in the published Docker image for a minimal startup command:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `ADMIN_JWT_SECRET` | Secret key for signing JWT access tokens. **Required in production.** | Ephemeral (dev only) |
-| `CLAWFORCE_ENV` | Set to `production` to require `ADMIN_JWT_SECRET` and disable ephemeral JWT. | `development` |
+| `SPECOPS_ENV` | Set to `production` to require `ADMIN_JWT_SECRET` and disable ephemeral JWT. | `development` |
 | `CORS_ORIGINS` | Comma-separated list of allowed CORS origins (no spaces). | `http://localhost:5173,http://localhost:8080` |
-| `CLAWFORCE_DISABLE_SSL_VERIFY` | Set to `1`/`true`/`yes`/`on` to disable TLS certificate verification for all outbound HTTPS calls and SMTP/IMAP TLS in clawforce, clawbot, and every agent container. Propagates automatically to Docker-spawned workers. **Insecure — only use for corporate MITM proxies or self-signed internal CAs; prefer `SSL_CERT_FILE` / `REQUESTS_CA_BUNDLE` for proper custom-CA setups.** | unset |
+| `SPECOPS_DISABLE_SSL_VERIFY` | Set to `1`/`true`/`yes`/`on` to disable TLS certificate verification for all outbound HTTPS calls and SMTP/IMAP TLS in specops, specialagent, and every agent container. Propagates automatically to Docker-spawned workers. **Insecure — only use for corporate MITM proxies or self-signed internal CAs; prefer `SSL_CERT_FILE` / `REQUESTS_CA_BUNDLE` for proper custom-CA setups.** | unset |
 
 ## Docker Pool
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `AGENT_IMAGE` | Worker image name (same clawforce image). | `ghcr.io/saolalab/clawforce:latest` |
+| `AGENT_IMAGE` | Worker image name (same specops image). | `ghcr.io/taylorelley/specops:latest` |
 | `AGENT_STORAGE_HOST_PATH` | Host-side base path for agent bind mounts. Override when the control plane runs in Docker so worker containers get the correct host path for `agents/{id}`. | `ADMIN_STORAGE_ROOT` |
 | `AGENT_DOCKER_MEM_LIMIT` | Memory limit per agent container (e.g. `2g`). Fallback when agent config has no override. | `2g` |
 | `AGENT_DOCKER_CPU_QUOTA` | CPU quota (CFS) per agent container. Fallback when agent config has no override. | `100000` |
@@ -77,19 +77,19 @@ Admin users are managed via the CLI. Use `--data-dir` to specify the data direct
 
 | Command | Description |
 |---------|-------------|
-| `clawforce user create <username>` | Create a new user. Use `--password` / `-p` or prompt; `--role` (default: admin). |
-| `clawforce user update <username>` | Update user. Use `--password` and/or `--role`. Prompts for password if neither given. |
-| `clawforce user list` | List all users. |
-| `clawforce user set-password <username>` | Reset password (interactive). |
-| `clawforce user reset <username>` | Reset password (alias for set-password). |
+| `specops user create <username>` | Create a new user. Use `--password` / `-p` or prompt; `--role` (default: admin). |
+| `specops user update <username>` | Update user. Use `--password` and/or `--role`. Prompts for password if neither given. |
+| `specops user list` | List all users. |
+| `specops user set-password <username>` | Reset password (interactive). |
+| `specops user reset <username>` | Reset password (alias for set-password). |
 
 Examples:
 
 ```bash
-clawforce user create alice --password secret
-clawforce user create bob --password secret --role admin
-clawforce user update alice --role admin
-clawforce user reset alice
+specops user create alice --password secret
+specops user create bob --password secret --role admin
+specops user update alice --role admin
+specops user reset alice
 ```
 
 ## Troubleshooting: 503 Agent Offline
@@ -128,7 +128,7 @@ When opening an agent in the browser, workspace/profile endpoints may return **5
 
 ## Audit Logging
 
-Security events are emitted by the `clawforce.audit` logger. Configure your logging (e.g. in `logging.yaml` or via `LOG_*` if supported) to capture this logger and send it to your SIEM or log aggregation.
+Security events are emitted by the `specops.audit` logger. Configure your logging (e.g. in `logging.yaml` or via `LOG_*` if supported) to capture this logger and send it to your SIEM or log aggregation.
 
 Events:
 

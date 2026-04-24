@@ -1,7 +1,7 @@
 ---
 name: bookkeeping
 description: "Financial record keeping: chart of accounts, journal entries, monthly close, reconciliation, and invoice management. Use when maintaining financial records and closing books."
-metadata: {"clawbot":{"emoji":"📚"}}
+metadata: {"specialagent":{"emoji":"📚"}}
 ---
 
 # Bookkeeping

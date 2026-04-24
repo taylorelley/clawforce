@@ -1,10 +1,10 @@
-# Clawforce Makefile
+# SpecOps Makefile
 #
 # Development:   make dev        (or: make backend + make frontend in two terminals)
-# Docs preview:  make docs       (VitePress at http://localhost:4173/clawforce/)
-# Production:    make install && clawforce setup && clawforce serve
+# Docs preview:  make docs       (VitePress at http://localhost:4173/specops/)
+# Production:    make install && specops setup && specops serve
 # Container:     make container  (uses docker by default, set ENGINE=podman for podman)
-# Stop/cleanup:  make container-stop  (stops and removes all clawforce + agent containers)
+# Stop/cleanup:  make container-stop  (stops and removes all specops + agent containers)
 
 # Container engine: docker (default) or podman
 ENGINE ?= $(shell command -v docker >/dev/null 2>&1 && echo docker || echo podman)
@@ -19,11 +19,11 @@ install:
 	@echo "Installing Python dependencies..."
 	uv sync --group dev
 	@echo "Installing frontend dependencies..."
-	cd clawforce-ui && npm install
+	cd specops-ui && npm install
 	@echo ""
 	@echo "Installation complete. Next steps:"
-	@echo "  1. clawforce setup              # Create admin user"
-	@echo "  2. clawforce serve              # Start server"
+	@echo "  1. specops setup              # Create admin user"
+	@echo "  2. specops serve              # Start server"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Development (hot-reload)
@@ -37,10 +37,10 @@ dev:
 	@echo "Run in two terminals: make backend | make frontend"
 
 backend:
-	ADMIN_STORAGE_ROOT=$$(pwd)/data uv run python -m clawforce.cli serve --host 127.0.0.1 --port 8080 --reload
+	ADMIN_STORAGE_ROOT=$$(pwd)/data uv run python -m specops.cli serve --host 127.0.0.1 --port 8080 --reload
 
 frontend:
-	cd clawforce-ui && npm run dev
+	cd specops-ui && npm run dev
 
 docs:
 	npm run docs:build && npm run docs:preview
@@ -53,29 +53,29 @@ docs-dev:
 # ─────────────────────────────────────────────────────────────────────────────
 
 setup:
-	ADMIN_STORAGE_ROOT=$$(pwd)/data ADMIN_SETUP_USERNAME=admin ADMIN_SETUP_PASSWORD=admin uv run python -m clawforce.cli setup
+	ADMIN_STORAGE_ROOT=$$(pwd)/data ADMIN_SETUP_USERNAME=admin ADMIN_SETUP_PASSWORD=admin uv run python -m specops.cli setup
 
 user-list:
-	ADMIN_STORAGE_ROOT=$$(pwd)/data uv run python -m clawforce.cli user list
+	ADMIN_STORAGE_ROOT=$$(pwd)/data uv run python -m specops.cli user list
 
 # Create user: make user-create CREATE_USER=alice CREATE_PASS=secret
 user-create:
-	ADMIN_STORAGE_ROOT=$$(pwd)/data uv run python -m clawforce.cli user create $(CREATE_USER) --password $(CREATE_PASS)
+	ADMIN_STORAGE_ROOT=$$(pwd)/data uv run python -m specops.cli user create $(CREATE_USER) --password $(CREATE_PASS)
 
 # Update user: make user-update UPDATE_USER=alice UPDATE_PASS=newpass
 user-update:
-	ADMIN_STORAGE_ROOT=$$(pwd)/data uv run python -m clawforce.cli user update $(UPDATE_USER) --password $(UPDATE_PASS)
+	ADMIN_STORAGE_ROOT=$$(pwd)/data uv run python -m specops.cli user update $(UPDATE_USER) --password $(UPDATE_PASS)
 
 # Reset password: make user-set-password RESET_USER=admin
 user-set-password:
-	ADMIN_STORAGE_ROOT=$$(pwd)/data uv run python -m clawforce.cli user set-password $(RESET_USER)
+	ADMIN_STORAGE_ROOT=$$(pwd)/data uv run python -m specops.cli user set-password $(RESET_USER)
 
 serve:
-	ADMIN_STORAGE_ROOT=$$(pwd)/data uv run python -m clawforce.cli serve --port 8080
+	ADMIN_STORAGE_ROOT=$$(pwd)/data uv run python -m specops.cli serve --port 8080
 
-# Build production frontend (outputs directly to clawforce/static/)
+# Build production frontend (outputs directly to specops/static/)
 build:
-	cd clawforce-ui && npm run build
+	cd specops-ui && npm run build
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Testing & Quality
@@ -99,23 +99,23 @@ format:
 # ─────────────────────────────────────────────────────────────────────────────
 
 container:
-	CLAWFORCE_ENGINE=$(ENGINE) ./scripts/dev.sh --logs
+	SPECOPS_ENGINE=$(ENGINE) ./scripts/dev.sh --logs
 
 container-nobuild:
-	CLAWFORCE_ENGINE=$(ENGINE) ./scripts/dev.sh --no-build --logs
+	SPECOPS_ENGINE=$(ENGINE) ./scripts/dev.sh --no-build --logs
 
 container-clean:
-	CLAWFORCE_ENGINE=$(ENGINE) ./scripts/dev.sh --clean --logs
+	SPECOPS_ENGINE=$(ENGINE) ./scripts/dev.sh --clean --logs
 
 container-logs:
-	$(ENGINE) logs -f clawforce
+	$(ENGINE) logs -f specops
 
 container-stop:
-	@echo "Stopping and removing clawforce containers..."
-	-@AGENTS=$$($(ENGINE) ps -aq --filter "name=clawbot-agent-" 2>/dev/null || true); \
+	@echo "Stopping and removing specops containers..."
+	-@AGENTS=$$($(ENGINE) ps -aq --filter "name=specialagent-" 2>/dev/null || true); \
 	  [ -n "$$AGENTS" ] && echo "$$AGENTS" | xargs $(ENGINE) rm -f 2>/dev/null || true
-	-@$(ENGINE) stop clawforce 2>/dev/null || true
-	-@$(ENGINE) rm -f clawforce 2>/dev/null || true
+	-@$(ENGINE) stop specops 2>/dev/null || true
+	-@$(ENGINE) rm -f specops 2>/dev/null || true
 	@echo "Done."
 
 # ─────────────────────────────────────────────────────────────────────────────

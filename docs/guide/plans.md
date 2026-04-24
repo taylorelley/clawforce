@@ -88,11 +88,11 @@ flowchart LR
 
 ## Plan templates
 
-Starting a plan from zero on every recurring workflow is tedious. **Plan templates** are reusable blueprints — a set of columns and pre-filled tasks — that you can apply when creating a plan. They live in the **Marketplace → Plan Templates** tab alongside Claw Templates, Skills, MCP Servers, and Software.
+Starting a plan from zero on every recurring workflow is tedious. **Plan templates** are reusable blueprints — a set of columns and pre-filled tasks — that you can apply when creating a plan. They live in the **Marketplace → Plan Templates** tab alongside SpecialAgent Templates, Skills, MCP Servers, and Software.
 
 ### Bundled starters
 
-Clawforce ships with four starter templates in `marketplace/plan-templates/catalog.yaml`:
+SpecOps ships with four starter templates in `marketplace/plan-templates/catalog.yaml`:
 
 - **Product Launch** — default Kanban columns, five launch tasks (scope, brief, demo, content, enablement).
 - **Sprint Planning** — default columns, six tasks covering grooming, goal-setting, estimation, standups, demo, retro.
@@ -123,9 +123,9 @@ Templates can seed a plan with agent assignments, saving a step at plan-creation
 - **Plan-level `agent_ids`** — every agent in this list is assigned to the new plan.
 - **Task-level `agent_id`** — the task is created already assigned to that agent, and that agent is also auto-added to the plan's agents list (so the assignment is valid).
 
-Agent ids reference claws in *your* installation, so preassignment is most useful for custom templates. In the Marketplace UI, the **Add Plan Template** modal lists your current claws as togglable chips for the plan-level list and as a per-task dropdown.
+Agent ids reference specialagents in *your* installation, so preassignment is most useful for custom templates. In the Marketplace UI, the **Add Plan Template** modal lists your current specialagents as togglable chips for the plan-level list and as a per-task dropdown.
 
-Agent references are resolved leniently: if an id doesn't match an existing claw at plan-creation time (because the claw was renamed or deleted), it is **silently skipped** — the plan is still created, missing plan-level ids are dropped, and tasks that referenced a missing agent are created unassigned. The detail modal marks stale ids with a *missing* badge so you can fix or remove them.
+Agent references are resolved leniently: if an id doesn't match an existing specialagent at plan-creation time (because the specialagent was renamed or deleted), it is **silently skipped** — the plan is still created, missing plan-level ids are dropped, and tasks that referenced a missing agent are created unassigned. The detail modal marks stale ids with a *missing* badge so you can fix or remove them.
 
 Example:
 
@@ -133,17 +133,17 @@ Example:
 - id: bug-bash
   name: Bug Bash
   description: Rapid team-wide bug discovery and triage.
-  author: Clawforce
+  author: SpecOps
   categories: [engineering]
   agent_ids:
-    - triager-claw-id        # whole team sees the plan
+    - triager-specialagent-id        # whole team sees the plan
   columns:
     - { title: Reported }
     - { title: Triaged }
     - { title: Fixing }
     - { title: Verified }
   tasks:
-    - { title: Kick off bug bash, column: reported, agent_id: triager-claw-id }
+    - { title: Kick off bug bash, column: reported, agent_id: triager-specialagent-id }
     - { title: Prioritise repros, column: triaged }
 ```
 
@@ -173,5 +173,5 @@ Plans are independent records once created — deleting the template they were c
 ## See also
 
 - [Terminology](/reference/terminology) — Plan definition and "Plan vs external systems"
-- [Role TOOLS.md](https://github.com/saolalab/clawforce/tree/main/marketplace/roles) — Agent guidance for planning and coordination
-- [Plan templates catalog](https://github.com/saolalab/clawforce/tree/main/marketplace/plan-templates) — Bundled starter templates
+- [Role TOOLS.md](https://github.com/taylorelley/specops/tree/main/marketplace/roles) — Agent guidance for planning and coordination
+- [Plan templates catalog](https://github.com/taylorelley/specops/tree/main/marketplace/plan-templates) — Bundled starter templates

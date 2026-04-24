@@ -1,7 +1,7 @@
 ---
 name: company-ops
 description: "Cross-functional company operations: status tracking, decision logging, and inter-department coordination. Use when managing company-wide processes."
-metadata: {"clawbot":{"emoji":"🏢"}}
+metadata: {"specialagent":{"emoji":"🏢"}}
 ---
 
 # Company Operations

@@ -1,4 +1,4 @@
-# Claw Templates — Autonomous Company Roles
+# SpecialAgent Templates — Autonomous Company Roles
 
 Pre-built role templates for bootstrapping an autonomous AI company.
 Each role is a self-contained agent profile with personality, instructions,
@@ -59,10 +59,10 @@ Each role follows the standard profile layout. **TOOLS.md** and **USER.md** use 
 When provisioning a new agent, specify the role template:
 
 ```bash
-clawforce agent create --name "alice" --template sre
-clawforce agent create --name "bob" --template finance-controller
-clawforce agent create --name "alice" --template sre --mode process   # run as subprocess
-clawforce agent create --name "ops" --template sre --mode docker      # run in container
+specops agent create --name "alice" --template sre
+specops agent create --name "bob" --template finance-controller
+specops agent create --name "alice" --template sre --mode process   # run as subprocess
+specops agent create --name "ops" --template sre --mode docker      # run in container
 ```
 
 - **`--template`** — Role template (e.g. `sre`, `ceo`). Omit to use the default profile/workspace.

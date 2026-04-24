@@ -2,7 +2,7 @@
 name: skills-sh
 description: Search and install agent skills from agentskill.sh, the AI agent skills directory.
 homepage: https://agentskill.sh
-metadata: {"clawbot":{"emoji":"📦"}}
+metadata: {"specialagent":{"emoji":"📦"}}
 ---
 
 # agentskill.sh
@@ -36,7 +36,7 @@ Or for a repo with a single skill:
 npx skills add owner/repo -a cursor -y
 ```
 
-Replace `owner/repo@skill-name` with the slug from search results (e.g. `anthropics/skills@pdf`). Use `-y` to skip confirmation. Skills install to `workspace/.agents/skills/` and are loaded automatically by Clawbot.
+Replace `owner/repo@skill-name` with the slug from search results (e.g. `anthropics/skills@pdf`). Use `-y` to skip confirmation. Skills install to `workspace/.agents/skills/` and are loaded automatically by SpecialAgent.
 
 ## List installed
 

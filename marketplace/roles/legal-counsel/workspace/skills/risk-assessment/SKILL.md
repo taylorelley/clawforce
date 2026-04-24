@@ -1,7 +1,7 @@
 ---
 name: risk-assessment
 description: "Framework for legal risk assessment and management. Use when evaluating legal risks, managing risk registers, assessing IP protection needs, or conducting risk reviews."
-metadata: {"clawbot":{"emoji":"⚠️"}}
+metadata: {"specialagent":{"emoji":"⚠️"}}
 ---
 
 # Risk Assessment

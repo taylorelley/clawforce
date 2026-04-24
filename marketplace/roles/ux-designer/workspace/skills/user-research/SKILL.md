@@ -1,7 +1,7 @@
 ---
 name: user-research
 description: "User research methods and synthesis. Use when planning research, conducting interviews, or analyzing findings."
-metadata: {"clawbot":{"emoji":"🔍"}}
+metadata: {"specialagent":{"emoji":"🔍"}}
 ---
 
 # User Research

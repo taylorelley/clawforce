@@ -1,7 +1,7 @@
 ---
 name: people-ops
 description: "Framework for people operations: performance reviews, 1:1s, engagement surveys, performance improvement plans, exit interviews, and policy management. Use when managing performance, measuring engagement, handling difficult situations, or updating policies."
-metadata: {"clawbot":{"emoji":"👥"}}
+metadata: {"specialagent":{"emoji":"👥"}}
 ---
 
 # People Operations

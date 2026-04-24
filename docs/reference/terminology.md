@@ -6,11 +6,11 @@ This document defines product terms so that design and documentation stay consis
 
 | Product term | Definition |
 |--------------|------------|
-| **Control plane** | clawforce: REST API, WebSocket hub, auth, vault, agent pools, plan store. Where operators and the UI talk to the system. |
+| **Control plane** | specops: REST API, WebSocket hub, auth, vault, agent pools, plan store. Where operators and the UI talk to the system. |
 | **Agent** | Logical unit: identity (id, name, team), config (model, tools, channels), and desired state. Stored as `AgentDef`; data under `agents/{agent_id}/`. |
-| **Agent instance / worker** | One running process or container executing one agent. Implemented by clawbot; one WebSocket connection per instance to the control plane. |
+| **Agent instance / worker** | One running process or container executing one agent. Implemented by specialagent; one WebSocket connection per instance to the control plane. |
 | **Agent pool** | Runtime backend that starts/stops and talks to agent instances: `process` (subprocess), `docker` (container), or future backends. |
-| **Worker** (clawbot) | The clawbot process that runs a single agent. `WorkerContext` holds everything that instance needs (config, loop, channels). |
+| **Worker** (specialagent) | The specialagent process that runs a single agent. `WorkerContext` holds everything that instance needs (config, loop, channels). |
 | **Start / stop agent** | Start = run one instance for that agent. Stop = terminate the instance (scale to 0). |
 | **Agent status** | Workload state of the agent instance: see [Status values](#status-values) below. |
 | **Workspace** | Per-agent filesystem: profiles (read-only), workspace (read/write), .config, .sessions. Isolated per agent. |

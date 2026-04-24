@@ -1,19 +1,19 @@
 ---
 layout: home
 hero:
-  name: Clawforce
+  name: SpecOps
   text: Your AI agent team. One click away.
   tagline: Deploy autonomous AI teams that run your work — 24/7, securely, at scale.
   image:
-    src: /clawforce.png
-    alt: Clawforce
+    src: /specops.svg
+    alt: SpecOps
   actions:
     - theme: brand
       text: Quick Start
       link: /guide/quickstart
     - theme: alt
       text: View on GitHub
-      link: https://github.com/saolalab/clawforce
+      link: https://github.com/taylorelley/specops
 features:
   - title: 1-Click Deployment
     details: Deploy from idea to production in seconds — no code required. Marketplace & templates, visual portal, auto-configuration.
@@ -50,12 +50,12 @@ features:
 
 **macOS / Linux:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.sh | bash
 ```
 
 **Windows (PowerShell as Administrator):**
 ```powershell
-irm https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.ps1 | iex
 ```
 
 After installation, open **http://localhost:8080** and log in with `admin`/`admin`.
@@ -68,4 +68,4 @@ After installation, open **http://localhost:8080** and log in with `admin`/`admi
 
 ## License
 
-Apache License 2.0 — see [LICENSE](https://github.com/saolalab/clawforce/blob/main/LICENSE) for details.
+Apache License 2.0 — see [LICENSE](https://github.com/taylorelley/specops/blob/main/LICENSE) for details.

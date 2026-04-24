@@ -1,7 +1,7 @@
 ---
 name: solution-design
 description: "Customer solution architecture and design. Use when designing implementations, creating architecture diagrams, or planning integrations."
-metadata: {"clawbot":{"emoji":"🏗️"}}
+metadata: {"specialagent":{"emoji":"🏗️"}}
 ---
 
 # Solution Design

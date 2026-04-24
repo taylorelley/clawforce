@@ -1,5 +1,5 @@
 {
-  "name": "clawforce-docs",
+  "name": "specops-docs",
   "private": true,
   "scripts": {
     "docs:build": "vitepress build docs",

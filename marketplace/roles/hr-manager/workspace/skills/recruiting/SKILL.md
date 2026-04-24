@@ -1,7 +1,7 @@
 ---
 name: recruiting
 description: "Framework for end-to-end recruiting: job descriptions, interview processes, candidate evaluation, and offer management. Use when posting roles, screening candidates, coordinating interviews, or extending offers."
-metadata: {"clawbot":{"emoji":"🎯"}}
+metadata: {"specialagent":{"emoji":"🎯"}}
 ---
 
 # Recruiting

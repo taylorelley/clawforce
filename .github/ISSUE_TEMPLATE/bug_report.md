@@ -27,7 +27,7 @@ A clear and concise description of what you expected to happen.
 
 - OS: [e.g. Ubuntu 22.04, macOS 14]
 - Python version: [e.g. 3.11]
-- Clawforce version: [e.g. 0.1.0]
+- SpecOps version: [e.g. 0.1.0]
 - Pool backend: [e.g. process, docker]
 
 ## Additional context

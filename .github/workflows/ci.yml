@@ -44,7 +44,7 @@ jobs:
           path: coverage.xml
 
       - name: Type check with mypy
-        run: uv run mypy clawlib/ clawbot/ clawforce/ --ignore-missing-imports --no-error-summary
+        run: uv run mypy specops_lib/ specialagent/ specops/ --ignore-missing-imports --no-error-summary
         continue-on-error: true
 
   build:
@@ -62,14 +62,14 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
 
-      - name: Build clawlib
-        run: uv build --package clawlib
+      - name: Build specops_lib
+        run: uv build --package specops_lib
 
-      - name: Build clawbot
-        run: uv build --package clawbot
+      - name: Build specialagent
+        run: uv build --package specialagent
 
-      - name: Build clawforce
-        run: uv build --package clawforce
+      - name: Build specops
+        run: uv build --package specops
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

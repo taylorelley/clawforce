@@ -1,7 +1,7 @@
 ---
 name: financial-reporting
 description: "Financial reporting frameworks: P&L, balance sheet, cash flow, variance analysis, and board-ready summaries. Use when preparing or reviewing financial reports."
-metadata: {"clawbot":{"emoji":"📊"}}
+metadata: {"specialagent":{"emoji":"📊"}}
 ---
 
 # Financial Reporting

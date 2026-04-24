@@ -12,7 +12,7 @@ import pytest
 import yaml
 from fastapi.testclient import TestClient
 
-from clawlib.plantemplateregistry import YamlPlanTemplateRegistry
+from specops_lib.plantemplateregistry import YamlPlanTemplateRegistry
 
 # ---------------------------------------------------------------------------
 # YamlPlanTemplateRegistry — pure unit tests (no FastAPI, no SQLite)
@@ -95,12 +95,12 @@ def isolated_data_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     data_dir = tmp_path / "data"
     data_dir.mkdir()
     monkeypatch.setenv("ADMIN_STORAGE_ROOT", str(data_dir))
-    monkeypatch.setenv("CLAWFORCE_ENV", "development")
+    monkeypatch.setenv("SPECOPS_ENV", "development")
     monkeypatch.setenv("ADMIN_RUNTIME_BACKEND", "process")
     monkeypatch.setenv("RATELIMIT_ENABLED", "0")
     # Force re-initialisation of cached singletons
-    from clawforce.core import database as db_module
-    from clawlib.registry import factory as registry_factory
+    from specops.core import database as db_module
+    from specops_lib.registry import factory as registry_factory
 
     db_module.get_database.cache_clear()
     registry_factory._plan_template_registry = None  # type: ignore[attr-defined]
@@ -111,7 +111,7 @@ def isolated_data_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 @pytest.fixture
 def client(isolated_data_dir: Path):
-    from clawforce.app import create_app
+    from specops.app import create_app
 
     app = create_app()
     with TestClient(app, raise_server_exceptions=True) as c:
@@ -120,9 +120,9 @@ def client(isolated_data_dir: Path):
 
 @pytest.fixture
 def admin_user(client: TestClient):
-    from clawforce.auth import hash_password
-    from clawforce.core.database import get_database
-    from clawforce.core.store.users import UserStore
+    from specops.auth import hash_password
+    from specops.core.database import get_database
+    from specops.core.store.users import UserStore
 
     UserStore(get_database()).create_user(
         username="testadmin", password_hash=hash_password("testpass"), role="admin"
@@ -143,7 +143,7 @@ def auth_headers(client: TestClient, admin_user):
 
 def _seed_agents(agent_ids: list[str]) -> None:
     """Insert minimal agent rows so plan_agents/plan_tasks FKs can reference them."""
-    from clawforce.core.database import get_database
+    from specops.core.database import get_database
 
     with get_database().connection() as conn:
         for aid in agent_ids:

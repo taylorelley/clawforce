@@ -1,7 +1,7 @@
 ---
 name: budgeting
 description: "Budgeting and forecasting: annual budgets, forecasts, scenario planning, expense approval workflows, and vendor evaluation. Use when creating budgets, updating forecasts, or evaluating spending decisions."
-metadata: {"clawbot":{"emoji":"💰"}}
+metadata: {"specialagent":{"emoji":"💰"}}
 ---
 
 # Budgeting

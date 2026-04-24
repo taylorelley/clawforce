@@ -11,11 +11,11 @@ from pathlib import Path
 import pytest
 import yaml
 
-from clawbot.agent.agent_fs import AgentFS
-from clawbot.worker.handlers.schema import InstallSkillRequest
-from clawbot.worker.handlers.skill import handle_install_skill
-from clawlib.skillregistry import YamlSkillRegistry
-from clawlib.skillregistry.skills_sh import SkillsShRegistry
+from specialagent.agent.agent_fs import AgentFS
+from specialagent.worker.handlers.schema import InstallSkillRequest
+from specialagent.worker.handlers.skill import handle_install_skill
+from specops_lib.skillregistry import YamlSkillRegistry
+from specops_lib.skillregistry.skills_sh import SkillsShRegistry
 
 
 class _StubSkillsShRegistry(SkillsShRegistry):

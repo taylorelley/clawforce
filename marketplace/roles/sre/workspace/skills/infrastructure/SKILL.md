@@ -1,7 +1,7 @@
 ---
 name: infrastructure
 description: "Framework for managing infrastructure as code, deployments, disaster recovery, and scaling. Use when planning infrastructure changes, designing deployments, or responding to capacity issues."
-metadata: {"clawbot":{"emoji":"🏗️"}}
+metadata: {"specialagent":{"emoji":"🏗️"}}
 ---
 
 # Infrastructure Management

@@ -1,7 +1,7 @@
 ---
 name: penetration-testing
 description: "Security testing and assessment methodologies. Use when conducting penetration tests, security assessments, or code reviews."
-metadata: {"clawbot":{"emoji":"🔓"}}
+metadata: {"specialagent":{"emoji":"🔓"}}
 ---
 
 # Penetration Testing

@@ -1,7 +1,7 @@
 ---
 name: user-research
 description: "Framework for conducting user research, creating personas, analyzing user needs, and competitive analysis. Use when planning research, conducting interviews, analyzing feedback, or evaluating competitors."
-metadata: {"clawbot":{"emoji":"🔍"}}
+metadata: {"specialagent":{"emoji":"🔍"}}
 ---
 
 # User Research

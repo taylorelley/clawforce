@@ -1,7 +1,7 @@
 ---
 name: ticket-management
 description: "Support ticket lifecycle management. Use when triaging, assigning, tracking, or resolving customer support tickets."
-metadata: {"clawbot":{"emoji":"🎫"}}
+metadata: {"specialagent":{"emoji":"🎫"}}
 ---
 
 # Ticket Management

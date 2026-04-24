@@ -36,8 +36,8 @@ botpy.log
 .assets
 .admin_data/
 /workspace/
-clawforce/workspace/
-clawbot/workspace/
+specops/workspace/
+specialagent/workspace/
 poetry.lock
 data/
 refs/

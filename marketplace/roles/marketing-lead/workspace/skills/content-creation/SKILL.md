@@ -1,7 +1,7 @@
 ---
 name: content-creation
 description: "Templates and frameworks for creating marketing content including blog posts, social media posts, email newsletters, press releases, and content calendars. Use when creating content, planning campaigns, or maintaining brand voice."
-metadata: {"clawbot":{"emoji":"✍️"}}
+metadata: {"specialagent":{"emoji":"✍️"}}
 ---
 
 # Content Creation

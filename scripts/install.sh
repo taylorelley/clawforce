@@ -1,63 +1,63 @@
 #!/usr/bin/env bash
 #
-# Clawforce Installer
+# SpecOps Installer
 # 
 # One-line install:
-#   curl -fsSL https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.sh | bash
 #
 # Or with custom options:
-#   curl -fsSL https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.sh | bash -s -- --port 9000 --data ~/my-data
+#   curl -fsSL https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.sh | bash -s -- --port 9000 --data ~/my-data
 #
 set -euo pipefail
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Configuration (override via environment or flags)
 # ─────────────────────────────────────────────────────────────────────────────
-IMAGE="${CLAWFORCE_IMAGE:-ghcr.io/saolalab/clawforce:latest}"
-CONTAINER="${CLAWFORCE_CONTAINER:-clawforce}"
-DATA_DIR="${CLAWFORCE_DATA:-$HOME/.clawforce-data}"
-PORT="${CLAWFORCE_PORT:-8080}"
-ADMIN_USER="${CLAWFORCE_ADMIN_USER:-admin}"
-ADMIN_PASS="${CLAWFORCE_ADMIN_PASS:-admin}"
-SKIP_DOCKER_INSTALL="${CLAWFORCE_SKIP_DOCKER:-false}"
-PROCESS_RUNTIME="${CLAWFORCE_PROCESS_RUNTIME:-${CLAWFORCE_PROCESS_POOL:-false}}"
+IMAGE="${SPECOPS_IMAGE:-ghcr.io/taylorelley/specops:latest}"
+CONTAINER="${SPECOPS_CONTAINER:-specops}"
+DATA_DIR="${SPECOPS_DATA:-$HOME/.specops-data}"
+PORT="${SPECOPS_PORT:-8080}"
+ADMIN_USER="${SPECOPS_ADMIN_USER:-admin}"
+ADMIN_PASS="${SPECOPS_ADMIN_PASS:-admin}"
+SKIP_DOCKER_INSTALL="${SPECOPS_SKIP_DOCKER:-false}"
+PROCESS_RUNTIME="${SPECOPS_PROCESS_RUNTIME:-${SPECOPS_PROCESS_POOL:-false}}"
 # Container engine: docker (default) or podman
-ENGINE="${CLAWFORCE_ENGINE:-}"
+ENGINE="${SPECOPS_ENGINE:-}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Parse arguments
 # ─────────────────────────────────────────────────────────────────────────────
 show_help() {
     cat << EOF
-Clawforce Installer
+SpecOps Installer
 
 Usage: install.sh [OPTIONS]
 
 Options:
   --port PORT           Port to expose (default: 8080)
-  --data DIR            Data directory (default: ~/.clawforce/data)
+  --data DIR            Data directory (default: ~/.specops/data)
   --admin-user USER     Admin username (default: admin)
   --admin-pass PASS     Admin password (default: admin)
   --engine ENGINE       Container engine: docker or podman (default: auto-detect)
   --process-runtime     Use process runtime instead of container isolation (alias: --process-pool)
   --skip-docker         Skip Docker/Podman installation check
-  --uninstall           Remove Clawforce container and optionally data
+  --uninstall           Remove SpecOps container and optionally data
   -h, --help            Show this help message
 
 Environment variables:
-  CLAWFORCE_IMAGE       Container image (default: ghcr.io/saolalab/clawforce:latest)
-  CLAWFORCE_ENGINE      Container engine: docker or podman (default: auto-detect)
-  CLAWFORCE_PORT        Port to expose
-  CLAWFORCE_DATA        Data directory path
-  CLAWFORCE_ADMIN_USER  Admin username
-  CLAWFORCE_ADMIN_PASS  Admin password
+  SPECOPS_IMAGE       Container image (default: ghcr.io/taylorelley/specops:latest)
+  SPECOPS_ENGINE      Container engine: docker or podman (default: auto-detect)
+  SPECOPS_PORT        Port to expose
+  SPECOPS_DATA        Data directory path
+  SPECOPS_ADMIN_USER  Admin username
+  SPECOPS_ADMIN_PASS  Admin password
 
 Examples:
   # Quick install with defaults
-  curl -fsSL https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.sh | bash
 
   # Custom port and data directory
-  curl -fsSL ... | bash -s -- --port 9000 --data /opt/clawforce
+  curl -fsSL ... | bash -s -- --port 9000 --data /opt/specops
 
   # With custom admin credentials
   curl -fsSL ... | bash -s -- --admin-user myuser --admin-pass mypassword
@@ -135,7 +135,7 @@ if $UNINSTALL; then
     if [ -z "$ENGINE" ]; then
         die "Neither docker nor podman found. Nothing to uninstall."
     fi
-    info "Uninstalling Clawforce..."
+    info "Uninstalling SpecOps..."
 
     # Stop and remove container
     if $ENGINE inspect "$CONTAINER" &>/dev/null; then
@@ -148,7 +148,7 @@ if $UNINSTALL; then
     fi
 
     # Stop agent workers
-    AGENT_CONTAINERS=$($ENGINE ps -aq --filter "name=clawbot-agent-" 2>/dev/null || true)
+    AGENT_CONTAINERS=$($ENGINE ps -aq --filter "name=specialagent-" 2>/dev/null || true)
     if [ -n "$AGENT_CONTAINERS" ]; then
         info "Stopping agent workers..."
         echo "$AGENT_CONTAINERS" | xargs $ENGINE rm -f 2>/dev/null || true
@@ -168,7 +168,7 @@ if $UNINSTALL; then
         fi
     fi
     
-    success "Clawforce uninstalled"
+    success "SpecOps uninstalled"
     exit 0
 fi
 
@@ -178,7 +178,7 @@ fi
 echo ""
 echo "  ╔══════════════════════════════════════════════════════╗"
 echo "  ║                                                      ║"
-echo "  ║    - CLAWFORCE -                                     ║"
+echo "  ║    - SPECOPS -                                     ║"
 echo "  ║    Autonomous AI Team Orchestration Platform         ║"
 echo "  ║                                                      ║"
 echo "  ╚══════════════════════════════════════════════════════╝"
@@ -435,13 +435,13 @@ engine_cmd() {
 # Stop existing containers
 # ─────────────────────────────────────────────────────────────────────────────
 if engine_cmd inspect "$CONTAINER" &>/dev/null; then
-    info "Stopping existing Clawforce container..."
+    info "Stopping existing SpecOps container..."
     engine_cmd stop "$CONTAINER" 2>/dev/null || true
     engine_cmd rm "$CONTAINER" 2>/dev/null || true
 fi
 
 # Stop any orphaned agent workers
-AGENT_CONTAINERS=$(engine_cmd ps -aq --filter "name=clawbot-agent-" 2>/dev/null || true)
+AGENT_CONTAINERS=$(engine_cmd ps -aq --filter "name=specialagent-" 2>/dev/null || true)
 if [ -n "$AGENT_CONTAINERS" ]; then
     info "Cleaning up agent workers..."
     echo "$AGENT_CONTAINERS" | xargs engine_cmd rm -f 2>/dev/null || true
@@ -463,7 +463,7 @@ DATA_DIR="$(cd "$DATA_DIR" && pwd)"
 # ─────────────────────────────────────────────────────────────────────────────
 # Pull image
 # ─────────────────────────────────────────────────────────────────────────────
-info "Pulling Clawforce image: $IMAGE"
+info "Pulling SpecOps image: $IMAGE"
 engine_cmd pull "$IMAGE"
 success "Image pulled"
 
@@ -471,7 +471,7 @@ success "Image pulled"
 # Install CLI Wrapper
 # ─────────────────────────────────────────────────────────────────────────────
 install_cli_wrapper() {
-    info "Installing 'clawforce' CLI wrapper..."
+    info "Installing 'specops' CLI wrapper..."
 
     # Ensure we're in a valid directory (avoids "chdir: cannot access parent" when cwd is stale)
     cd "${TMPDIR:-/tmp}" 2>/dev/null || cd /tmp 2>/dev/null || true
@@ -489,19 +489,19 @@ install_cli_wrapper() {
         return 1
     fi
 
-    local wrapper_path="$install_dir/clawforce"
+    local wrapper_path="$install_dir/specops"
 
     local tmpfile
     tmpfile="$(mktemp)" || { warn "Could not create temp file. Skipping CLI wrapper."; return 1; }
     cat > "$tmpfile" << 'EOF'
 #!/usr/bin/env bash
-# clawforce - Manage the Clawforce container
+# specops - Manage the SpecOps container
 
-CONTAINER="${CLAWFORCE_CONTAINER:-clawforce}"
+CONTAINER="${SPECOPS_CONTAINER:-specops}"
 
 # Container engine: docker (default) or podman
-if [ -n "$CLAWFORCE_ENGINE" ]; then
-    ENGINE="$CLAWFORCE_ENGINE"
+if [ -n "$SPECOPS_ENGINE" ]; then
+    ENGINE="$SPECOPS_ENGINE"
 elif command -v docker &>/dev/null; then
     ENGINE="docker"
 elif command -v podman &>/dev/null; then
@@ -512,19 +512,19 @@ else
 fi
 
 show_help() {
-    echo "Usage: clawforce <command>"
+    echo "Usage: specops <command>"
     echo ""
     echo "Commands:"
-    echo "  start     Start the Clawforce container"
-    echo "  stop      Stop the Clawforce container"
-    echo "  clean     Stop and remove the Clawforce container"
-    echo "  restart   Restart the Clawforce container"
+    echo "  start     Start the SpecOps container"
+    echo "  stop      Stop the SpecOps container"
+    echo "  clean     Stop and remove the SpecOps container"
+    echo "  restart   Restart the SpecOps container"
     echo "  update    Pull the latest image and recreate the container"
     echo "  logs      View container logs"
     echo "  status    Check container status"
     echo ""
     echo "Environment:"
-    echo "  CLAWFORCE_ENGINE   Container engine to use: docker or podman (default: auto-detect)"
+    echo "  SPECOPS_ENGINE   Container engine to use: docker or podman (default: auto-detect)"
 }
 
 if [ $# -eq 0 ]; then
@@ -578,11 +578,11 @@ case "$1" in
         HOST_PORT="${HOST_PORT:-8080}"
         for i in $(seq 1 30); do
             if curl -sf "http://localhost:$HOST_PORT/api/health" &>/dev/null; then
-                echo "Clawforce updated and running on http://localhost:$HOST_PORT"
+                echo "SpecOps updated and running on http://localhost:$HOST_PORT"
                 break
             fi
             if [ "$i" -eq 30 ]; then
-                echo "Server not responding after 30s. Check logs: clawforce logs"
+                echo "Server not responding after 30s. Check logs: specops logs"
                 exit 1
             fi
             sleep 1
@@ -604,8 +604,8 @@ EOF
     chmod +x "$tmpfile"
     mv "$tmpfile" "$wrapper_path" 2>/dev/null || { rm -f "$tmpfile" 2>/dev/null; warn "Failed to install CLI wrapper."; return 1; }
 
-    if command_exists clawforce; then
-        success "CLI wrapper installed (run 'clawforce' to manage container)"
+    if command_exists specops; then
+        success "CLI wrapper installed (run 'specops' to manage container)"
     else
         # $HOME/.local/bin is not in PATH — advise the user
         warn "'$install_dir' is not in your PATH."
@@ -625,7 +625,7 @@ install_cli_wrapper
 # ─────────────────────────────────────────────────────────────────────────────
 # Run container
 # ─────────────────────────────────────────────────────────────────────────────
-info "Starting Clawforce on port $PORT..."
+info "Starting SpecOps on port $PORT..."
 
 RUN_ARGS=(
     -d
@@ -695,7 +695,7 @@ done
 # Success
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""
-success "Clawforce is running!"
+success "SpecOps is running!"
 echo ""
 echo "  ┌─────────────────────────────────────────────────────────────────┐"
 echo "  │                                                                 │"
@@ -711,12 +711,12 @@ if [ "$ADMIN_PASS" = "admin" ]; then
 fi
 echo ""
 echo "  Commands:"
-echo "    Logs:           clawforce logs"
-echo "    Stop:           clawforce stop"
-echo "    Start:          clawforce start"
-echo "    Status:         clawforce status"
-echo "    Update:         clawforce update"
-echo "    Uninstall:      curl -fsSL https://raw.githubusercontent.com/saolalab/clawforce/main/scripts/install.sh | bash -s -- --uninstall"
+echo "    Logs:           specops logs"
+echo "    Stop:           specops stop"
+echo "    Start:          specops start"
+echo "    Status:         specops status"
+echo "    Update:         specops update"
+echo "    Uninstall:      curl -fsSL https://raw.githubusercontent.com/taylorelley/specops/main/scripts/install.sh | bash -s -- --uninstall"
 echo ""
-echo "  Documentation:    https://github.com/saolalab/clawforce"
+echo "  Documentation:    https://github.com/taylorelley/specops"
 echo ""
