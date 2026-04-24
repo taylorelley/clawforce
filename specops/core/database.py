@@ -217,7 +217,9 @@ class Database:
             conn.execute("ALTER TABLE plans ADD COLUMN owner_user_id TEXT DEFAULT ''")
 
         # Add kind to plan_columns (review-gate opt-in); existing rows default to 'standard'.
-        plan_column_cols = {r[1] for r in conn.execute("PRAGMA table_info(plan_columns)").fetchall()}
+        plan_column_cols = {
+            r[1] for r in conn.execute("PRAGMA table_info(plan_columns)").fetchall()
+        }
         if "kind" not in plan_column_cols:
             conn.execute(
                 "ALTER TABLE plan_columns ADD COLUMN kind TEXT NOT NULL DEFAULT 'standard'"

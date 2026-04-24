@@ -461,11 +461,7 @@ async def update_task(
         entering_review_col = bool(new_col and new_col.kind == "review")
 
         # Agents cannot move a task OUT of a review column unless reviewed.
-        if (
-            leaving_review
-            and old_task.requires_review
-            and old_task.review_status != "approved"
-        ):
+        if leaving_review and old_task.requires_review and old_task.review_status != "approved":
             # Humans with plan-write may still push the task backwards or forwards
             # — this gate only blocks agents (who cannot approve their own work).
             if caller.get("type") == "agent":
@@ -646,9 +642,8 @@ def review_task(
 
     event_type = f"task_review_{body.decision}"
     reviewer_label = caller.get("username") or reviewer_id or "Reviewer"
-    content = (
-        f"**{reviewer_label}** {body.decision} review on task **{task.title}**"
-        + (f": {body.note}" if body.note else "")
+    content = f"**{reviewer_label}** {body.decision} review on task **{task.title}**" + (
+        f": {body.note}" if body.note else ""
     )
     for aid in plan.agent_ids or []:
         try:

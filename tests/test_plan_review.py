@@ -82,9 +82,7 @@ class TestColumnKindAndTaskFields:
         plan = resp.json()
         assert {c["kind"] for c in plan["columns"]} == {"standard"}
 
-    def test_review_column_kind_round_trips_from_template(
-        self, client: TestClient, admin_headers
-    ):
+    def test_review_column_kind_round_trips_from_template(self, client: TestClient, admin_headers):
         # Register a custom template that declares a review column.
         created = client.post(
             "/api/plan-templates",
@@ -115,9 +113,7 @@ class TestColumnKindAndTaskFields:
         assert by_title["Done"]["kind"] == "standard"
 
     def test_tasks_default_to_requires_review_true(self, client: TestClient, admin_headers):
-        plan_id = client.post(
-            "/api/plans", headers=admin_headers, json={"name": "p"}
-        ).json()["id"]
+        plan_id = client.post("/api/plans", headers=admin_headers, json={"name": "p"}).json()["id"]
         columns = client.get(f"/api/plans/{plan_id}", headers=admin_headers).json()["columns"]
         resp = client.post(
             f"/api/plans/{plan_id}/tasks",
