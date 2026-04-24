@@ -339,15 +339,10 @@ class TestCreatePlanFromTemplate:
         by_title = {c["title"]: c for c in plan["columns"]}
         assert by_title["Review"]["kind"] == "review"
         assert by_title["Triage"]["kind"] == "standard"
-        # Bundled template seeds a task in each non-review column.
+        # All bundled tasks route to the first (Triage) column.
         column_by_id = {c["id"]: c["title"] for c in plan["columns"]}
         titles_with_tasks = {column_by_id[t["column_id"]] for t in plan["tasks"]}
-        assert titles_with_tasks == {
-            "Triage",
-            "Investigating",
-            "Fix in Progress",
-            "Verified",
-        }
+        assert titles_with_tasks == {"Triage"}
 
     def test_from_custom_template(self, client: TestClient, auth_headers):
         # Create a custom template, then create a plan from it.

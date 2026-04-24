@@ -86,13 +86,13 @@
       column: triage
     - title: Investigate and root-cause
       description: Dig into the highest-priority bugs to identify the root cause.
-      column: investigating
+      column: triage
     - title: Begin fix implementation
       description: Write and review fixes; track PRs.
-      column: fix-in-progress
+      column: triage
     - title: Verify and close
       description: Confirm fixes in staging/production and close out reports.
-      column: verified
+      column: triage
 
 - id: research-project
   name: Research Project
@@ -119,10 +119,10 @@
       column: research
     - title: Synthesise findings
       description: Cluster insights; draft an outline.
-      column: synthesise
+      column: research
     - title: Write first draft
       description: Produce a full draft with figures and citations.
-      column: draft
+      column: research
     - title: Publish and share
       description: Final edit, publish, and socialise to stakeholders.
-      column: publish
+      column: research
