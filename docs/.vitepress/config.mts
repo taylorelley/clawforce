@@ -8,7 +8,7 @@ export default defineConfig({
   description:
     "Deploy autonomous AI teams that run your work — 24/7, securely, at scale. Infrastructure for persistent, proactive agent workforces.",
   themeConfig: {
-    logo: "/specops.png",
+    logo: "/specops.svg",
     nav: [
       { text: "Home", link: "/" },
       { text: "Guide", link: "/guide/quickstart" },

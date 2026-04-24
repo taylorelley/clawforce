@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="specops-ui/src/assets/specops.png" alt="SpecOps" width="160" />
+<img src="specops-ui/src/assets/specops.svg" alt="SpecOps" width="160" />
 
 **Your AI agent team. One click away.**
 

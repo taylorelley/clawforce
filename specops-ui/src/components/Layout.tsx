@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { SpecialAgentIcon } from "./SpecialAgentIcon";
 import { PlanIcon, MarketplaceIcon } from "./ui";
-import specopsLogo from "../assets/specops.png";
+import specopsLogo from "../assets/specops.svg";
 
 export default function Layout() {
   const { user, logout } = useAuth();

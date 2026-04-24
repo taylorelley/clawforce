@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Button, Input } from "../components/ui";
-import specopsLogo from "../assets/specops.png";
+import specopsLogo from "../assets/specops.svg";
 
 export default function Login() {
   const [username, setUsername] = useState("");

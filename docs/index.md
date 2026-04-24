@@ -5,7 +5,7 @@ hero:
   text: Your AI agent team. One click away.
   tagline: Deploy autonomous AI teams that run your work — 24/7, securely, at scale.
   image:
-    src: /specops.png
+    src: /specops.svg
     alt: SpecOps
   actions:
     - theme: brand
