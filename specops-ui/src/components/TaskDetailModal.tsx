@@ -167,7 +167,7 @@ export default function TaskDetailModal({
                 Description
               </h4>
               <article
-                className="prose prose-sm max-w-none text-claude-text-primary [&_p]:my-1 [&_ul]:my-1 [&_code]:text-xs [&_code]:bg-claude-surface [&_code]:px-1 [&_code]:rounded [&_pre]:bg-claude-surface [&_pre]:p-3 [&_pre]:rounded-lg"
+                className="prose prose-sm dark:prose-invert max-w-none text-claude-text-primary [&_p]:my-1 [&_ul]:my-1 [&_code]:text-xs [&_code]:bg-claude-surface [&_code]:px-1 [&_code]:rounded [&_pre]:bg-claude-surface [&_pre]:p-3 [&_pre]:rounded-lg"
                 dangerouslySetInnerHTML={{
                   __html: renderMd(task.description),
                 }}
@@ -330,7 +330,7 @@ export default function TaskDetailModal({
               </div>
             ) : isMarkdownArtifact(viewArtifact) ? (
               <article
-                className="prose prose-sm max-w-none text-claude-text-primary"
+                className="prose prose-sm dark:prose-invert max-w-none text-claude-text-primary"
                 dangerouslySetInnerHTML={{ __html: renderMd(viewArtifactContent ?? "") }}
               />
             ) : (viewArtifactContent != null) ? (

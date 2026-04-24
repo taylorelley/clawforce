@@ -1211,7 +1211,7 @@ function ArtifactSection({
               </div>
             ) : isMarkdownArtifact(viewArtifact) ? (
               <article
-                className="prose prose-sm max-w-none text-claude-text-primary"
+                className="prose prose-sm dark:prose-invert max-w-none text-claude-text-primary"
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(viewArtifactContent ?? "") }}
               />
             ) : (viewArtifactContent != null) ? (

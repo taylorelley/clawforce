@@ -65,8 +65,8 @@ function ContentPane({ file }: { file: { path: string; content: string } | null 
       </div>
       {asMd ? (
         <div
-          className="prose prose-sm max-w-none
-            prose-headings:text-claude-text-primary prose-p:text-claude-text-secondary prose-li:text-claude-text-secondary
+          className="prose prose-sm dark:prose-invert max-w-none
+            prose-headings:text-claude-text-primary prose-p:text-claude-text-secondary prose-li:text-claude-text-secondary prose-strong:text-claude-text-primary
             prose-code:text-claude-text-primary prose-code:bg-claude-surface prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
             prose-pre:bg-claude-bg prose-pre:border prose-pre:border-claude-border prose-pre:rounded-lg"
           dangerouslySetInnerHTML={{ __html: renderMd(file.content) }}
