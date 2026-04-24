@@ -7,7 +7,7 @@ export function MarkdownPreview({ content }: { content: string }) {
   const html = DOMPurify.sanitize(marked.parse(content) as string);
   return (
     <div
-      className="prose prose-sm max-w-none overflow-y-auto p-6 h-full
+      className="prose prose-sm dark:prose-invert max-w-none overflow-y-auto p-6 h-full
         prose-headings:text-claude-text-primary prose-p:text-claude-text-secondary
         prose-a:text-claude-accent prose-code:text-claude-accent prose-code:bg-claude-surface
         prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
