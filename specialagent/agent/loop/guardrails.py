@@ -20,7 +20,7 @@ import copy
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Mapping
+from typing import Any, Awaitable, Callable, Literal, Mapping
 
 from specops_lib.execution import JournalLookup
 from specops_lib.guardrails import (
@@ -103,7 +103,10 @@ def resolve_refs(
             continue
         pattern = ref.get("pattern")
         prompt = ref.get("prompt")
-        regex_mode = ref.get("regex_mode") or "block"
+        raw_mode = ref.get("regex_mode") or "block"
+        regex_mode: Literal["block", "allow"] = (
+            raw_mode if raw_mode in ("block", "allow") else "block"
+        )
         if isinstance(pattern, str) and pattern:
             out.append(
                 RegexGuardrail(
@@ -185,7 +188,7 @@ def synthesize_approval_guardrails(approval_cfg: Any) -> dict[str, list[Any]]:
 # ---------------------------------------------------------------------------
 
 
-def _legacy_approval_guardrail() -> Guardrail:
+def legacy_approval_guardrail() -> Guardrail:
     """Always-fail callable that triggers ``escalate``; used to bridge
     the legacy approval queue onto the journal-backed pause."""
 
@@ -334,10 +337,10 @@ class GuardrailRunner:
         args: Mapping[str, Any] | None,
     ) -> GuardrailResult:
         ctx = GuardrailContext(position=position, tool_name=tool_name, args=args)
-        # LLMGuardrail prefers async; use it where present, else sync check().
-        if hasattr(g, "check_async"):
-            return await getattr(g, "check_async")(content, ctx)
         try:
+            # LLMGuardrail prefers async; use it where present, else sync check().
+            if hasattr(g, "check_async"):
+                return await getattr(g, "check_async")(content, ctx)
             return g.check(content, ctx)
         except Exception as exc:  # defensive — never let a bad guardrail kill the loop
             logger.exception("[guardrail] %s raised; treating as fail", g.name)
@@ -462,7 +465,7 @@ class GuardrailRunner:
 __all__ = [
     "EnforcementOutcome",
     "GuardrailRunner",
-    "_legacy_approval_guardrail",
+    "legacy_approval_guardrail",
     "resolve_refs",
     "synthesize_approval_guardrails",
 ]

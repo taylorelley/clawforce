@@ -333,7 +333,7 @@ async def uninstall_api_tool(
     persisted = agent_config_store.update_config(
         agent_id,
         {"tools": {"openapi_tools": new_openapi_tools}},
-        replace_keys=("tools.openapi_tools",),
+        replace_keys=[("tools", "openapi_tools")],
     )
     full = (
         persisted.get("tools", {}).get("openapi_tools")

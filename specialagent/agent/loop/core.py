@@ -11,7 +11,7 @@ from specialagent.agent.consolidator import MemoryConsolidator
 from specialagent.agent.context import ContextBuilder
 from specialagent.agent.loop.guardrails import (
     GuardrailRunner,
-    _legacy_approval_guardrail,
+    legacy_approval_guardrail,
     resolve_refs,
     synthesize_approval_guardrails,
 )
@@ -159,7 +159,7 @@ class AgentLoop:
         # Bridge ToolApprovalConfig → escalate guardrails so legacy YAML
         # keeps working without schema change.
         registry = default_registry()
-        registry.register(_legacy_approval_guardrail())
+        registry.register(legacy_approval_guardrail())
         approval_synth = synthesize_approval_guardrails(tools.approval)
         # Per-tool resolved guardrails: agent-default + per-tool config overrides
         # + synthesised approval refs + (later, at registration time) class-level Tool.guardrails.

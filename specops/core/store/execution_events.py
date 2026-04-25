@@ -54,6 +54,30 @@ class ExecutionEventsStore:
             )
             return cur.rowcount > 0
 
+    def last_of_kind(
+        self,
+        execution_id: str,
+        kinds: tuple[str, ...],
+    ) -> dict[str, Any] | None:
+        """Return the most recent event for ``execution_id`` whose
+        ``event_kind`` is in ``kinds``, or ``None``.
+
+        Used by the ``/resolve`` endpoint to locate the last
+        ``hitl_waiting`` without scanning the full journal — the
+        ``(execution_id, id)`` index keeps this O(1).
+        """
+        if not kinds:
+            return None
+        placeholders = ",".join("?" * len(kinds))
+        with self._db.connection() as conn:
+            row = conn.execute(
+                f"""SELECT * FROM execution_events
+                    WHERE execution_id = ? AND event_kind IN ({placeholders})
+                    ORDER BY id DESC LIMIT 1""",
+                (execution_id, *kinds),
+            ).fetchone()
+            return _row_to_dict(row) if row else None
+
     def list_for_execution(
         self,
         execution_id: str,

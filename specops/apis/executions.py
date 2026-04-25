@@ -93,9 +93,10 @@ async def list_executions_global(
         for a in agents:
             rows.extend(executions_store.list_for_agent(a.id, status=status_filter, limit=limit))
         rows.sort(key=lambda e: e.created_at, reverse=True)
-        rows = rows[:limit]
-    # RBAC filter: drop executions on agents the caller can't read.
-    out = []
+    # RBAC filter first, then cap to the requested page size so readable
+    # executions aren't silently dropped when an unreadable one happens
+    # to rank higher by created_at.
+    out: list[dict] = []
     for ex in rows:
         agent = agent_store.get_agent(ex.agent_id)
         if not agent:
@@ -105,6 +106,8 @@ async def list_executions_global(
         except HTTPException:
             continue
         out.append(ex.model_dump())
+        if len(out) >= limit:
+            break
     return {"executions": out}
 
 
@@ -157,7 +160,7 @@ async def resolve_execution(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found")
     require_agent_write(current, agent, share_store)
 
-    last_waiting = _last_event(execution_events_store, execution_id, kinds=("hitl_waiting",))
+    last_waiting = execution_events_store.last_of_kind(execution_id, kinds=("hitl_waiting",))
     guardrail_name = ""
     position = ""
     tool_name = None
@@ -189,19 +192,12 @@ async def resolve_execution(
     )
     execution_events_store.insert(ev)
 
-    if body.decision == "reject":
-        executions_store.set_status(
-            execution_id, "failed", error_message=body.note or "rejected by human"
-        )
-        return {"ok": True, "decision": "reject", "resumed": False}
-
-    executions_store.set_status(execution_id, "running")
-    # The worker's LocalJournalLookup reads .logs/activity.jsonl; the
-    # resolve event we just wrote lives only in the control-plane DB.
-    # Carry the serialised event in the resume message so the worker
-    # can emit it locally before re-running the turn — without that,
-    # the runner's _lookup_prior_resolution would miss the approval
-    # and the same guardrail would re-pause on replay.
+    # Both approve and reject must push the serialised hitl_resolved
+    # event to the worker: the worker's LocalJournalLookup reads
+    # .logs/activity.jsonl, so without the payload the runner's
+    # _lookup_prior_resolution can't find the decision and the
+    # guardrail re-pauses on replay. Approval continues the turn;
+    # rejection unwinds so the worker doesn't stay blocked forever.
     resolve_event_payload = {
         "agent_id": ev.agent_id,
         "event_type": ev.event_type,
@@ -214,6 +210,26 @@ async def resolve_execution(
         "timestamp": ev.timestamp,
         "event_id": ev.event_id,
     }
+
+    if body.decision == "reject":
+        executions_store.set_status(
+            execution_id, "failed", error_message=body.note or "rejected by human"
+        )
+        await ws_manager.send_to_agent(
+            execution.agent_id,
+            {
+                "type": "resume",
+                "execution_id": execution_id,
+                "text": "[Resume after rejection]",
+                "channel": execution.channel,
+                "chat_id": execution.chat_id,
+                "session_key": execution.session_key,
+                "hitl_resolved": resolve_event_payload,
+            },
+        )
+        return {"ok": True, "decision": "reject", "resumed": False}
+
+    executions_store.set_status(execution_id, "running")
     delivered = await ws_manager.send_to_agent(
         execution.agent_id,
         {
@@ -231,18 +247,6 @@ async def resolve_execution(
         return {"ok": True, "decision": "approve", "resumed": False, "queued": True}
     executions_store.set_pending_resume(execution_id, False)
     return {"ok": True, "decision": "approve", "resumed": True}
-
-
-def _last_event(
-    store: ExecutionEventsStore,
-    execution_id: str,
-    *,
-    kinds: tuple[str, ...],
-) -> dict | None:
-    for row in reversed(store.list_for_execution(execution_id)):
-        if row.get("event_kind") in kinds:
-            return row
-    return None
 
 
 def _parse_payload(raw):
@@ -278,6 +282,14 @@ async def resume_execution(
     execution = executions_store.get(execution_id)
     if not execution:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Execution not found")
+    # Don't clobber terminal states: a finished / failed / canceled run
+    # must not be rewritten to "running" just because someone POSTed
+    # here. Mirrors the gate on /resolve.
+    if execution.status not in ("paused", "running"):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Execution is {execution.status}; cannot resume",
+        )
     agent = agent_store.get_agent(execution.agent_id)
     if not agent:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found")
