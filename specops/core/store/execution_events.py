@@ -148,8 +148,11 @@ class ExecutionEventsStore:
         guardrail (and optional tool name) or ``None``.
 
         ``tool_name`` disambiguates the shared ``legacy_approval``
-        guardrail name across multiple pending approvals. Pass ``None``
-        to match any tool.
+        guardrail name across multiple pending approvals. Pass a
+        specific name to match exactly that tool, with a fallback to a
+        tool-agnostic resolution. Pass ``None`` to match any
+        guardrail-keyed resolution regardless of payload tool name —
+        used at the agent_output position where there is no tool.
         """
         if not guardrail_name:
             return None
@@ -167,7 +170,12 @@ class ExecutionEventsStore:
                 continue
             row_tool = payload.get("tool_name") or ""
             merged = {**_row_to_dict(row), **payload}
-            if tool_name and row_tool == tool_name:
+            if tool_name is None:
+                # True wildcard — most recent guardrail-matching row
+                # wins regardless of which tool it was tied to. Rows
+                # are DESC-ordered so the first match is the freshest.
+                return merged
+            if row_tool == tool_name:
                 return merged
             if not row_tool and wildcard is None:
                 wildcard = merged

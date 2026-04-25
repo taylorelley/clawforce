@@ -282,7 +282,10 @@ async def install_api_tool(
     persisted = agent_config_store.update_config(
         agent_id,
         {"tools": {"openapi_tools": {body.spec_id: cfg_dict}}},
-        replace_keys=None,
+        # Replace at the per-spec path so reinstalling overwrites the
+        # entry's headers / max_tools / role_hint cleanly instead of
+        # deep-merging stale fields with the new ones.
+        replace_keys=[("tools", "openapi_tools", body.spec_id)],
     )
     full_openapi_tools = (
         persisted.get("tools", {}).get("openapi_tools")

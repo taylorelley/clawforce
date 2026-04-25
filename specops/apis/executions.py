@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
 from specops.auth import get_current_user
@@ -160,6 +160,12 @@ async def resolve_execution(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found")
     require_agent_write(current, agent, share_store)
 
+    logger.info(
+        "[resolve] execution_id=%s decision=%s approver=%s",
+        execution_id,
+        body.decision,
+        body.approver_id or current.get("id", ""),
+    )
     last_waiting = execution_events_store.last_of_kind(execution_id, kinds=("hitl_waiting",))
     guardrail_name = ""
     position = ""
@@ -215,7 +221,7 @@ async def resolve_execution(
         executions_store.set_status(
             execution_id, "failed", error_message=body.note or "rejected by human"
         )
-        await ws_manager.send_to_agent(
+        delivered = await ws_manager.send_to_agent(
             execution.agent_id,
             {
                 "type": "resume",
@@ -227,6 +233,10 @@ async def resolve_execution(
                 "hitl_resolved": resolve_event_payload,
             },
         )
+        if not delivered:
+            executions_store.set_pending_resume(execution_id, True)
+            return {"ok": True, "decision": "reject", "resumed": False, "queued": True}
+        executions_store.set_pending_resume(execution_id, False)
         return {"ok": True, "decision": "reject", "resumed": False}
 
     executions_store.set_status(execution_id, "running")
@@ -265,7 +275,6 @@ def _parse_payload(raw):
 async def resume_execution(
     execution_id: str,
     body: ResumeRequest,
-    request: Request,
     current: dict = Depends(get_current_user),
     agent_store: AgentStore = Depends(get_agent_store),
     share_store: ShareStore = Depends(get_share_store),

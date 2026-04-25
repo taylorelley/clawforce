@@ -41,16 +41,6 @@ from specops_lib.execution import JournalLookup, LocalJournalLookup
 from specops_lib.guardrails import Guardrail, default_registry
 
 
-def _expand_prefix_keys(
-    tool_guardrails: dict[str, list[Guardrail]],
-) -> dict[str, list[Guardrail]]:
-    """Pass-through for now; ``ToolsManager.guardrails_for_tool`` handles
-    the prefix-match itself by looking up the exact tool name first
-    and falling back to a startswith() over the registered keys.
-    """
-    return tool_guardrails
-
-
 class AgentLoop:
     """
     The agent loop is the core processing engine.
@@ -227,7 +217,10 @@ class AgentLoop:
             openapi_tools_config=dict(tools.openapi_tools or {}),
             api_tool_cache_dir=api_tool_cache_dir,
             guardrail_runner=guardrail_runner,
-            tool_guardrails=_expand_prefix_keys(tool_guardrails),
+            # ToolsManager.guardrails_for_tool does exact-name then
+            # startswith() fallback over the registered keys, so the
+            # prefix wiring here is a plain pass-through.
+            tool_guardrails=tool_guardrails,
             default_tool_guardrails=default_tool_guardrails,
         )
         self._tools_manager.register_default_tools()

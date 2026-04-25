@@ -89,7 +89,10 @@ def resolve_refs(
     for raw in refs or []:
         ref = _ref_to_dict(raw)
         name = str(ref.get("name") or "")
-        on_fail: OnFail = ref.get("on_fail") or "retry"
+        raw_on_fail = ref.get("on_fail") or "retry"
+        on_fail: OnFail = (
+            raw_on_fail if raw_on_fail in ("retry", "raise", "fix", "escalate") else "retry"
+        )
         max_retries = int(ref.get("max_retries") or 3)
         registered = registry.get(name) if name else None
         if registered is not None:

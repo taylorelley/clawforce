@@ -243,9 +243,18 @@ class LocalJournalLookup(JournalLookup):
             self._load()
         else:
             self._refresh_if_changed()
-        if tool_name:
-            hit = self._hitl_index.get((execution_id, guardrail_name, tool_name))
-            if hit is not None:
-                return hit
-        # Wildcard fallback: an event without a tool_name applies to any.
+        if tool_name is None:
+            # True wildcard — used at agent_output where there is no
+            # tool. Any indexed resolution for the guardrail counts.
+            # Index insertion order matches JSONL append order; iterate
+            # in reverse so the most recent match wins.
+            for (exec_id, gname, _row_tool), row in reversed(self._hitl_index.items()):
+                if exec_id == execution_id and gname == guardrail_name:
+                    return row
+            return None
+        hit = self._hitl_index.get((execution_id, guardrail_name, tool_name))
+        if hit is not None:
+            return hit
+        # Tool-agnostic fallback: an event written without a tool_name
+        # applies to any tool with the same guardrail.
         return self._hitl_index.get((execution_id, guardrail_name, ""))
