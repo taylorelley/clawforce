@@ -196,6 +196,24 @@ async def resolve_execution(
         return {"ok": True, "decision": "reject", "resumed": False}
 
     executions_store.set_status(execution_id, "running")
+    # The worker's LocalJournalLookup reads .logs/activity.jsonl; the
+    # resolve event we just wrote lives only in the control-plane DB.
+    # Carry the serialised event in the resume message so the worker
+    # can emit it locally before re-running the turn — without that,
+    # the runner's _lookup_prior_resolution would miss the approval
+    # and the same guardrail would re-pause on replay.
+    resolve_event_payload = {
+        "agent_id": ev.agent_id,
+        "event_type": ev.event_type,
+        "execution_id": ev.execution_id,
+        "step_id": ev.step_id,
+        "event_kind": ev.event_kind,
+        "tool_name": ev.tool_name,
+        "result_status": ev.result_status,
+        "payload_json": ev.payload_json,
+        "timestamp": ev.timestamp,
+        "event_id": ev.event_id,
+    }
     delivered = await ws_manager.send_to_agent(
         execution.agent_id,
         {
@@ -205,6 +223,7 @@ async def resolve_execution(
             "channel": execution.channel,
             "chat_id": execution.chat_id,
             "session_key": execution.session_key,
+            "hitl_resolved": resolve_event_payload,
         },
     )
     if not delivered:

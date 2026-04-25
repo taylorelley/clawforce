@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict
 
 from specops.core.database import Database
+from specops.core.store.base import BaseRepository
 
 
 class Execution(BaseModel):
@@ -27,11 +28,21 @@ class Execution(BaseModel):
     paused_at: str = ""
 
 
-class ExecutionsStore:
-    """CRUD for the ``executions`` table."""
+class ExecutionsStore(BaseRepository[Execution]):
+    """CRUD for the ``executions`` table.
+
+    Inherits ``get_by_id`` / ``list_all`` / ``delete`` / ``_update``
+    from :class:`BaseRepository`; the specialised lifecycle methods
+    (``create``, ``mark_paused``, ``set_status``, ``set_last_step``,
+    ``set_pending_resume``, ``list_for_agent``, ``list_paused``)
+    layer on top.
+    """
+
+    table_name = "executions"
+    model_class = Execution
 
     def __init__(self, db: Database) -> None:
-        self._db = db
+        super().__init__(db)
 
     def create(
         self,
@@ -66,9 +77,9 @@ class ExecutionsStore:
         )
 
     def get(self, execution_id: str) -> Execution | None:
-        with self._db.connection() as conn:
-            row = conn.execute("SELECT * FROM executions WHERE id = ?", (execution_id,)).fetchone()
-            return Execution.model_validate(dict(row)) if row else None
+        # Thin wrapper over BaseRepository.get_by_id for callers that
+        # spell the lookup as ``store.get(...)``.
+        return self.get_by_id(execution_id)
 
     def list_for_agent(
         self,
@@ -110,51 +121,30 @@ class ExecutionsStore:
         *,
         error_message: str = "",
     ) -> bool:
-        now = datetime.now(timezone.utc).isoformat()
-        with self._db.connection() as conn:
-            cur = conn.execute(
-                """UPDATE executions
-                   SET status = ?, error_message = ?, updated_at = ?
-                   WHERE id = ?""",
-                (status, error_message, now, execution_id),
-            )
-            return cur.rowcount > 0
+        return self._update(
+            execution_id,
+            status=status,
+            error_message=error_message,
+            updated_at=datetime.now(timezone.utc).isoformat(),
+        )
 
     def mark_paused(self, execution_id: str) -> bool:
         now = datetime.now(timezone.utc).isoformat()
-        with self._db.connection() as conn:
-            cur = conn.execute(
-                """UPDATE executions
-                   SET status = 'paused', paused_at = ?, updated_at = ?
-                   WHERE id = ?""",
-                (now, now, execution_id),
-            )
-            return cur.rowcount > 0
+        return self._update(execution_id, status="paused", paused_at=now, updated_at=now)
 
     def set_last_step(self, execution_id: str, step_id: str) -> bool:
-        now = datetime.now(timezone.utc).isoformat()
-        with self._db.connection() as conn:
-            cur = conn.execute(
-                """UPDATE executions SET last_step_id = ?, updated_at = ?
-                   WHERE id = ?""",
-                (step_id, now, execution_id),
-            )
-            return cur.rowcount > 0
+        return self._update(
+            execution_id,
+            last_step_id=step_id,
+            updated_at=datetime.now(timezone.utc).isoformat(),
+        )
 
     def set_pending_resume(self, execution_id: str, pending: bool) -> bool:
-        now = datetime.now(timezone.utc).isoformat()
-        with self._db.connection() as conn:
-            cur = conn.execute(
-                """UPDATE executions SET pending_resume = ?, updated_at = ?
-                   WHERE id = ?""",
-                (1 if pending else 0, now, execution_id),
-            )
-            return cur.rowcount > 0
-
-    def delete(self, execution_id: str) -> bool:
-        with self._db.connection() as conn:
-            cur = conn.execute("DELETE FROM executions WHERE id = ?", (execution_id,))
-            return cur.rowcount > 0
+        return self._update(
+            execution_id,
+            pending_resume=1 if pending else 0,
+            updated_at=datetime.now(timezone.utc).isoformat(),
+        )
 
 
 __all__ = ["Execution", "ExecutionsStore"]

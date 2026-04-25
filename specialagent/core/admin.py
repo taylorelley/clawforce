@@ -327,6 +327,33 @@ class AdminClient:
                     channel = data.get("channel", "cli")
                     chat_id = data.get("chat_id", "direct")
                     session_key = data.get("session_key") or f"{channel}:{chat_id}"
+                    # Carry-forward of the hitl_resolved event written by
+                    # the control plane: emit it into the local
+                    # ActivityLog so LocalJournalLookup picks it up.
+                    # Without this the runner's resume-side short-circuit
+                    # misses the approval and the guardrail re-pauses.
+                    resolve_payload = data.get("hitl_resolved") or {}
+                    if resolve_payload:
+                        try:
+                            self._ctx.activity_log.emit(
+                                ActivityEvent(
+                                    agent_id=resolve_payload.get("agent_id", self._agent_id),
+                                    event_type=resolve_payload.get("event_type", "hitl_resolved"),
+                                    timestamp=resolve_payload.get("timestamp", ""),
+                                    event_id=resolve_payload.get("event_id"),
+                                    execution_id=resolve_payload.get("execution_id"),
+                                    step_id=resolve_payload.get("step_id"),
+                                    event_kind=resolve_payload.get("event_kind", "hitl_resolved"),
+                                    tool_name=resolve_payload.get("tool_name"),
+                                    result_status=resolve_payload.get("result_status"),
+                                    payload_json=resolve_payload.get("payload_json"),
+                                )
+                            )
+                        except Exception as exc:
+                            logger.warning(
+                                "Failed to mirror hitl_resolved into local journal: %s",
+                                exc,
+                            )
                     logger.info(f"Resume received: execution_id={execution_id}, channel={channel}")
                     asyncio.create_task(
                         self._ctx.agent_loop.process_direct(

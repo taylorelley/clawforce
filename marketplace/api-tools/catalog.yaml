@@ -10,7 +10,8 @@
     - payments
     - finance
     - api
-  spec_url: https://api.stripe.com/openapi.json
+  # The official spec is published in stripe/openapi on GitHub. Verified 2026-04-25.
+  spec_url: https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.json
   headers:
     Authorization: "Bearer ${STRIPE_KEY}"
   default_max_tools: 32
@@ -29,7 +30,9 @@
     - devtools
     - source-control
     - api
-  spec_url: https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.json
+  # Pinned to a specific release tag so cache invalidation can't silently
+  # change the API surface. See github/rest-api-description for newer tags.
+  spec_url: https://raw.githubusercontent.com/github/rest-api-description/v1.1.4/descriptions/api.github.com/api.github.com.json
   headers:
     Authorization: "Bearer ${GITHUB_TOKEN}"
     Accept: "application/vnd.github+json"
@@ -46,11 +49,13 @@
     audio, and image generation. Useful when an agent needs to drive
     a separate provider account.
   author: OpenAI
-  version: latest
+  version: "2.0.0"
   categories:
     - llm
     - api
-  spec_url: https://raw.githubusercontent.com/openai/openai-openapi/master/openapi.yaml
+  # Pinned to release tag 2.0.0; the master branch was renamed and the
+  # main branch returns 404 as of 2026-04-25.
+  spec_url: https://raw.githubusercontent.com/openai/openai-openapi/2.0.0/openapi.yaml
   headers:
     Authorization: "Bearer ${OPENAI_API_KEY}"
   default_max_tools: 24

@@ -16,6 +16,7 @@ This module is the worker-side integration of the
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 from dataclasses import dataclass, field
@@ -92,10 +93,13 @@ def resolve_refs(
         max_retries = int(ref.get("max_retries") or 3)
         registered = registry.get(name) if name else None
         if registered is not None:
-            # Inherit registered behaviour but allow overrides.
-            registered.on_fail = on_fail
-            registered.max_retries = max_retries
-            out.append(registered)
+            # Shallow-copy so per-call overrides don't mutate the
+            # registry's shared instance (would otherwise cross-pollute
+            # different tools / agents that reference the same name).
+            override = copy.copy(registered)
+            override.on_fail = on_fail
+            override.max_retries = max_retries
+            out.append(override)
             continue
         pattern = ref.get("pattern")
         prompt = ref.get("prompt")

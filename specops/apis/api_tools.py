@@ -40,6 +40,20 @@ _SLUG_RE = re.compile(r"^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$")
 _RESERVED_IDS = frozenset({"custom", "search", "registry"})
 
 
+def _require_admin(current: dict) -> None:
+    """Reject non-admin callers with 403.
+
+    The API-tool catalog is a global trust surface: a malicious entry
+    would let anyone who installs it issue authenticated outbound HTTP
+    on behalf of an agent. Custom catalog mutations are admin-only.
+    """
+    if current.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin role required to manage the global API-tool catalog",
+        )
+
+
 class CustomApiToolRequest(BaseModel):
     """Request body for adding or updating a self-hosted API-tool entry."""
 
@@ -119,9 +133,10 @@ async def list_custom_api_tools(_: dict = Depends(get_current_user)):
 @router.post("/api/api-tools/custom", status_code=status.HTTP_201_CREATED)
 async def add_custom_api_tool(
     body: CustomApiToolRequest,
-    _: dict = Depends(get_current_user),
+    current: dict = Depends(get_current_user),
 ):
-    """Add a self-hosted entry to the API-tool catalog."""
+    """Add a self-hosted entry to the API-tool catalog. Admin-only."""
+    _require_admin(current)
     registry = get_api_tool_registry()
     if registry.get_entry(body.id):
         raise HTTPException(
@@ -137,8 +152,9 @@ async def add_custom_api_tool(
 async def update_custom_api_tool(
     entry_id: str,
     body: CustomApiToolRequest,
-    _: dict = Depends(get_current_user),
+    current: dict = Depends(get_current_user),
 ):
+    _require_admin(current)
     if body.id != entry_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -156,8 +172,9 @@ async def update_custom_api_tool(
 @router.delete("/api/api-tools/custom/{entry_id}")
 async def delete_custom_api_tool(
     entry_id: str,
-    _: dict = Depends(get_current_user),
+    current: dict = Depends(get_current_user),
 ):
+    _require_admin(current)
     registry = get_api_tool_registry()
     if not registry.delete_custom_entry(entry_id):
         raise HTTPException(
