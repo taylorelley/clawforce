@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from specops.auth import get_current_user
 from specops.core.authz import require_agent_read, require_agent_write
 from specops.core.store.agents import AgentStore
-from specops.core.store.execution_events import ExecutionEventsStore
+from specops.core.store.execution_events import ExecutionEventsStore, _parse_payload
 from specops.core.store.executions import ExecutionsStore
 from specops.core.store.shares import ShareStore
 from specops.core.ws import ConnectionManager
@@ -257,18 +257,6 @@ async def resolve_execution(
         return {"ok": True, "decision": "approve", "resumed": False, "queued": True}
     executions_store.set_pending_resume(execution_id, False)
     return {"ok": True, "decision": "approve", "resumed": True}
-
-
-def _parse_payload(raw):
-    if not raw:
-        return {}
-    if isinstance(raw, dict):
-        return raw
-    try:
-        parsed = json.loads(raw)
-    except json.JSONDecodeError:
-        return {}
-    return parsed if isinstance(parsed, dict) else {}
 
 
 @router.post("/api/executions/{execution_id}/resume")

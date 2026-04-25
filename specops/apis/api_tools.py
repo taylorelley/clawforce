@@ -268,14 +268,20 @@ async def install_api_tool(
         )
 
     headers = body.headers or catalog_entry.get("headers") or {}
-    cfg_obj = OpenAPIToolConfig(
-        spec_id=body.spec_id,
-        spec_url=spec_url,
-        headers=dict(headers),
-        enabled_operations=body.enabled_operations,
-        max_tools=body.max_tools,
-        base_url_override=body.base_url_override,
-        role_hint=body.role_hint,
+    # Build via model_validate so the snake_case keys round-trip
+    # cleanly under Base's populate_by_name=True. Constructing with
+    # positional kwargs would require the camelCase aliases to satisfy
+    # pydantic-mypy.
+    cfg_obj = OpenAPIToolConfig.model_validate(
+        {
+            "spec_id": body.spec_id,
+            "spec_url": spec_url,
+            "headers": dict(headers),
+            "enabled_operations": body.enabled_operations,
+            "max_tools": body.max_tools,
+            "base_url_override": body.base_url_override,
+            "role_hint": body.role_hint,
+        }
     )
     cfg_dict: dict[str, Any] = cfg_obj.model_dump(by_alias=False, exclude_none=True)
 

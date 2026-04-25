@@ -177,12 +177,20 @@ class LocalJournalLookup(JournalLookup):
                         tname = str(payload.get("tool_name") or "")
                         if gname:
                             merged = {**data, **payload}
-                            self._hitl_index[(exec_id, gname, tname)] = merged
+                            # Pop-then-set so a later-emit duplicate key
+                            # moves to the end of the dict, keeping the
+                            # tool_name=None wildcard's reverse-iteration
+                            # in true insertion (time) order.
+                            key = (exec_id, gname, tname)
+                            self._hitl_index.pop(key, None)
+                            self._hitl_index[key] = merged
                         continue
                     idem = data.get("idempotency_key")
                     if not idem:
                         continue
-                    self._index[(exec_id, idem, kind)] = data
+                    key2 = (exec_id, idem, kind)
+                    self._index.pop(key2, None)
+                    self._index[key2] = data
             except OSError:
                 continue
         self._loaded = True
