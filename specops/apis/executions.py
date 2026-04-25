@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from specops.auth import get_current_user
 from specops.core.authz import require_agent_read, require_agent_write
 from specops.core.store.agents import AgentStore
-from specops.core.store.execution_events import ExecutionEventsStore, _parse_payload
+from specops.core.store.execution_events import ExecutionEventsStore, parse_payload
 from specops.core.store.executions import ExecutionsStore
 from specops.core.store.shares import ShareStore
 from specops.core.ws import ConnectionManager
@@ -171,7 +171,7 @@ async def resolve_execution(
     position = ""
     tool_name = None
     if last_waiting:
-        payload = _parse_payload(last_waiting.get("payload_json"))
+        payload = parse_payload(last_waiting.get("payload_json"))
         guardrail_name = str(payload.get("guardrail") or "")
         position = str(payload.get("position") or "")
         tool_name = payload.get("tool_name")
@@ -239,7 +239,6 @@ async def resolve_execution(
         executions_store.set_pending_resume(execution_id, False)
         return {"ok": True, "decision": "reject", "resumed": False}
 
-    executions_store.set_status(execution_id, "running")
     delivered = await ws_manager.send_to_agent(
         execution.agent_id,
         {
@@ -252,9 +251,16 @@ async def resolve_execution(
             "hitl_resolved": resolve_event_payload,
         },
     )
+    # Only promote out of "paused" once a worker has actually accepted
+    # the resume. Flipping to "running" before a successful WS delivery
+    # would leave the row marked running-but-queued if the worker is
+    # offline, which then masks the pause from any UI that filters on
+    # status="paused" and blocks a fresh worker's auto-resume on
+    # register from spotting the pending row.
     if not delivered:
         executions_store.set_pending_resume(execution_id, True)
         return {"ok": True, "decision": "approve", "resumed": False, "queued": True}
+    executions_store.set_status(execution_id, "running")
     executions_store.set_pending_resume(execution_id, False)
     return {"ok": True, "decision": "approve", "resumed": True}
 

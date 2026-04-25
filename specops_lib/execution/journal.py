@@ -215,7 +215,12 @@ class LocalJournalLookup(JournalLookup):
                 mtime = path.stat().st_mtime if path.exists() else 0.0
             except OSError:
                 continue
-            if self._mtimes.get(path.name, -1.0) != mtime:
+            # Use 0.0 (not -1.0) as the missing-key default so files that
+            # were absent at last load and remain absent compare equal —
+            # otherwise every find_* would trigger a full reload while
+            # rotated activity.{1,2}.jsonl don't exist (the common case
+            # on a fresh worker).
+            if self._mtimes.get(path.name, 0.0) != mtime:
                 self._load()
                 return
 

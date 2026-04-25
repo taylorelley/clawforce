@@ -165,7 +165,7 @@ class ExecutionEventsStore:
             ).fetchall()
         wildcard: dict[str, Any] | None = None
         for row in rows:
-            payload = _parse_payload(row["payload_json"])
+            payload = parse_payload(row["payload_json"])
             if payload.get("guardrail") != guardrail_name:
                 continue
             row_tool = payload.get("tool_name") or ""
@@ -200,7 +200,7 @@ def _row_to_dict(row) -> dict[str, Any]:
     }
 
 
-def _parse_payload(raw: Any) -> dict[str, Any]:
+def parse_payload(raw: Any) -> dict[str, Any]:
     if isinstance(raw, dict):
         return raw
     if isinstance(raw, str) and raw:
@@ -212,4 +212,4 @@ def _parse_payload(raw: Any) -> dict[str, Any]:
     return {}
 
 
-__all__ = ["ExecutionEventsStore"]
+__all__ = ["ExecutionEventsStore", "parse_payload"]

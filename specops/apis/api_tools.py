@@ -97,7 +97,11 @@ class ApiToolInstallRequest(BaseModel):
     """Request to install an OpenAPI tool to an agent."""
 
     spec_id: str
-    headers: dict[str, str] = Field(default_factory=dict)
+    # ``None`` means "use catalog defaults"; an explicit ``{}`` means
+    # "no headers". The fallback at install-time discriminates on
+    # ``is None`` so callers can override the catalog's recommended
+    # template with an empty dict.
+    headers: dict[str, str] | None = None
     enabled_operations: list[str] | None = None
     max_tools: int = Field(default=64, ge=1, le=256)
     base_url_override: str | None = None
@@ -267,7 +271,13 @@ async def install_api_tool(
             detail=f"Catalog entry '{body.spec_id}' has no spec_url",
         )
 
-    headers = body.headers or catalog_entry.get("headers") or {}
+    # Discriminate on ``is None`` so an explicit empty dict from the
+    # client wipes the catalog's header template instead of silently
+    # falling back to it.
+    if body.headers is None:
+        headers = catalog_entry.get("headers") or {}
+    else:
+        headers = body.headers
     # Build via model_validate so the snake_case keys round-trip
     # cleanly under Base's populate_by_name=True. Constructing with
     # positional kwargs would require the camelCase aliases to satisfy
@@ -337,12 +347,15 @@ async def uninstall_api_tool(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"API tool '{spec_id}' not installed on this agent",
         )
-    new_openapi_tools = {k: v for k, v in openapi_tools.items() if k != spec_id}
 
+    # ``delete_keys`` performs the surgical pop inside the same
+    # update_config write transaction, eliminating the read-modify-write
+    # race that a concurrent install on a different spec would otherwise
+    # lose against.
     persisted = agent_config_store.update_config(
         agent_id,
-        {"tools": {"openapi_tools": new_openapi_tools}},
-        replace_keys=[("tools", "openapi_tools")],
+        {},
+        delete_keys=[("tools", "openapi_tools", spec_id)],
     )
     full = (
         persisted.get("tools", {}).get("openapi_tools")
