@@ -31,6 +31,7 @@ from specops_lib.bus import MessageBus, OutboundMessage
 from specops_lib.config.schema import (
     AgentDefaults,
     ControlPlaneConfig,
+    GuardrailsConfig,
     ProviderConfig,
     SecretsConfig,
     SkillsConfig,
@@ -38,7 +39,53 @@ from specops_lib.config.schema import (
     ToolsConfig,
 )
 from specops_lib.execution import JournalLookup, LocalJournalLookup
-from specops_lib.guardrails import Guardrail, default_registry
+from specops_lib.guardrails import (
+    DefenseClawGuardrail,
+    DefenseClawSettings,
+    Guardrail,
+    default_registry,
+)
+
+
+def _build_defenseclaw_guardrails(
+    cfg: Any, *, agent_id: str
+) -> tuple[dict[str, list[Guardrail]], list[Guardrail], list[Guardrail]]:
+    """Substitute defenseclaw guardrails for the global engine swap.
+
+    Returns ``(tool_guardrails, default_tool_guardrails,
+    agent_output_guardrails)`` matching the shapes consumed by
+    ``ToolsManager``/``SessionProcessor``. Per-tool overrides are not
+    populated — the gateway's policy packs apply uniformly.
+
+    One guardrail covers both ``tool_input`` and ``tool_output`` (the
+    same ``ToolsManager`` list is used at both call sites; the runner
+    passes the active position through ``GuardrailContext``). A
+    separate instance covers ``agent_output`` so retry counters and
+    event names stay distinct from the tool-level ones.
+    """
+    settings = DefenseClawSettings(
+        gateway_url=cfg.gateway_url,
+        api_key=cfg.api_key,
+        policy_pack=cfg.policy_pack,
+        timeout_seconds=cfg.timeout_seconds,
+        fail_closed=cfg.fail_closed,
+    )
+    on_fail = cfg.on_fail if cfg.on_fail in ("retry", "raise", "fix", "escalate") else "raise"
+    tool_g = DefenseClawGuardrail(
+        position="tool_input",  # cosmetic for name; gateway reads ctx.position
+        settings=settings,
+        agent_id=agent_id,
+        on_fail=on_fail,
+        name="defenseclaw_tool",
+    )
+    agent_out_g = DefenseClawGuardrail(
+        position="agent_output",
+        settings=settings,
+        agent_id=agent_id,
+        on_fail=on_fail,
+        name="defenseclaw_agent_output",
+    )
+    return ({}, [tool_g], [agent_out_g])
 
 
 class AgentLoop:
@@ -73,6 +120,7 @@ class AgentLoop:
         on_event: Callable[..., Awaitable[None]] | None = None,
         journal_lookup: JournalLookup | None = None,
         secrets_config: SecretsConfig | None = None,
+        guardrails_config: GuardrailsConfig | None = None,
     ):
         self._file_service = file_service
         self.workspace = file_service.workspace_path
@@ -146,49 +194,58 @@ class AgentLoop:
         api_tool_cache_dir = self._file_service.config_path.parent / "api-tools"
 
         guardrail_runner = GuardrailRunner(on_event=on_event, journal_lookup=self._journal_lookup)
-        # Bridge ToolApprovalConfig → escalate guardrails so legacy YAML
-        # keeps working without schema change.
         registry = default_registry()
         registry.register(legacy_approval_guardrail())
-        approval_synth = synthesize_approval_guardrails(tools.approval)
-        # Per-tool resolved guardrails: agent-default + per-tool config overrides
-        # + synthesised approval refs + (later, at registration time) class-level Tool.guardrails.
-        default_refs = list(tools.guardrails or [])
-        default_tool_guardrails: list[Guardrail] = resolve_refs(default_refs, registry=registry)
-        per_tool_refs: dict[str, list[Any]] = {}
-        for tool_name, refs in approval_synth.items():
-            if tool_name == "__default__":
-                # Approval default-mode means every tool gets the synth.
-                default_tool_guardrails.extend(resolve_refs(refs, registry=registry))
-            else:
-                per_tool_refs.setdefault(tool_name, []).extend(refs)
-        # MCP server guardrails: each server's refs apply to every tool the
-        # server exposes (named ``mcp_<server>_<tool>`` at runtime).
-        for server_key, server_cfg in (tools.mcp_servers or {}).items():
-            server_refs = getattr(server_cfg, "guardrails", None) or []
-            if not server_refs:
-                continue
-            prefix = f"mcp_{server_key}_"
-            per_tool_refs.setdefault(prefix, []).extend(
-                ref.model_dump() if hasattr(ref, "model_dump") else dict(ref) for ref in server_refs
+
+        gr_cfg = guardrails_config or GuardrailsConfig()
+        if gr_cfg.engine == "defenseclaw" and gr_cfg.defenseclaw and gr_cfg.defenseclaw.gateway_url:
+            # Global swap: ALL three positions go through defenseclaw.
+            # Per-tool / per-MCP / OpenAPI guardrail refs are bypassed —
+            # the gateway's policy packs are authoritative.
+            tool_guardrails, default_tool_guardrails, agent_output_guardrails = (
+                _build_defenseclaw_guardrails(gr_cfg.defenseclaw, agent_id=self._agent_id)
             )
-        # OpenAPI tool guardrails: same shape — one prefix per spec.
-        for spec_id, ot_cfg in (tools.openapi_tools or {}).items():
-            ot_refs = getattr(ot_cfg, "guardrails", None) or []
-            if not ot_refs:
-                continue
-            prefix = f"api_{spec_id}_"
-            per_tool_refs.setdefault(prefix, []).extend(
-                ref.model_dump() if hasattr(ref, "model_dump") else dict(ref) for ref in ot_refs
-            )
-        tool_guardrails: dict[str, list[Guardrail]] = {
-            name: resolve_refs(refs, registry=registry) for name, refs in per_tool_refs.items()
-        }
-        # Agent-output guardrails come from agent.defaults.guardrails.
-        agent_output_refs = list(getattr(defaults, "guardrails", None) or [])
-        agent_output_guardrails: list[Guardrail] = resolve_refs(
-            agent_output_refs, registry=registry
-        )
+        else:
+            # Bridge ToolApprovalConfig → escalate guardrails so legacy YAML
+            # keeps working without schema change.
+            approval_synth = synthesize_approval_guardrails(tools.approval)
+            # Per-tool resolved guardrails: agent-default + per-tool config overrides
+            # + synthesised approval refs + (later, at registration time) class-level Tool.guardrails.
+            default_refs = list(tools.guardrails or [])
+            default_tool_guardrails = resolve_refs(default_refs, registry=registry)
+            per_tool_refs: dict[str, list[Any]] = {}
+            for tool_name, refs in approval_synth.items():
+                if tool_name == "__default__":
+                    # Approval default-mode means every tool gets the synth.
+                    default_tool_guardrails.extend(resolve_refs(refs, registry=registry))
+                else:
+                    per_tool_refs.setdefault(tool_name, []).extend(refs)
+            # MCP server guardrails: each server's refs apply to every tool the
+            # server exposes (named ``mcp_<server>_<tool>`` at runtime).
+            for server_key, server_cfg in (tools.mcp_servers or {}).items():
+                server_refs = getattr(server_cfg, "guardrails", None) or []
+                if not server_refs:
+                    continue
+                prefix = f"mcp_{server_key}_"
+                per_tool_refs.setdefault(prefix, []).extend(
+                    ref.model_dump() if hasattr(ref, "model_dump") else dict(ref)
+                    for ref in server_refs
+                )
+            # OpenAPI tool guardrails: same shape — one prefix per spec.
+            for spec_id, ot_cfg in (tools.openapi_tools or {}).items():
+                ot_refs = getattr(ot_cfg, "guardrails", None) or []
+                if not ot_refs:
+                    continue
+                prefix = f"api_{spec_id}_"
+                per_tool_refs.setdefault(prefix, []).extend(
+                    ref.model_dump() if hasattr(ref, "model_dump") else dict(ref) for ref in ot_refs
+                )
+            tool_guardrails = {
+                name: resolve_refs(refs, registry=registry) for name, refs in per_tool_refs.items()
+            }
+            # Agent-output guardrails come from agent.defaults.guardrails.
+            agent_output_refs = list(getattr(defaults, "guardrails", None) or [])
+            agent_output_guardrails = resolve_refs(agent_output_refs, registry=registry)
         self._guardrail_runner = guardrail_runner
         self._tool_guardrails = tool_guardrails
         self._default_tool_guardrails = default_tool_guardrails

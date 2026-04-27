@@ -16,12 +16,15 @@ from specops_lib.guardrails.base import (
     Position,
 )
 from specops_lib.guardrails.callable import CallableGuardrail, guardrail
+from specops_lib.guardrails.defenseclaw import DefenseClawGuardrail, DefenseClawSettings
 from specops_lib.guardrails.llm import JudgeFn, LLMGuardrail
 from specops_lib.guardrails.regex import RegexGuardrail, RegexMode
 from specops_lib.guardrails.registry import GuardrailRegistry, default_registry
 
 __all__ = [
     "CallableGuardrail",
+    "DefenseClawGuardrail",
+    "DefenseClawSettings",
     "Guardrail",
     "GuardrailContext",
     "GuardrailRegistry",
