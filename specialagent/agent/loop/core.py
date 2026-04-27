@@ -50,18 +50,13 @@ from specops_lib.guardrails import (
 def _build_defenseclaw_guardrails(
     cfg: Any, *, agent_id: str
 ) -> tuple[dict[str, list[Guardrail]], list[Guardrail], list[Guardrail]]:
-    """Substitute defenseclaw guardrails for the global engine swap.
+    """Build ``(tool_guardrails, default_tool_guardrails, agent_output_guardrails)``
+    for the global defenseclaw swap.
 
-    Returns ``(tool_guardrails, default_tool_guardrails,
-    agent_output_guardrails)`` matching the shapes consumed by
-    ``ToolsManager``/``SessionProcessor``. Per-tool overrides are not
-    populated — the gateway's policy packs apply uniformly.
-
-    One guardrail covers both ``tool_input`` and ``tool_output`` (the
-    same ``ToolsManager`` list is used at both call sites; the runner
-    passes the active position through ``GuardrailContext``). A
-    separate instance covers ``agent_output`` so retry counters and
-    event names stay distinct from the tool-level ones.
+    One guardrail covers both tool_input and tool_output (the runner
+    passes the active position via ``GuardrailContext``); a separate
+    instance covers agent_output so retry counters and event names
+    stay distinct.
     """
     settings = DefenseClawSettings(
         gateway_url=cfg.gateway_url,
@@ -199,9 +194,7 @@ class AgentLoop:
 
         gr_cfg = guardrails_config or GuardrailsConfig()
         if gr_cfg.engine == "defenseclaw" and gr_cfg.defenseclaw and gr_cfg.defenseclaw.gateway_url:
-            # Global swap: ALL three positions go through defenseclaw.
-            # Per-tool / per-MCP / OpenAPI guardrail refs are bypassed —
-            # the gateway's policy packs are authoritative.
+            # Gateway policy packs are authoritative; per-tool YAML refs are bypassed.
             tool_guardrails, default_tool_guardrails, agent_output_guardrails = (
                 _build_defenseclaw_guardrails(gr_cfg.defenseclaw, agent_id=self._agent_id)
             )

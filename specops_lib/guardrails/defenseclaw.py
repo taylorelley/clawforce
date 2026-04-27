@@ -168,6 +168,11 @@ def _parse_decision(data: Any) -> GuardrailResult:
     if decision == "allow":
         return GuardrailResult(passed=True, message=reason)
     if decision == "fix":
+        if not fixed:
+            return GuardrailResult(
+                passed=False,
+                message=reason or "defenseclaw returned fix decision without fixed_output",
+            )
         return GuardrailResult(
             passed=False, message=reason or "defenseclaw fix", fixed_output=fixed
         )

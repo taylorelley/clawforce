@@ -51,26 +51,44 @@ class DefenseClawAuditForwarder:
         self._task = asyncio.create_task(self._drain(), name="defenseclaw-audit")
 
     def enqueue(self, event: Any) -> None:
-        """Best-effort enqueue. Dropping on full queue is intentional —
-        audit forwarding must never block the producer side."""
+        """Best-effort enqueue. On a full queue the oldest item is
+        dropped to make room — matches the convention in
+        ``specops_lib/activity.py``'s subscriber broadcast and ensures
+        recent events (the most relevant for live audit) are preserved.
+        Audit forwarding must never block the producer side.
+        """
         if self._closed:
             return
         item = _to_dict(event)
-        # Forwarder is per-agent; authoritative for the audit tag.
         item["agent_id"] = self._agent_id
+        if self._queue.full():
+            try:
+                dropped = self._queue.get_nowait()
+                logger.warning(
+                    "[defenseclaw.audit] queue full (>%d); dropping oldest event %s",
+                    _QUEUE_MAX,
+                    (dropped or {}).get("event_type") if isinstance(dropped, dict) else None,
+                )
+            except asyncio.QueueEmpty:
+                pass
         try:
             self._queue.put_nowait(item)
         except asyncio.QueueFull:
-            logger.warning(
-                "[defenseclaw.audit] queue full (>%d); dropping event %s",
-                _QUEUE_MAX,
-                item.get("event_type"),
-            )
+            # Race: a concurrent producer filled the slot. Drop the new
+            # item rather than block; next enqueue will resume normally.
+            pass
 
     async def close(self) -> None:
         if self._closed:
             return
         self._closed = True
+        # Reserve a slot for the sentinel so the drain loop terminates
+        # deterministically even when the queue is at capacity.
+        if self._queue.full():
+            try:
+                self._queue.get_nowait()
+            except asyncio.QueueEmpty:
+                pass
         try:
             self._queue.put_nowait(None)
         except asyncio.QueueFull:

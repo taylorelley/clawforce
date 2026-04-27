@@ -57,14 +57,6 @@ def create_worker_context(
     cron.on_job = on_cron_job
 
     activity_log = ActivityLog(logs_path=file_service.logs_path)
-    activity_log.emit(
-        ActivityEvent(
-            agent_id=agent_id,
-            event_type="agent_started",
-            channel="",
-            content="Agent started",
-        )
-    )
 
     audit_forwarder: DefenseClawAuditForwarder | None = None
     gr_cfg = config.guardrails
@@ -81,6 +73,16 @@ def create_worker_context(
             timeout_seconds=gr_cfg.defenseclaw.timeout_seconds,
         )
         audit_forwarder.start()
+
+    startup_event = ActivityEvent(
+        agent_id=agent_id,
+        event_type="agent_started",
+        channel="",
+        content="Agent started",
+    )
+    activity_log.emit(startup_event)
+    if audit_forwarder is not None:
+        audit_forwarder.enqueue(startup_event)
 
     async def on_event(
         ev_type: str, channel: str, content: str, plan_id: str = "", **kwargs: Any

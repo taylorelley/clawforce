@@ -55,8 +55,10 @@ matters more than enforcement.
 
 `audit_forwarding: true` mirrors every `ActivityEvent` to the
 gateway's `/v1/audit/events` endpoint. Forwarding is fire-and-forget
-with a bounded queue — it never blocks the agent loop, and drops
-oldest on backpressure.
+with a bounded queue (2000 events): it never blocks the agent loop,
+and on backpressure drops the **oldest** queued event to make room
+for the new one — matching SpecOps' subscriber-broadcast convention
+in `specops_lib/activity.py`.
 
 ## Rolling back
 

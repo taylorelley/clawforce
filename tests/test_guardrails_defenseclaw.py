@@ -111,6 +111,31 @@ class TestDefenseClawGuardrail:
         assert result.passed is False
         assert result.fixed_output == "[REDACTED]"
 
+    async def test_fix_without_fixed_output_is_invalid(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # A "fix" decision that omits fixed_output is a malformed gateway
+        # response; surface it as a clear failure rather than forwarding
+        # None as a "fix" (which would otherwise crash the runner's
+        # `fix` dispatch path).
+        _patch_client(monkeypatch, _StubResponse(200, {"decision": "fix", "reason": "redact"}))
+        g = DefenseClawGuardrail(position="tool_output", settings=_settings(), agent_id="a1")
+        result = await g.check_async("x", _CTX)
+        assert result.passed is False
+        assert result.fixed_output is None
+        assert result.message == "redact"
+
+    async def test_fix_without_reason_or_output_uses_fallback_message(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _patch_client(monkeypatch, _StubResponse(200, {"decision": "fix"}))
+        g = DefenseClawGuardrail(position="tool_output", settings=_settings(), agent_id="a1")
+        result = await g.check_async("x", _CTX)
+        assert result.passed is False
+        assert result.fixed_output is None
+        assert "fix" in result.message.lower()
+        assert "fixed_output" in result.message
+
     async def test_unknown_decision_fails(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _patch_client(monkeypatch, _StubResponse(200, {"decision": "yolo"}))
         g = DefenseClawGuardrail(position="tool_input", settings=_settings(), agent_id="a1")
