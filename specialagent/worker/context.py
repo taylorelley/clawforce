@@ -12,6 +12,7 @@ from specialagent.core.heartbeat import HeartbeatService
 from specialagent.core.software import SoftwareManagement
 from specops_lib.activity import ActivityLog
 from specops_lib.channels.manager import ChannelManager
+from specops_lib.observability import DefenseClawAuditForwarder
 
 
 @dataclass(slots=True)
@@ -38,3 +39,4 @@ class WorkerContext:
     software_management: SoftwareManagement
     admin_url: str = ""
     agent_token: str = ""
+    audit_forwarder: DefenseClawAuditForwarder | None = None

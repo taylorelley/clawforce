@@ -220,6 +220,8 @@ async def _shutdown(
         await asyncio.wait_for(asyncio.shield(agent_task), timeout=5.0)
     except (asyncio.CancelledError, asyncio.TimeoutError):
         pass
+    if ctx.audit_forwarder is not None:
+        await ctx.audit_forwarder.close()
     if admin_client:
         await admin_client.stop()
     if admin_task:
