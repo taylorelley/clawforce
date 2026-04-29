@@ -208,6 +208,11 @@ class CustomAgentTemplateService:
     def create(self, payload: dict[str, Any], skill_resolver) -> dict[str, Any]:
         """Create a new custom template. Raises on collision/validation errors."""
         template_id = payload["id"]
+        if not _SAFE_TEMPLATE_ID_RE.fullmatch(template_id):
+            raise CustomAgentTemplateError(
+                "Invalid custom template id; expected 'custom-<slug>'",
+                status_code=400,
+            )
         if template_id in builtin_role_ids():
             raise CustomAgentTemplateError(
                 f"Template id '{template_id}' collides with a built-in role",
@@ -223,6 +228,11 @@ class CustomAgentTemplateService:
 
     def update(self, template_id: str, payload: dict[str, Any], skill_resolver) -> dict[str, Any]:
         """Overwrite an existing custom template in place."""
+        if not _SAFE_TEMPLATE_ID_RE.fullmatch(template_id):
+            raise CustomAgentTemplateError(
+                "Invalid custom template id; expected 'custom-<slug>'",
+                status_code=400,
+            )
         if self.template_dir(template_id) is None:
             raise CustomAgentTemplateError(
                 f"Custom template '{template_id}' not found", status_code=404
@@ -231,6 +241,8 @@ class CustomAgentTemplateService:
         return self._summary(template_id)
 
     def delete(self, template_id: str) -> bool:
+        if not _SAFE_TEMPLATE_ID_RE.fullmatch(template_id):
+            return False
         tdir = self.template_dir(template_id)
         if not tdir:
             return False

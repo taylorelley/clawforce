@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from specops.apis.agents._schemas import CustomAgentTemplateRequest
+from specops.apis.users import _require_admin
 from specops.auth import get_current_user
 from specops.core.services.agent_template_service import (
     CustomAgentTemplateError,
@@ -15,6 +16,7 @@ from specops.core.services.agent_template_service import (
 )
 from specops.core.storage import StorageBackend
 from specops.deps import get_skill_registry, get_storage
+from specops_lib.config.helpers import redact
 
 logger = logging.getLogger(__name__)
 
@@ -66,18 +68,59 @@ def _make_skill_resolver(registry):
 
 
 def _collect_files_with_content(base: Path) -> list[dict[str, str]]:
+    """Read files under ``base`` for the detail view.
+
+    The agent.yaml config file may contain secrets (mcp_servers env values,
+    channel tokens, provider api keys); we replace its content with a redacted
+    summary instead of dumping raw YAML so a normal template fetch never leaks
+    them.
+    """
     out: list[dict[str, str]] = []
     if not base.is_dir():
         return out
     for p in sorted(base.rglob("*")):
         if p.is_file():
             rel = str(p.relative_to(base)).replace("\\", "/")
-            try:
-                content = p.read_text(encoding="utf-8", errors="replace")
-            except Exception:
-                content = "(binary or unreadable)"
+            if rel == "config/agent.yaml":
+                content = "# (redacted — fetch the structured payload via GET /api/templates/{id} instead)"
+            else:
+                try:
+                    content = p.read_text(encoding="utf-8", errors="replace")
+                except Exception:
+                    content = "(binary or unreadable)"
             out.append({"path": rel, "content": content})
     return out
+
+
+def _redact_template_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Return a copy of a custom template payload with secret fields redacted.
+
+    Drives off the ``secret_fields`` declarations on the underlying Pydantic
+    models (channels, providers, etc.) via :func:`specops_lib.config.helpers.redact`.
+    """
+    if not payload:
+        return payload
+    redacted = dict(payload)
+    if isinstance(payload.get("channels"), dict):
+        redacted["channels"] = redact(payload["channels"], path=("channels",))
+    if isinstance(payload.get("tools"), dict):
+        redacted["tools"] = redact(payload["tools"], path=("tools",))
+    # mcp_servers env / headers values may contain installation secrets.
+    mcp = payload.get("mcp_servers")
+    if isinstance(mcp, dict):
+        redacted_mcp: dict[str, Any] = {}
+        for key, server in mcp.items():
+            if not isinstance(server, dict):
+                redacted_mcp[key] = server
+                continue
+            entry = dict(server)
+            if isinstance(entry.get("env"), dict):
+                entry["env"] = {k: "***" for k in entry["env"]}
+            if isinstance(entry.get("headers"), dict):
+                entry["headers"] = {k: "***" for k in entry["headers"]}
+            redacted_mcp[key] = entry
+        redacted["mcp_servers"] = redacted_mcp
+    return redacted
 
 
 @router.get("/api/templates")
@@ -108,13 +151,13 @@ def list_custom_templates(
     _: dict = Depends(get_current_user),
     storage: StorageBackend = Depends(get_storage),
 ):
-    """Return user-authored custom templates (full payload, not just summaries)."""
+    """Return user-authored custom templates (secret-bearing fields redacted)."""
     service = CustomAgentTemplateService(storage)
     out: list[dict[str, Any]] = []
     for template_id in service.list_ids():
         payload = service.get(template_id)
         if payload:
-            out.append(payload)
+            out.append(_redact_template_payload(payload))
     return out
 
 
@@ -151,22 +194,23 @@ def get_template_detail(
         "workspaceFiles": _collect_files_with_content(role_dir / "workspace"),
     }
     if is_custom:
-        # Surface the structured payload for the edit form.
+        # Surface the structured payload for the edit form (with secrets redacted).
         custom_service = CustomAgentTemplateService(storage)
         payload = custom_service.get(template_id)
         if payload:
-            response["payload"] = payload
+            response["payload"] = _redact_template_payload(payload)
     return response
 
 
 @router.post("/api/templates", status_code=status.HTTP_201_CREATED)
 def create_custom_template(
     body: CustomAgentTemplateRequest,
-    _: dict = Depends(get_current_user),
+    current: dict = Depends(get_current_user),
     storage: StorageBackend = Depends(get_storage),
     registry=Depends(get_skill_registry),
 ):
-    """Create a new custom agent template."""
+    """Create a new custom agent template (admin only)."""
+    _require_admin(current)
     service = CustomAgentTemplateService(storage)
     if body.id in builtin_role_ids():
         raise HTTPException(
@@ -184,11 +228,12 @@ def create_custom_template(
 def update_custom_template(
     template_id: str,
     body: CustomAgentTemplateRequest,
-    _: dict = Depends(get_current_user),
+    current: dict = Depends(get_current_user),
     storage: StorageBackend = Depends(get_storage),
     registry=Depends(get_skill_registry),
 ):
-    """Update an existing custom agent template."""
+    """Update an existing custom agent template (admin only)."""
+    _require_admin(current)
     if body.id != template_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -210,10 +255,11 @@ def update_custom_template(
 @router.delete("/api/templates/{template_id}")
 def delete_custom_template(
     template_id: str,
-    _: dict = Depends(get_current_user),
+    current: dict = Depends(get_current_user),
     storage: StorageBackend = Depends(get_storage),
 ):
-    """Delete a custom agent template (built-ins cannot be deleted)."""
+    """Delete a custom agent template (admin only; built-ins cannot be deleted)."""
+    _require_admin(current)
     if template_id in builtin_role_ids():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

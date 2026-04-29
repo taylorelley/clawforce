@@ -269,7 +269,7 @@ function TemplatesTab({ templates, isLoading }: { templates: AgentTemplateListIt
   const [createTemplate, setCreateTemplate] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [editEntry, setEditEntry] = useState<CustomAgentTemplate | null>(null);
-  const { data: customEntries = [] } = useCustomAgentTemplates();
+  const { data: customEntries = [], isLoading: customEntriesLoading } = useCustomAgentTemplates();
   const deleteMutation = useDeleteCustomAgentTemplate();
   const customById = new Map(customEntries.map((e) => [e.id, e]));
 
@@ -348,7 +348,15 @@ function TemplatesTab({ templates, isLoading }: { templates: AgentTemplateListIt
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => handleEdit(t.value)}
-                      className="rounded-md px-2 py-1 text-[11px] text-claude-text-secondary hover:text-claude-text-primary hover:bg-claude-surface transition-colors"
+                      disabled={customEntriesLoading || !customById.has(t.value)}
+                      className="rounded-md px-2 py-1 text-[11px] text-claude-text-secondary hover:text-claude-text-primary hover:bg-claude-surface transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                      title={
+                        customEntriesLoading
+                          ? "Loading template details…"
+                          : !customById.has(t.value)
+                            ? "Template details unavailable"
+                            : undefined
+                      }
                     >
                       Edit
                     </button>

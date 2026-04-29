@@ -280,6 +280,99 @@ class TestCustomAgentTemplateEndpoints:
         assert client.get("/api/templates").status_code == 401
         assert client.post("/api/templates", json=_basic_payload()).status_code == 401
 
+    def test_writes_require_admin(self, client: TestClient, admin_user):
+        """Non-admin users get 403 on POST/PUT/DELETE; reads stay accessible."""
+        from specops.auth import hash_password
+        from specops.core.database import get_database
+        from specops.core.store.users import UserStore
+
+        UserStore(get_database()).create_user(
+            username="someuser", password_hash=hash_password("pw"), role="user"
+        )
+        login = client.post("/api/auth/login", data={"username": "someuser", "password": "pw"})
+        user_headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+        # Reads stay accessible to any authed user.
+        assert client.get("/api/templates", headers=user_headers).status_code == 200
+        # Writes are admin-only.
+        assert (
+            client.post("/api/templates", headers=user_headers, json=_basic_payload()).status_code
+            == 403
+        )
+        assert (
+            client.put(
+                "/api/templates/custom-data-scientist",
+                headers=user_headers,
+                json=_basic_payload(),
+            ).status_code
+            == 403
+        )
+        assert (
+            client.delete("/api/templates/custom-data-scientist", headers=user_headers).status_code
+            == 403
+        )
+
+    def test_secrets_redacted_in_read_endpoints(
+        self, client: TestClient, auth_headers, isolated_data_dir: Path
+    ):
+        """MCP env values, channel tokens, and raw agent.yaml never leak via reads."""
+        from specops.core.services.agent_template_service import CustomAgentTemplateService
+        from specops.core.storage import LocalStorage
+
+        storage = LocalStorage(str(isolated_data_dir))
+        svc = CustomAgentTemplateService(storage)
+        payload = _basic_payload()
+        payload["mcp_servers"] = {
+            "github": {
+                "command": "npx",
+                "args": ["-y", "@modelcontextprotocol/server-github"],
+                "env": {"GITHUB_TOKEN": "ghp_supersecret_xxx"},
+                "url": "",
+                "headers": {"Authorization": "Bearer abc.def.ghi"},
+            }
+        }
+        payload["channels"] = {"telegram": {"enabled": True, "bot_token": "bot:secret"}}
+        svc.create(payload, skill_resolver=lambda _: None)
+
+        # /api/templates/custom — full payload
+        resp = client.get("/api/templates/custom", headers=auth_headers)
+        assert resp.status_code == 200
+        entry = resp.json()[0]
+        mcp_env = entry["mcp_servers"]["github"]["env"]
+        assert mcp_env["GITHUB_TOKEN"] == "***", "MCP env value not redacted"
+        mcp_headers = entry["mcp_servers"]["github"]["headers"]
+        assert mcp_headers["Authorization"] == "***", "MCP header value not redacted"
+        # Channel bot_token is a known secret_field and should be redacted.
+        tg_token = entry["channels"]["telegram"]["bot_token"]
+        assert tg_token != "bot:secret"
+        assert "***" in tg_token
+
+        # /api/templates/{id} — config file content must not leak raw YAML
+        resp = client.get("/api/templates/custom-data-scientist", headers=auth_headers)
+        assert resp.status_code == 200
+        detail = resp.json()
+        config_files = [f for f in detail["profileFiles"] if f["path"] == "config/agent.yaml"]
+        assert len(config_files) == 1
+        assert "ghp_supersecret_xxx" not in config_files[0]["content"]
+        assert "bot:secret" not in config_files[0]["content"]
+        # Structured payload also redacted.
+        assert detail["payload"]["mcp_servers"]["github"]["env"]["GITHUB_TOKEN"] == "***"
+
+    def test_path_traversal_rejected_via_service(self, isolated_data_dir: Path):
+        """Crafted ids with separators are rejected before any filesystem write."""
+        from specops.core.services.agent_template_service import (
+            CustomAgentTemplateError,
+            CustomAgentTemplateService,
+        )
+        from specops.core.storage import LocalStorage
+
+        storage = LocalStorage(str(isolated_data_dir))
+        svc = CustomAgentTemplateService(storage)
+        for bad_id in ("../escape", "custom-../etc", "custom-a/b", "custom-..", ""):
+            with pytest.raises(CustomAgentTemplateError):
+                payload = _basic_payload(template_id=bad_id)
+                svc.create(payload, skill_resolver=lambda _: None)
+
 
 class TestProvisioningWithCustomTemplate:
     def test_provision_uses_custom_template(self, isolated_data_dir: Path):
@@ -299,3 +392,12 @@ class TestProvisioningWithCustomTemplate:
         assert (agent_root / ".config" / "agent.json").is_file()
         # Workspace seeds were copied.
         assert (agent_root / "workspace" / "README.md").is_file()
+
+    def test_resolve_template_root_rejects_traversal(self, isolated_data_dir: Path):
+        """Bogus template ids never escape the marketplace/admin roots."""
+        from specops.core.services.workspace_service import WorkspaceService
+        from specops.core.storage import LocalStorage
+
+        ws = WorkspaceService(LocalStorage(str(isolated_data_dir)))
+        for bad in ("../etc", "..", "a/b", "default/../etc"):
+            assert ws._resolve_template_root(bad) is None

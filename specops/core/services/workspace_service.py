@@ -14,6 +14,7 @@ This service only handles initial provisioning (copying templates to storage).
 """
 
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -29,6 +30,8 @@ _ROLES_TEMPLATES_DIR = _ROOT / "marketplace" / "roles"
 _BUILTIN_WORKSPACE_TEMPLATE = _ROLES_TEMPLATES_DIR / "default" / "workspace"
 _BUILTIN_PROFILE_TEMPLATE = _ROLES_TEMPLATES_DIR / "default" / "profile"
 _CUSTOM_TEMPLATES_SUBDIR = "admin/agent_templates"
+# Reject ids with path separators, leading dots, etc. before joining to disk.
+_SAFE_TEMPLATE_NAME_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
 
 
 class WorkspaceService:
@@ -40,7 +43,13 @@ class WorkspaceService:
     # -- Provisioning --
 
     def _resolve_template_root(self, template: str) -> Path | None:
-        """Locate a template directory by id, checking built-in roles first then custom."""
+        """Locate a template directory by id, checking built-in roles first then custom.
+
+        Validates the template id as a single safe path component to prevent
+        directory traversal (e.g. "../../etc") from escaping the template roots.
+        """
+        if not template or not _SAFE_TEMPLATE_NAME_RE.fullmatch(template):
+            return None
         builtin = _ROLES_TEMPLATES_DIR / template
         if builtin.is_dir():
             return builtin

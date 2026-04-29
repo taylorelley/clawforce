@@ -60,6 +60,14 @@ function toIdSlug(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+type McpServerStub = {
+  command: string;
+  args: string[];
+  env: Record<string, string>;
+  url: string;
+  headers: Record<string, string>;
+};
+
 type FormState = {
   idTail: string; // the part after `custom-`
   name: string;
@@ -74,6 +82,10 @@ type FormState = {
   soulMd: string;
   skillIds: string[];
   mcpServerIds: string[];
+  /** Cached registry metadata captured at toggle time so the saved payload
+   *  doesn't depend on whatever is in the live MCP search results when the
+   *  user clicks Save. */
+  mcpServerCache: Record<string, McpServerStub>;
   restrictToWorkspace: boolean;
   webProvider: "duckduckgo" | "brave" | "serpapi";
   shellPolicyMode: "allow_all" | "allowlist" | "deny_all";
@@ -95,6 +107,7 @@ const EMPTY_FORM: FormState = {
   soulMd: "",
   skillIds: [],
   mcpServerIds: [],
+  mcpServerCache: {},
   restrictToWorkspace: true,
   webProvider: "duckduckgo",
   shellPolicyMode: "allow_all",
@@ -153,6 +166,18 @@ export default function AddCustomAgentTemplateModal({
       const exec = ((tools as Record<string, unknown>).exec ?? {}) as {
         policy?: { mode?: FormState["shellPolicyMode"] };
       };
+      const existingMcp = entryToEdit.mcp_servers ?? {};
+      const mcpServerCache: Record<string, McpServerStub> = {};
+      for (const [key, value] of Object.entries(existingMcp)) {
+        const v = (value ?? {}) as Partial<McpServerStub>;
+        mcpServerCache[key] = {
+          command: v.command ?? "",
+          args: v.args ?? [],
+          env: v.env ?? {},
+          url: v.url ?? "",
+          headers: v.headers ?? {},
+        };
+      }
       setForm({
         idTail,
         name: entryToEdit.name ?? "",
@@ -166,7 +191,8 @@ export default function AddCustomAgentTemplateModal({
         agentsMd: entryToEdit.agents_md ?? "",
         soulMd: entryToEdit.soul_md ?? "",
         skillIds: entryToEdit.skill_ids ?? [],
-        mcpServerIds: Object.keys(entryToEdit.mcp_servers ?? {}),
+        mcpServerIds: Object.keys(existingMcp),
+        mcpServerCache,
         restrictToWorkspace:
           (tools as { restrict_to_workspace?: boolean }).restrict_to_workspace ?? true,
         webProvider: web.search?.provider ?? "duckduckgo",
@@ -195,13 +221,38 @@ export default function AddCustomAgentTemplateModal({
     }));
   }
 
-  function toggleMcp(id: string) {
-    setForm((f) => ({
-      ...f,
-      mcpServerIds: f.mcpServerIds.includes(id)
-        ? f.mcpServerIds.filter((s) => s !== id)
-        : [...f.mcpServerIds, id],
-    }));
+  function toggleMcp(id: string, metadata?: MCPRegistryServer) {
+    setForm((f) => {
+      const isSelected = f.mcpServerIds.includes(id);
+      if (isSelected) {
+        const nextCache = { ...f.mcpServerCache };
+        delete nextCache[id];
+        return {
+          ...f,
+          mcpServerIds: f.mcpServerIds.filter((s) => s !== id),
+          mcpServerCache: nextCache,
+        };
+      }
+      // Capture installation metadata at toggle time so a later search-query
+      // change can't blank it out before save.
+      const installCfg = (
+        Array.isArray(metadata?.install_config)
+          ? metadata?.install_config?.[0]
+          : metadata?.install_config
+      ) as Record<string, unknown> | undefined;
+      const stub: McpServerStub = {
+        command: typeof installCfg?.command === "string" ? installCfg.command : "",
+        args: Array.isArray(installCfg?.args) ? (installCfg!.args as string[]) : [],
+        env: {},
+        url: typeof installCfg?.url === "string" ? installCfg.url : "",
+        headers: {},
+      };
+      return {
+        ...f,
+        mcpServerIds: [...f.mcpServerIds, id],
+        mcpServerCache: { ...f.mcpServerCache, [id]: stub },
+      };
+    });
   }
 
   function toggleChannel(channel: ChannelKey) {
@@ -227,33 +278,25 @@ export default function AddCustomAgentTemplateModal({
       return null;
     }
 
-    // Build mcp_servers — preserve existing config when editing, otherwise stub from registry results.
-    const mcpServers: Record<string, { command: string; args: string[]; env: Record<string, string>; url: string; headers: Record<string, string> }> = {};
+    // Build mcp_servers from the cache populated at toggle time so the saved
+    // payload doesn't depend on whatever is in the live MCP search results.
+    const mcpServers: Record<string, McpServerStub> = {};
     for (const id of form.mcpServerIds) {
-      const existing = entryToEdit?.mcp_servers?.[id];
-      if (existing) {
+      const cached = form.mcpServerCache[id];
+      if (cached) {
         mcpServers[id] = {
-          command: existing.command ?? "",
-          args: existing.args ?? [],
-          env: existing.env ?? {},
-          url: existing.url ?? "",
-          headers: existing.headers ?? {},
+          command: cached.command,
+          args: cached.args,
+          env: cached.env,
+          url: cached.url,
+          headers: cached.headers,
         };
         continue;
       }
-      const registryEntry = mcpResults.find((s) => s.slug === id || s.id === id);
-      const installCfg = (
-        Array.isArray(registryEntry?.install_config)
-          ? registryEntry?.install_config?.[0]
-          : registryEntry?.install_config
-      ) as Record<string, unknown> | undefined;
-      mcpServers[id] = {
-        command: typeof installCfg?.command === "string" ? installCfg.command : "",
-        args: Array.isArray(installCfg?.args) ? (installCfg!.args as string[]) : [],
-        env: {},
-        url: typeof installCfg?.url === "string" ? installCfg.url : "",
-        headers: {},
-      };
+      // Fallback: id known but no cached metadata (shouldn't happen via UI;
+      // covers programmatic edge cases). Persist a stub so the server still
+      // sees it and the user can correct it later.
+      mcpServers[id] = { command: "", args: [], env: {}, url: "", headers: {} };
     }
 
     const channels: Record<string, { enabled: boolean }> = {};
@@ -583,7 +626,7 @@ export default function AddCustomAgentTemplateModal({
                 <button
                   key={id}
                   type="button"
-                  onClick={() => toggleMcp(id)}
+                  onClick={() => toggleMcp(id, s)}
                   className={css.chip(form.mcpServerIds.includes(id))}
                   title={s.description}
                 >
@@ -600,6 +643,7 @@ export default function AddCustomAgentTemplateModal({
                   type="button"
                   onClick={() => toggleMcp(id)}
                   className={css.chip(true)}
+                  title="Currently selected (not in current search results)"
                 >
                   {id} ✕
                 </button>
