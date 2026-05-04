@@ -240,18 +240,15 @@ def _build_plan_context_message(plan, agent_id: str = "") -> str:
             ]
         )
     elif plan.status == "active" and my_tasks:
-        cols = sorted(plan.columns, key=lambda c: c.position)
-        progress_col_id = cols[1].id if len(cols) > 1 else cols[0].id
-        done_col_id = cols[-1].id
         lines.extend(
             [
                 "## 🚀 Action required",
                 "The plan is **active**. You have tasks assigned to you — **start working on them now.**",
                 "Tasks follow: Context, Requirements, Definition of Done, Output. Report per the Output section (add_task_comment, add_plan_artifact).",
-                f"1. Move your task(s) to in-progress using `update_plan_task(plan_id, task_id, column_id='{progress_col_id}')`.",
+                "1. Use the board above to identify the column for active work, then move your task(s) there with `update_plan_task(plan_id, task_id, column_id=...)` using that column's exact `column_id`.",
                 "2. Do the actual work described in each task.",
                 "3. Save any output using `add_plan_artifact(plan_id, name, content, task_id=task_id)`. Use a `.md` filename (e.g. `report.md`) for text outputs so they render as Markdown in the browser.",
-                f"4. When done, move the task to the final column using `update_plan_task(plan_id, task_id, column_id='{done_col_id}')`.",
+                "4. When done, move the task to the appropriate completion or review column shown above, using that column's exact `column_id`.",
                 "5. Add a completion comment with `add_task_comment(plan_id, task_id, content)` summarising what you produced.",
                 "",
                 "Do NOT wait for further instructions. Start immediately.",
