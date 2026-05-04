@@ -594,24 +594,30 @@ async def update_task(
     # Validate that the requested column_id exists in this plan; resolve it eagerly so the
     # store receives the full prefixed ID and _resolve_column_id never silently falls back.
     if "column_id" in kwargs:
-        col_id_val = kwargs["column_id"]
-        matched_col = next(
-            (
-                c
-                for c in plan.columns
-                if c.id == col_id_val
-                or c.id.endswith(f"-{col_id_val}")
-                or c.id.endswith(col_id_val)
-            ),
-            None,
-        )
-        if not matched_col:
+        col_id_val = (kwargs["column_id"] or "").strip()
+        if not col_id_val:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="column_id cannot be empty.",
+            )
+        matches = [
+            c
+            for c in plan.columns
+            if c.id == col_id_val or c.id.endswith(f"-{col_id_val}")
+        ]
+        if not matches:
             available = ", ".join(f"{c.title} ({c.id})" for c in plan.columns)
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Column '{col_id_val}' not found. Available columns: {available}",
             )
-        kwargs["column_id"] = matched_col.id
+        if len(matches) > 1:
+            ambiguous = ", ".join(f"{c.title} ({c.id})" for c in matches)
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Column '{col_id_val}' is ambiguous. Matches: {ambiguous}",
+            )
+        kwargs["column_id"] = matches[0].id
 
     # Review gate enforcement (only when column_id is changing)
     entering_review_col = False

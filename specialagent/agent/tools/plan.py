@@ -589,8 +589,8 @@ class CreatePlanTaskTool(_PlanToolBase):
                     "type": "string",
                     "description": (
                         "Column to place the task in. Use the short column suffix shown in "
-                        "get_plan(plan_id) (e.g. 'col-todo', 'col-triage'). Defaults to the "
-                        "first column if omitted."
+                        "get_plan(plan_id) (e.g. 'col-todo', 'col-triage'). Defaults to "
+                        "'col-todo' if omitted."
                     ),
                 },
             },
