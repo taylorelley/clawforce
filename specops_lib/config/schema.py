@@ -38,6 +38,44 @@ class GuardrailRef(Base):
     regex_mode: str = Field(default="block", alias="regexMode")
 
 
+class DefenseClawConfig(Base):
+    """Cisco defenseclaw gateway connection settings.
+
+    The gateway is a Go sidecar that the operator runs out-of-band
+    (``defenseclaw-gateway start``); SpecOps points at its REST endpoint
+    when ``GuardrailsConfig.engine == "defenseclaw"``. ``api_key`` is
+    optional — only needed if the deployment fronts the gateway with
+    auth. ``policy_pack`` selects which named pack from
+    ``policies/guardrail/`` the gateway should evaluate against.
+    """
+
+    secret_fields: ClassVar[frozenset[str]] = frozenset({"api_key"})
+
+    gateway_url: str = Field(default="", alias="gatewayUrl")
+    api_key: str = Field(default="", alias="apiKey")
+    policy_pack: str = Field(default="", alias="policyPack")
+    timeout_seconds: float = Field(default=5.0, alias="timeoutSeconds")
+    fail_closed: bool = Field(default=True, alias="failClosed")
+    audit_forwarding: bool = Field(default=False, alias="auditForwarding")
+    on_fail: str = Field(default="raise", alias="onFail")
+
+
+class GuardrailsConfig(Base):
+    """Top-level guardrail engine selector.
+
+    Default ``engine="builtin"`` keeps the existing regex/LLM/callable
+    runners. Setting ``engine="defenseclaw"`` (with a populated
+    ``defenseclaw`` block) routes ALL three positions
+    (``tool_input``, ``tool_output``, ``agent_output``) through the
+    defenseclaw gateway. Per-tool / per-MCP / per-OpenAPI guardrail
+    refs are bypassed in that mode — defenseclaw policy packs are
+    authoritative.
+    """
+
+    engine: str = "builtin"
+    defenseclaw: DefenseClawConfig | None = None
+
+
 class WhatsAppConfig(Base):
     secret_fields: ClassVar[frozenset[str]] = frozenset()
     enabled: bool = False
@@ -420,6 +458,7 @@ _ALL_SECRET_MODELS = (
     ZaloUserConfig,
     TeamsConfig,
     ProviderConfig,
+    DefenseClawConfig,
 )
 ALL_SECRET_FIELD_NAMES = frozenset().union(
     *(getattr(m, "secret_fields", frozenset()) for m in _ALL_SECRET_MODELS)
@@ -482,6 +521,7 @@ class Config(BaseSettings):
     control_plane: ControlPlaneConfig = Field(default_factory=ControlPlaneConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
     secrets: SecretsConfig = Field(default_factory=SecretsConfig)
+    guardrails: GuardrailsConfig = Field(default_factory=GuardrailsConfig)
 
     model_config = ConfigDict(env_prefix="SPECIALAGENT_", env_nested_delimiter="__")
 
@@ -499,3 +539,4 @@ class ConfigUpdate(Base):
     control_plane: ControlPlaneConfig | None = None
     security: SecurityConfig | None = None
     secrets: SecretsConfig | None = None
+    guardrails: GuardrailsConfig | None = None

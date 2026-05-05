@@ -16,6 +16,7 @@ from specialagent.worker.context import WorkerContext
 from specops_lib.activity import ActivityEvent, ActivityLog
 from specops_lib.bus import InboundMessage, MessageBus
 from specops_lib.channels.manager import ChannelManager
+from specops_lib.observability import DefenseClawAuditForwarder
 
 
 def create_worker_context(
@@ -56,28 +57,47 @@ def create_worker_context(
     cron.on_job = on_cron_job
 
     activity_log = ActivityLog(logs_path=file_service.logs_path)
-    activity_log.emit(
-        ActivityEvent(
+
+    audit_forwarder: DefenseClawAuditForwarder | None = None
+    gr_cfg = config.guardrails
+    if (
+        gr_cfg.engine == "defenseclaw"
+        and gr_cfg.defenseclaw is not None
+        and gr_cfg.defenseclaw.audit_forwarding
+        and gr_cfg.defenseclaw.gateway_url
+    ):
+        audit_forwarder = DefenseClawAuditForwarder(
+            gateway_url=gr_cfg.defenseclaw.gateway_url,
             agent_id=agent_id,
-            event_type="agent_started",
-            channel="",
-            content="Agent started",
+            api_key=gr_cfg.defenseclaw.api_key,
+            timeout_seconds=gr_cfg.defenseclaw.timeout_seconds,
         )
+        audit_forwarder.start()
+
+    startup_event = ActivityEvent(
+        agent_id=agent_id,
+        event_type="agent_started",
+        channel="",
+        content="Agent started",
     )
+    activity_log.emit(startup_event)
+    if audit_forwarder is not None:
+        audit_forwarder.enqueue(startup_event)
 
     async def on_event(
         ev_type: str, channel: str, content: str, plan_id: str = "", **kwargs: Any
     ) -> None:
-        activity_log.emit(
-            ActivityEvent(
-                agent_id=agent_id,
-                event_type=ev_type,
-                channel=channel,
-                content=content,
-                plan_id=plan_id,
-                **kwargs,
-            )
+        event = ActivityEvent(
+            agent_id=agent_id,
+            event_type=ev_type,
+            channel=channel,
+            content=content,
+            plan_id=plan_id,
+            **kwargs,
         )
+        activity_log.emit(event)
+        if audit_forwarder is not None:
+            audit_forwarder.enqueue(event)
 
     software_management = SoftwareManagement(
         config_path=config_path,
@@ -101,6 +121,7 @@ def create_worker_context(
         software_management=software_management,
         on_event=on_event,
         secrets_config=config.secrets,
+        guardrails_config=config.guardrails,
     )
 
     # Wire the agent_loop into the engine for hot-reload support
@@ -138,4 +159,5 @@ def create_worker_context(
         software_management=software_management,
         admin_url=cp.admin_url if cp else "",
         agent_token=(cp.agent_token or "") if cp else "",
+        audit_forwarder=audit_forwarder,
     )

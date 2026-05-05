@@ -28,6 +28,7 @@ export default defineConfig({
             { text: "Durable Runtime", link: "/guide/durable-runtime" },
             { text: "API Tools", link: "/guide/api-tools" },
             { text: "Guardrails", link: "/guide/guardrails" },
+            { text: "Guardrails: defenseclaw", link: "/guide/guardrails-defenseclaw" },
             { text: "Human-in-the-Loop", link: "/guide/hitl" },
             { text: "Security", link: "/guide/security" },
           ],
