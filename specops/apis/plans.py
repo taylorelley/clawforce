@@ -597,11 +597,7 @@ async def update_task(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="column_id cannot be empty.",
             )
-        matches = [
-            c
-            for c in plan.columns
-            if c.id == col_id_val or c.id.endswith(f"-{col_id_val}")
-        ]
+        matches = [c for c in plan.columns if c.id == col_id_val or c.id.endswith(f"-{col_id_val}")]
         if not matches:
             available = ", ".join(f"{c.title} ({c.id})" for c in plan.columns)
             raise HTTPException(
